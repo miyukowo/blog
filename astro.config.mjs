@@ -1,5 +1,5 @@
 // @ts-check
-import { defineConfig, fontProviders, svgoOptimizer } from 'astro/config';
+import { defineConfig, svgoOptimizer } from 'astro/config';
 import process from 'node:process';
 import { readFileSync, writeFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
@@ -283,89 +283,4 @@ export default defineConfig({
     }),
   },
 
-  fonts: [
-    // Inter — main UI font from @fontsource/inter npm package
-    {
-      name: 'Inter',
-      cssVariable: '--font-inter',
-      provider: fontProviders.local(),
-      options: {
-        variants: [
-          {
-            weight: '300',
-            style: 'normal',
-            src: [
-              './node_modules/@fontsource/inter/files/inter-vietnamese-300-normal.woff2',
-            ],
-          },
-          {
-            weight: '400',
-            style: 'normal',
-            src: [
-              './node_modules/@fontsource/inter/files/inter-vietnamese-400-normal.woff2',
-            ],
-          },
-          {
-            weight: '500',
-            style: 'normal',
-            src: [
-              './node_modules/@fontsource/inter/files/inter-vietnamese-500-normal.woff2',
-            ],
-          },
-          {
-            weight: '600',
-            style: 'normal',
-            src: [
-              './node_modules/@fontsource/inter/files/inter-vietnamese-600-normal.woff2',
-            ],
-          },
-          {
-            weight: '700',
-            style: 'normal',
-            src: [
-              './node_modules/@fontsource/inter/files/inter-vietnamese-700-normal.woff2',
-            ],
-          },
-          {
-            weight: '800',
-            style: 'normal',
-            src: [
-              './node_modules/@fontsource/inter/files/inter-vietnamese-800-normal.woff2',
-            ],
-          },
-          {
-            weight: '900',
-            style: 'normal',
-            src: [
-              './node_modules/@fontsource/inter/files/inter-vietnamese-900-normal.woff2',
-            ],
-          },
-        ],
-      },
-    },
-    // JetBrains Mono — monospace font from @fontsource/jetbrains-mono npm package
-    {
-      name: 'JetBrains Mono',
-      cssVariable: '--font-jetbrains-mono',
-      provider: fontProviders.local(),
-      options: {
-        variants: [
-          {
-            weight: '400',
-            style: 'normal',
-            src: [
-              './node_modules/@fontsource/jetbrains-mono/files/jetbrains-mono-latin-400-normal.woff2',
-            ],
-          },
-          {
-            weight: '600',
-            style: 'normal',
-            src: [
-              './node_modules/@fontsource/jetbrains-mono/files/jetbrains-mono-latin-600-normal.woff2',
-            ],
-          },
-        ],
-      },
-    },
-  ],
 });

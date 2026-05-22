@@ -47,8 +47,10 @@ const HEIGHT = 630;
 
 // Load font files from @fontsource/inter (bundled locally, no network needed).
 const fontsDir = join(process.cwd(), 'node_modules/@fontsource/inter/files');
-const fontRegular = readFileSync(join(fontsDir, 'inter-vietnamese-400-normal.woff'));
-const fontBold = readFileSync(join(fontsDir, 'inter-vietnamese-700-normal.woff'));
+const fontLatinRegular = readFileSync(join(fontsDir, 'inter-latin-400-normal.woff'));
+const fontVietnameseRegular = readFileSync(join(fontsDir, 'inter-vietnamese-400-normal.woff'));
+const fontLatinBold = readFileSync(join(fontsDir, 'inter-latin-700-normal.woff'));
+const fontVietnameseBold = readFileSync(join(fontsDir, 'inter-vietnamese-700-normal.woff'));
 
 /**
  * Generate a themed OG image as a PNG buffer.
@@ -104,6 +106,7 @@ export async function generateOgImage(data: OgImageData): Promise<Uint8Array> {
         alignItems: 'center',
         background: 'linear-gradient(135deg, #1e3a5f 0%, #2a408e 40%, #4a6cf7 100%)',
         padding: '40px',
+        fontFamily: 'Inter, Inter-Vietnamese',
       },
       children: {
         type: 'div',
@@ -280,8 +283,10 @@ export async function generateOgImage(data: OgImageData): Promise<Uint8Array> {
     width: WIDTH,
     height: HEIGHT,
     fonts: [
-      { name: 'Inter', data: fontRegular, weight: 400, style: 'normal' },
-      { name: 'Inter', data: fontBold, weight: 700, style: 'normal' },
+      { name: 'Inter', data: fontLatinRegular, weight: 400, style: 'normal' },
+      { name: 'Inter-Vietnamese', data: fontVietnameseRegular, weight: 400, style: 'normal' },
+      { name: 'Inter', data: fontLatinBold, weight: 700, style: 'normal' },
+      { name: 'Inter-Vietnamese', data: fontVietnameseBold, weight: 700, style: 'normal' },
     ],
   });
 

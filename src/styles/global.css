@@ -8,6 +8,16 @@
  */
 
 @import 'tailwindcss';
+@import '@fontsource/inter/300.css';
+@import '@fontsource/inter/400.css';
+@import '@fontsource/inter/500.css';
+@import '@fontsource/inter/600.css';
+@import '@fontsource/inter/700.css';
+@import '@fontsource/inter/800.css';
+@import '@fontsource/inter/900.css';
+@import '@fontsource/jetbrains-mono/400.css';
+@import '@fontsource/jetbrains-mono/600.css';
+
 @plugin 'daisyui' {
   themes: false; /* we provide our own themes below */
   logs: false;
@@ -134,9 +144,9 @@
   /* Reading column max width on post pages */
   --width-prose: 50rem;
 
-  /* Fonts — configured via Astro Fonts API (astro.config.mjs) */
-  --font-sans: var(--font-inter, system-ui, sans-serif);
-  --font-mono: var(--font-jetbrains-mono, ui-monospace, monospace);
+  /* Fonts — configured via Fontsource @import */
+  --font-sans: 'Inter', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
 }
 
 [data-theme='chirpy-dark'] {
