@@ -53,7 +53,7 @@ const fontBold = readFileSync(join(fontsDir, 'inter-latin-700-normal.woff'));
 /**
  * Generate a themed OG image as a PNG buffer.
  */
-export async function generateOgImage(data: OgImageData): Promise<Buffer> {
+export async function generateOgImage(data: OgImageData): Promise<Uint8Array> {
   // Truncate for readability at OG image dimensions.
   const desc = data.description
     ? data.description.length > 120

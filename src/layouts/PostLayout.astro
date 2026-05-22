@@ -100,6 +100,7 @@ const crumbs = [
   crumbs={crumbs}
   seo={seo}
   availableLocales={availableLocales}
+  translations={translationLinks}
 >
   {post.data.math && <MathStyles />}
   {
@@ -208,8 +209,3 @@ const crumbs = [
     }
   </article>
 </BaseLayout>
-
-{/* Translation links exposed for the LanguageSwitcher to read at runtime */}
-<script is:inline define:vars={{ links: translationLinks }}>
-  window.__chirpyTranslations = links;
-</script>

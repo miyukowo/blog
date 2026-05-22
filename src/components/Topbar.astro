@@ -21,9 +21,11 @@ interface Props {
    * language switcher so it only links to working pages.
    */
   availableLocales?: readonly Locale[];
+  /** Optional pre-calculated translation URLs for each locale. */
+  translations?: Partial<Record<Locale, string>>;
 }
 
-const { locale, crumbs = [], availableLocales } = Astro.props;
+const { locale, crumbs = [], availableLocales, translations } = Astro.props;
 const t = useTranslations(locale);
 const home = localizedPath('/', locale);
 ---
@@ -71,6 +73,7 @@ const home = localizedPath('/', locale);
 
   <div class="chirpy-topbar__search">
     <SearchButton locale={locale} />
-    {SITE.multilingual && <LanguageSwitcher locale={locale} availableLocales={availableLocales} />}
+    {SITE.multilingual && <LanguageSwitcher locale={locale} availableLocales={availableLocales} translations={translations} />}
   </div>
 </header>
+

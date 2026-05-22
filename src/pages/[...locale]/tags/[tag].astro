@@ -41,6 +41,7 @@ const translationLinks = await getTagTranslations(locale, tagName);
     { label: t('tags.title'), href: localizedPath('/tags/', locale) },
     { label: `#${tagName}` },
   ]}
+  translations={translationLinks}
 >
   <header class="mb-6">
     <p class="text-base-content/70 text-sm tracking-wide uppercase">{t('list.tagPosts')}</p>
@@ -52,9 +53,4 @@ const translationLinks = await getTagTranslations(locale, tagName);
   </header>
   <PostList posts={posts} locale={locale} />
 </BaseLayout>
-
-{/* Translation links exposed for the LanguageSwitcher to read at runtime */}
-<script is:inline define:vars={{ links: translationLinks }}>
-  window.__chirpyTranslations = links;
-</script>
 

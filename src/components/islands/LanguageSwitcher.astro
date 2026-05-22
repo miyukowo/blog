@@ -23,9 +23,11 @@ export interface Props {
    * always treated as available.
    */
   availableLocales?: readonly Locale[];
+  /** Optional pre-calculated translation URLs for each locale. */
+  translations?: Partial<Record<Locale, string>>;
 }
 
-const { locale, availableLocales } = Astro.props;
+const { locale, availableLocales, translations } = Astro.props;
 const t = useTranslations(locale);
 const allowed = new Set<Locale>([locale, ...((availableLocales ?? SITE.locales) as Locale[])]);
 const otherLocales = SITE.locales.filter((l) => l !== locale && allowed.has(l));
@@ -58,14 +60,14 @@ const fallbackBase = stripLocale(Astro.url.pathname);
           {t('lang.switcher')}
         </li>
         <li>
-          <a href={localizedPath(fallbackBase, locale)} aria-current="true" class="font-medium">
+          <a href={translations?.[locale] ?? localizedPath(fallbackBase, locale)} aria-current="true" class="font-medium">
             <span class="badge badge-primary badge-sm">{locale.toUpperCase()}</span>
             {localeLabel(locale)}
           </a>
         </li>
         {otherLocales.map((target) => (
           <li>
-            <a href={localizedPath(fallbackBase, target)} data-lang-target={target}>
+            <a href={translations?.[target] ?? localizedPath(fallbackBase, target)} data-lang-target={target}>
               <span class="badge badge-ghost badge-sm">{target.toUpperCase()}</span>
               {localeLabel(target)}
             </a>
@@ -76,16 +78,3 @@ const fallbackBase = stripLocale(Astro.url.pathname);
   )
 }
 
-<script>
-  function rewireLanguageLinks() {
-    const map = (window as unknown as { __chirpyTranslations?: Record<string, string> })
-      .__chirpyTranslations;
-    if (!map) return;
-    document.querySelectorAll<HTMLAnchorElement>('[data-lang-target]').forEach((a) => {
-      const target = a.dataset.langTarget;
-      if (target && map[target]) a.href = map[target];
-    });
-  }
-  rewireLanguageLinks();
-  document.addEventListener('astro:page-load', rewireLanguageLinks);
-</script>

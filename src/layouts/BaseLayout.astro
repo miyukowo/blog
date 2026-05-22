@@ -38,6 +38,8 @@ interface Props {
    * to scope hreflang alternates. Defaults to all `SITE.locales`.
    */
   availableLocales?: readonly Locale[];
+  /** Optional pre-calculated translation URLs for each locale. */
+  translations?: Partial<Record<Locale, string>>;
 }
 
 const {
@@ -53,6 +55,7 @@ const {
   crumbs = [],
   seo,
   availableLocales,
+  translations,
 } = Astro.props;
 
 const locale: Locale = detectLocale(Astro.url.pathname);
@@ -123,7 +126,6 @@ const meta: SeoMeta =
         // Re-apply after view transitions swap in a fresh <html data-theme>.
         document.addEventListener('astro:after-swap', function () {
           applyTheme();
-          delete window.__chirpyTranslations;
         });
       })();
     </script>
@@ -141,7 +143,7 @@ const meta: SeoMeta =
 
     <div class="chirpy-main-wrapper">
       <div class="chirpy-shell">
-        <Topbar locale={locale} crumbs={crumbs} availableLocales={availableLocales} />
+        <Topbar locale={locale} crumbs={crumbs} availableLocales={availableLocales} translations={translations} />
 
         <div class="flex flex-1 gap-10">
           <div class="flex min-w-0 flex-1 flex-col">

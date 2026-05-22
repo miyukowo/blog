@@ -43,6 +43,7 @@ const translationLinks = await getCategoryTranslations(locale, categoryName);
     { label: t('categories.title'), href: localizedPath('/categories/', locale) },
     { label: categoryName },
   ]}
+  translations={translationLinks}
 >
   <header class="mb-6">
     <p class="text-base-content/70 text-sm tracking-wide uppercase">{t('list.categoryPosts')}</p>
@@ -54,9 +55,4 @@ const translationLinks = await getCategoryTranslations(locale, categoryName);
   </header>
   <PostList posts={posts} locale={locale} />
 </BaseLayout>
-
-{/* Translation links exposed for the LanguageSwitcher to read at runtime */}
-<script is:inline define:vars={{ links: translationLinks }}>
-  window.__chirpyTranslations = links;
-</script>
 
