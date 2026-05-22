@@ -8,28 +8,26 @@ import type { SiteConfig, NavItem, SocialLink, GiscusConfig } from './types/conf
  * across layouts, components, RSS, sitemap, and SEO.
  */
 
-// Export imported site images for use in components
-export const SITE_IMAGES = {
-  avatar: avatarImg,
-  ogDefault: ogDefaultImg,
-} as const;
-
-export const locales = ['en', 'vi'] as const;
-export type Locale = (typeof locales)[number];
-
-/**
- * Author + social handles. Filled in from env vars (see `.env.example`)
- * so identifiers never need to be hard-coded into source.
- *
- * Leave any handle as an empty string to drop it from the sidebar
- * automatically — the entry won't render and no broken `your-handle`
- * URL is exposed.
- */
 const GITHUB_HANDLE = import.meta.env.PUBLIC_GITHUB_HANDLE ?? '';
 const GITHUB_REPO = import.meta.env.PUBLIC_GITHUB_REPO ?? 'chirping-astro';
 const TWITTER_HANDLE = import.meta.env.PUBLIC_TWITTER_HANDLE ?? '';
 const CONTACT_EMAIL = import.meta.env.PUBLIC_CONTACT_EMAIL ?? '';
 const THEME_REPO_URL = 'https://github.com/kannansuresh/chirping-astro';
+
+/**
+ * Global site + theme configuration.
+ * Edit values here to rebrand the theme. All values are typed and consumed
+ * across layouts, components, RSS, sitemap, and SEO.
+ */
+
+// Export imported site images for use in components
+export const SITE_IMAGES = {
+  avatar: GITHUB_HANDLE ? `https://github.com/${GITHUB_HANDLE}.png` : avatarImg,
+  ogDefault: ogDefaultImg,
+} as const;
+
+export const locales = ['en', 'vi'] as const;
+export type Locale = (typeof locales)[number];
 
 /**
  * Public GitHub coordinates of the deployed source. Useful for custom links
@@ -57,7 +55,7 @@ export const SITE: SiteConfig = {
   author: {
     name: 'tvphus',
     url: GITHUB_HANDLE ? `https://github.com/${GITHUB_HANDLE}` : undefined,
-    avatar: avatarImg,
+    avatar: GITHUB_HANDLE ? `https://github.com/${GITHUB_HANDLE}.png` : avatarImg,
     bio: 'its me.',
   },
   /** Default OG image. */
