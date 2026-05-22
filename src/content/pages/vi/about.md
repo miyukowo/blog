@@ -1,74 +1,67 @@
 ---
-title: À propos
-description: Chirping Astro — un thème Astro multilingue inspiré de Chirpy, pensé pour les rédacteurs et les bricoleurs.
+title: About
+description: Chirping Astro — a Chirpy-inspired, multilingual Astro theme built for writers and tinkerers.
 translationKey: about
 ---
 
-**Chirping Astro** est un thème open source qui apporte l'apparence et
-l'esprit du célèbre [thème Jekyll Chirpy](https://chirpy.cotes.page/)
-à [Astro](https://astro.build/) — avec une internationalisation
-de premier ordre, une chaîne d'outils moderne, et zéro JavaScript
-requis pour lire les articles.
+**Chirping Astro** is an open-source theme that brings the look and feel of
+the popular [Chirpy Jekyll theme](https://chirpy.cotes.page/) to
+[Astro](https://astro.build/) — with first-class internationalization, a
+modern toolchain, and zero-JavaScript reading by default.
 
-Il s'adresse aux blogs personnels, aux carnets techniques et aux
-sites de documentation où la typographie, la recherche et une lecture
-calme comptent plus que les animations et les espaces publicitaires.
+It is intended for personal blogs, technical journals, and documentation
+sites where typography, search, and quiet, focused reading matter more
+than animations and ad slots.
 
-## Ce qui est inclus
+## What's in the box
 
-- **Mise en page axée sur la lecture** — barre latérale gauche fixe avec
-  avatar, navigation verticale, bascule de thème et liens sociaux ;
-  colonne principale centrée plafonnée à 1250 px ; rail droit avec
-  « Récemment mis à jour » et « Tags populaires ».
-- **Thèmes clair & sombre** — la palette Chirpy d'origine, portée sur
-  les tokens daisyUI v5, avec une transition circulaire entre les modes.
-- **Contenu bilingue (EN + FR)** — l'anglais à la racine, le français
-  sous `/fr/`. Les articles sont appariés par `translationKey`, et un
-  sélecteur de langue dans la barre supérieure bascule entre les
-  versions. Définissez `multilingual: false` dans `src/config.ts`
-  pour publier un site monolingue.
-- **Markdown + MDX** — Content Collections d'Astro avec frontmatter
-  typé, coloration syntaxique Shiki, GFM, notes de bas de page, table
-  des matières automatique, et un composant `<Callout>` prêt à l'emploi.
-- **Mathématiques LaTeX** — prise en charge KaTeX optionnelle par
-  article via `math: true`.
-- **Recherche instantanée** — [Pagefind](https://pagefind.app/) génère
-  un index statique à la compilation ; l'overlay de recherche se
-  charge à la demande.
-- **Commentaires** — intégration [Giscus](https://giscus.app/) basée
-  sur les Discussions GitHub, avec désactivation par article.
-- **Navigation fluide** — transitions de vue Astro avec un fondu
-  discret et un repli respectant `prefers-reduced-motion`.
-- **SEO d'emblée** — OpenGraph, cartes Twitter, flux RSS par locale,
-  hreflang, et plan du site.
+- **Reading-first layout** — fixed left sidebar with avatar, vertical nav,
+  theme toggle, and social links; centered main column capped at 1250px;
+  right rail with “Recently Updated” and “Trending Tags”.
+- **Light & dark themes** — the original Chirpy palette, ported to
+  daisyUI v5 tokens, with a circular reveal transition between modes.
+- **Bilingual content (EN + FR)** — English served at the root, French
+  under `/fr/`. Posts are paired by `translationKey`, and a language
+  switcher in the topbar jumps between translations. Set
+  `multilingual: false` in `src/config.ts` to ship a single-language
+  site.
+- **Markdown + MDX** — Astro Content Collections with typed frontmatter,
+  Shiki syntax highlighting, GFM, footnotes, an automatic table of
+  contents, and a bundled `<Callout>` component.
+- **LaTeX math** — opt-in KaTeX support per post via `math: true`.
+- **Instant search** — [Pagefind](https://pagefind.app/) generates a
+  static search index at build time; the search overlay loads on demand.
+- **Comments** — [Giscus](https://giscus.app/) integration backed by
+  GitHub Discussions, with per-post opt-out.
+- **Smooth navigation** — Astro view transitions with a subtle fade and
+  motion-reduced fallback for accessibility.
+- **SEO out of the box** — OpenGraph, Twitter cards, RSS feeds per locale,
+  hreflang, and a sitemap.
 
-## Construit avec
+## Built with
 
-- [**Astro 6.x**](https://astro.build/) — Content Collections, MDX,
-  RSS et view transitions
-- [**Tailwind CSS v4**](https://tailwindcss.com/) via le plugin
-  `@tailwindcss/vite`, avec [**daisyUI v5**](https://daisyui.com/) pour
-  le théming
-- [**Pagefind**](https://pagefind.app/) pour la recherche statique
-- [**Giscus**](https://giscus.app/) pour les commentaires
-- [**Shiki**](https://shiki.style/), [**KaTeX**](https://katex.org/),
-  et les icônes [**Lucide**](https://lucide.dev/)
+- [**Astro 6.x**](https://astro.build/) — Content Collections, MDX, RSS,
+  and view transitions
+- [**Tailwind CSS v4**](https://tailwindcss.com/) via the `@tailwindcss/vite`
+  plugin, with [**daisyUI v5**](https://daisyui.com/) for theming
+- [**Pagefind**](https://pagefind.app/) for static search
+- [**Giscus**](https://giscus.app/) for comments
+- [**Shiki**](https://shiki.style/), [**KaTeX**](https://katex.org/), and
+  [**Lucide**](https://lucide.dev/) icons
 
-## Personnalisez-le
+## Make it yours
 
-La quasi-totalité de la configuration passe par un seul fichier typé
-[`src/config.ts`](https://github.com/) — titre du site, auteur,
-navigation, liens sociaux, articles par page, locale par défaut,
-identifiants Giscus, et indicateurs de fonctionnalités. Redémarrez
-`bun run dev` après l'avoir modifié.
+Almost everything is wired through a single typed config file at
+[`src/config.ts`](https://github.com/) — site title, author, navigation,
+social links, posts-per-page, default locale, Giscus credentials, and
+feature flags. Restart `bun run dev` after editing it.
 
-Les nouveaux articles vont dans `src/content/posts/<locale>/`. Appariez
-les traductions en utilisant la même `translationKey` dans les deux
-fichiers. La référence du frontmatter sur ce site de démo détaille
-chaque champ.
+New posts go in `src/content/posts/<locale>/`. Pair translations by
+setting the same `translationKey` in both files. The frontmatter
+reference in this demo site explains every field.
 
-## Licence & crédits
+## License & credits
 
-Distribué sous **licence MIT**. Le design visuel est un hommage à
-[Chirpy de Cotes Chung](https://github.com/cotes2020/jekyll-theme-chirpy) ;
-l'implémentation Astro, le contenu et le code sont indépendants.
+Released under the **MIT License**. The visual design is a tribute to
+[Cotes Chung's Chirpy](https://github.com/cotes2020/jekyll-theme-chirpy);
+the Astro implementation, content, and code are independent.

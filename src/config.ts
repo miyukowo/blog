@@ -167,7 +167,7 @@ export const GISCUS: GiscusConfig = {
   strict: '0',
   reactionsEnabled: '1',
   emitMetadata: '0',
-  inputPosition: 'bottom',
+  inputPosition: 'top',
   loading: 'lazy',
 };
 
