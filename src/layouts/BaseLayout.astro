@@ -121,7 +121,10 @@ const meta: SeoMeta =
         }
         applyTheme();
         // Re-apply after view transitions swap in a fresh <html data-theme>.
-        document.addEventListener('astro:after-swap', applyTheme);
+        document.addEventListener('astro:after-swap', function () {
+          applyTheme();
+          delete window.__chirpyTranslations;
+        });
       })();
     </script>
   </head>
