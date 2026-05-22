@@ -14,7 +14,7 @@ export const SITE_IMAGES = {
   ogDefault: ogDefaultImg,
 } as const;
 
-export const locales = ['en', 'vi] as const;
+export const locales = ['en', 'vi'] as const;
 export type Locale = (typeof locales)[number];
 
 /**
