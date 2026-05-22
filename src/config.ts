@@ -47,16 +47,16 @@ export const SITE: SiteConfig = {
   // ==========================================
 
   /** Default site title used as homepage <title> and meta. */
-  title: 'tvp blog',
+  title: `tvp's blog`,
   /** Site tagline / description. */
   description:
-    'welcome to my personal blog.',
+    `welcome to tvphus's personal blog.`,
   /** Author/handle shown in footer + meta. */
   author: {
     name: 'tvphus',
     url: GITHUB_HANDLE ? `https://github.com/${GITHUB_HANDLE}` : undefined,
     avatar: GITHUB_HANDLE ? `https://github.com/${GITHUB_HANDLE}.png` : avatarImg,
-    bio: 'its me.',
+    bio: 'hi, im a tech noobie. feel free to look around my blog.',
   },
   /** Default OG image. */
   defaultOgImage: ogDefaultImg.src,

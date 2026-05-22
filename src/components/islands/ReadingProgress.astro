@@ -1,0 +1,36 @@
+---
+/**
+ * Reading progress bar — a thin coloured strip fixed to the top of the
+ * viewport that fills from left to right as the reader scrolls through
+ * an article. Only rendered on post pages.
+ */
+---
+
+<div class="reading-progress" data-reading-progress aria-hidden="true"></div>
+
+<script>
+  function setupReadingProgress() {
+    const bar = document.querySelector<HTMLElement>('[data-reading-progress]');
+    if (!bar) return;
+
+    // Only activate when an <article> element is present (post pages).
+    const article = document.querySelector('article');
+    if (!article) {
+      bar.style.display = 'none';
+      return;
+    }
+
+    function onScroll() {
+      const scrollTop = window.scrollY;
+      const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+      const progress = docHeight > 0 ? Math.min(scrollTop / docHeight, 1) : 0;
+      bar!.style.width = `${progress * 100}%`;
+    }
+
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+  }
+
+  setupReadingProgress();
+  document.addEventListener('astro:page-load', setupReadingProgress);
+</script>

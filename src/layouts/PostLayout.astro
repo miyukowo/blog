@@ -3,9 +3,12 @@ import BaseLayout from './BaseLayout.astro';
 import PostNav from '../components/PostNav.astro';
 import SmartImage from '../components/SmartImage.astro';
 import TableOfContents from '../components/islands/TableOfContents.astro';
+import ReadingProgress from '../components/islands/ReadingProgress.astro';
 import Giscus from '../components/islands/Giscus.astro';
 import MathStyles from '../components/MathStyles.astro';
 import { Icon } from 'astro-icon/components';
+import { Image } from 'astro:assets';
+import type { ImageMetadata } from 'astro';
 import { GISCUS, SITE, type Locale } from '../config';
 import { useTranslations, stripLocale, formatDate, isoDate, localizedPath } from '../i18n/utils';
 import { readingTime } from '../utils/reading-time';
@@ -37,6 +40,12 @@ interface Props {
 const { post, headings, body, prev, next, locale } = Astro.props;
 const t = useTranslations(locale);
 const minutes = readingTime(body).minutes;
+
+// Author avatar — resolve string vs ImageMetadata.
+const avatar = SITE.author.avatar;
+const isStringAvatar = typeof avatar === 'string';
+const avatarSrc = isStringAvatar ? avatar : undefined;
+const aboutHref = localizedPath('/about', locale);
 
 // Translation siblings (used by language switcher links).
 const translations = await getTranslations(post);
@@ -109,6 +118,8 @@ const crumbs = [
     )
   }
 
+  <ReadingProgress />
+
   <article class={articleClass}>
     <header class="mb-8">
       <h1
@@ -119,6 +130,32 @@ const crumbs = [
       <p class="text-base-content/65 mt-3 text-lg">{post.data.description}</p>
 
       <div class="text-base-content/70 mt-5 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
+        <a href={aboutHref} class="inline-flex items-center gap-1.5 hover:text-primary transition-colors">
+          {
+            avatarSrc ? (
+              <img
+                src={avatarSrc}
+                alt={SITE.author.name}
+                width="20"
+                height="20"
+                class="rounded-full"
+                loading="eager"
+                decoding="async"
+              />
+            ) : avatar ? (
+              <Image
+                src={avatar as ImageMetadata}
+                alt={SITE.author.name}
+                width={20}
+                height={20}
+                class="rounded-full"
+                loading="eager"
+                decoding="async"
+              />
+            ) : null
+          }
+          <span class="font-medium">{SITE.author.name}</span>
+        </a>
         <span class="inline-flex items-center gap-1">
           <Icon name="lucide:calendar-days" width={14} height={14} />
           <time datetime={isoDate(post.data.pubDate)}>{formatDate(post.data.pubDate, locale)}</time>
