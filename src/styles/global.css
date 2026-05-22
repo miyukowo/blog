@@ -149,6 +149,16 @@
   --font-mono: 'JetBrains Mono', ui-monospace, monospace;
 }
 
+:root {
+  --current-sidebar-width: var(--width-sidebar);
+}
+
+@media (min-width: 1650px) {
+  :root {
+    --current-sidebar-width: var(--width-sidebar-lg);
+  }
+}
+
 [data-theme='chirpy-dark'] {
   --color-sidebar-from: oklch(20% 0.005 264);
   --color-sidebar-to: oklch(17% 0.005 264);
@@ -739,58 +749,6 @@
   }
 }
 
-/* ---------- Back-to-top floating button ---------- */
-@layer components {
-  @keyframes back-to-top-in {
-    from {
-      opacity: 0;
-      transform: translateY(16px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  .back-to-top {
-    @apply border-base-300 bg-base-100 text-base-content fixed bottom-6 right-6 z-30 flex h-11 w-11 items-center justify-center rounded-full border shadow-md;
-    opacity: 0;
-    pointer-events: none;
-    /* No transition on opacity/transform — we use the keyframe instead */
-    transition: background-color 150ms ease, border-color 150ms ease, box-shadow 150ms ease;
-  }
-  .back-to-top:hover {
-    @apply bg-base-200 shadow-lg;
-  }
-  .back-to-top.is-visible {
-    opacity: 1;
-    pointer-events: auto;
-    animation: back-to-top-in 280ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
-  }
-
-  /* On xl+ (panel rail is visible): show a wider pill with text label,
-     and align it with the right edge of the panel rail column so it sits
-     neatly beside the main content — more visible, less tucked away. */
-  @media (min-width: 1280px) {
-    .back-to-top {
-      @apply h-auto w-auto gap-1.5 rounded-full px-4 py-2.5;
-      /* Position it at the far right of the viewport, roughly where the
-         panel rail starts — sidebar(260px) + shell padding(56px) + shell
-         max(1250px) pushes the rail to a predictable x position. We use
-         right: 2rem as a simple, readable approximation. */
-      right: 2rem;
-    }
-    .back-to-top .back-to-top__text {
-      display: inline;
-      @apply text-sm font-medium;
-    }
-  }
-
-  /* Hide the text span by default (mobile / narrow desktop) */
-  .back-to-top .back-to-top__text {
-    display: none;
-  }
-}
 
 /* ---------- Reduced motion ---------- */
 @media (prefers-reduced-motion: reduce) {

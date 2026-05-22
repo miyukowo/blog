@@ -4,8 +4,9 @@
  * Sits inside the main column, below the header.
  */
 import { SITE, type Locale } from '../config';
-import { useTranslations, localizedPath } from '../i18n/utils';
+import { useTranslations, localizedPath, withBase } from '../i18n/utils';
 import { Icon } from 'astro-icon/components';
+import { Image } from 'astro:assets';
 import SearchButton from './islands/SearchButton.astro';
 import LanguageSwitcher from './islands/LanguageSwitcher.astro';
 
@@ -28,6 +29,9 @@ interface Props {
 const { locale, crumbs = [], availableLocales, translations } = Astro.props;
 const t = useTranslations(locale);
 const home = localizedPath('/', locale);
+const avatar = SITE.author.avatar;
+const isStringAvatar = typeof avatar === 'string';
+const avatarSrc = isStringAvatar ? avatar.trim() : '';
 ---
 
 <header class="chirpy-topbar" aria-label="Top Bar">
@@ -66,8 +70,37 @@ const home = localizedPath('/', locale);
     </nav>
 
     {/* Mobile site title */}
-    <a href={home} class="ml-1 truncate text-base font-semibold sm:hidden" aria-label={SITE.title}>
-      {SITE.title}
+    <a
+      href={home}
+      class="ml-1 flex items-center gap-2 truncate text-base font-semibold sm:hidden"
+      aria-label={SITE.title}
+    >
+      {
+        avatar ? (
+          isStringAvatar ? (
+            <img
+              src={avatarSrc.startsWith('/') ? withBase(avatarSrc) : avatarSrc}
+              alt={SITE.author.name}
+              width="24"
+              height="24"
+              class="h-6 w-6 rounded-full border border-base-300 object-cover"
+              loading="eager"
+              decoding="async"
+            />
+          ) : (
+            <Image
+              src={avatar}
+              alt={SITE.author.name}
+              width={24}
+              height={24}
+              class="h-6 w-6 rounded-full border border-base-300 object-cover"
+              loading="eager"
+              decoding="async"
+            />
+          )
+        ) : null
+      }
+      <span>{SITE.title}</span>
     </a>
   </div>
 
