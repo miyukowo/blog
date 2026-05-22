@@ -284,60 +284,61 @@ export default defineConfig({
   },
 
   fonts: [
-    // Source Sans 3 — main UI font from @fontsource/source-sans-3 npm package
+    // Inter — main UI font from @fontsource/inter npm package
     {
-      name: 'Source Sans 3',
-      cssVariable: '--font-source-sans-3',
-      provider: fontProviders.local(),
-      options: {
-        variants: [
-          {
-            weight: '400',
-            style: 'normal',
-            src: [
-              './node_modules/@fontsource/source-sans-3/files/source-sans-3-latin-400-normal.woff2',
-            ],
-          },
-          {
-            weight: '600',
-            style: 'normal',
-            src: [
-              './node_modules/@fontsource/source-sans-3/files/source-sans-3-latin-600-normal.woff2',
-            ],
-          },
-          {
-            weight: '700',
-            style: 'normal',
-            src: [
-              './node_modules/@fontsource/source-sans-3/files/source-sans-3-latin-700-normal.woff2',
-            ],
-          },
-          {
-            weight: '900',
-            style: 'normal',
-            src: [
-              './node_modules/@fontsource/source-sans-3/files/source-sans-3-latin-900-normal.woff2',
-            ],
-          },
-        ],
-      },
-    },
-    // Lato — secondary font from @fontsource/lato npm package
-    {
-      name: 'Lato',
-      cssVariable: '--font-lato',
+      name: 'Inter',
+      cssVariable: '--font-inter',
       provider: fontProviders.local(),
       options: {
         variants: [
           {
             weight: '300',
             style: 'normal',
-            src: ['./node_modules/@fontsource/lato/files/lato-latin-300-normal.woff2'],
+            src: [
+              './node_modules/@fontsource/inter/files/inter-vietnamese-300-normal.woff2',
+            ],
           },
           {
             weight: '400',
             style: 'normal',
-            src: ['./node_modules/@fontsource/lato/files/lato-latin-400-normal.woff2'],
+            src: [
+              './node_modules/@fontsource/inter/files/inter-vietnamese-400-normal.woff2',
+            ],
+          },
+          {
+            weight: '500',
+            style: 'normal',
+            src: [
+              './node_modules/@fontsource/inter/files/inter-vietnamese-500-normal.woff2',
+            ],
+          },
+          {
+            weight: '600',
+            style: 'normal',
+            src: [
+              './node_modules/@fontsource/inter/files/inter-vietnamese-600-normal.woff2',
+            ],
+          },
+          {
+            weight: '700',
+            style: 'normal',
+            src: [
+              './node_modules/@fontsource/inter/files/inter-vietnamese-700-normal.woff2',
+            ],
+          },
+          {
+            weight: '800',
+            style: 'normal',
+            src: [
+              './node_modules/@fontsource/inter/files/inter-vietnamese-800-normal.woff2',
+            ],
+          },
+          {
+            weight: '900',
+            style: 'normal',
+            src: [
+              './node_modules/@fontsource/inter/files/inter-vietnamese-900-normal.woff2',
+            ],
           },
         ],
       },

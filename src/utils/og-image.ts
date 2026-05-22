@@ -47,8 +47,8 @@ const HEIGHT = 630;
 
 // Load font files from @fontsource/inter (bundled locally, no network needed).
 const fontsDir = join(process.cwd(), 'node_modules/@fontsource/inter/files');
-const fontRegular = readFileSync(join(fontsDir, 'inter-latin-400-normal.woff'));
-const fontBold = readFileSync(join(fontsDir, 'inter-latin-700-normal.woff'));
+const fontRegular = readFileSync(join(fontsDir, 'inter-vietnamese-400-normal.woff'));
+const fontBold = readFileSync(join(fontsDir, 'inter-vietnamese-700-normal.woff'));
 
 /**
  * Generate a themed OG image as a PNG buffer.
