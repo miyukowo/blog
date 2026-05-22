@@ -185,9 +185,11 @@ const setupSteps = [
     const mount = document.querySelector('[data-giscus-mount]');
     if (!mount) return;
 
-    mount.innerHTML = '';
-    delete mount.dataset.mounted;
+    const newMount = mount.cloneNode(false);
+    mount.replaceWith(newMount);
 
-    mountGiscus();
+    setTimeout(() => {
+      mountGiscus();
+    }, 50);
   });
 </script>
