@@ -265,3 +265,130 @@ export function categoryPath(locale: Locale, category: string): string {
     locale === SITE.defaultLocale ? `/categories/${slug}/` : `/${locale}/categories/${slug}/`;
   return withBase(path);
 }
+
+/** Find the corresponding category path in all locales for a category in a given locale. */
+export async function getCategoryTranslations(
+  currentLocale: Locale,
+  currentCategory: string,
+): Promise<Record<Locale, string>> {
+  const out = {} as Record<Locale, string>;
+
+  // Initialize with fallback (the category list page)
+  for (const locale of SITE.locales) {
+    const path = locale === SITE.defaultLocale ? '/categories/' : `/${locale}/categories/`;
+    out[locale] = withBase(path);
+  }
+
+  // Current category path in the current locale is definitely correct
+  out[currentLocale] = categoryPath(currentLocale, currentCategory);
+
+  // Find all posts in the current category
+  const currentSlug = slugify(currentCategory);
+  const posts = (await getPosts(currentLocale)).filter(
+    (p) => p.data.categories && p.data.categories.some((c) => slugify(c) === currentSlug)
+  );
+
+  for (const targetLocale of SITE.locales) {
+    if (targetLocale === currentLocale) continue;
+
+    // 1. Check if there is a category in target locale with exact same slug/name
+    const targetCategories = await getCategoriesWithCount(targetLocale);
+    const exactMatch = targetCategories.find((c) => slugify(c.name) === currentSlug);
+    if (exactMatch) {
+      out[targetLocale] = categoryPath(targetLocale, exactMatch.name);
+      continue;
+    }
+
+    // 2. Try to map via post translations
+    const targetCategoryCounts = new Map<string, number>();
+    for (const post of posts) {
+      const translations = await getTranslations(post);
+      const translatedPost = translations[targetLocale];
+      if (translatedPost && translatedPost.data.categories) {
+        for (const cat of translatedPost.data.categories) {
+          targetCategoryCounts.set(cat, (targetCategoryCounts.get(cat) ?? 0) + 1);
+        }
+      }
+    }
+
+    if (targetCategoryCounts.size > 0) {
+      let bestCategory = '';
+      let maxCount = -1;
+      for (const [cat, count] of targetCategoryCounts.entries()) {
+        if (count > maxCount) {
+          maxCount = count;
+          bestCategory = cat;
+        }
+      }
+      if (bestCategory) {
+        out[targetLocale] = categoryPath(targetLocale, bestCategory);
+      }
+    }
+  }
+
+  return out;
+}
+
+/** Find the corresponding tag path in all locales for a tag in a given locale. */
+export async function getTagTranslations(
+  currentLocale: Locale,
+  currentTag: string,
+): Promise<Record<Locale, string>> {
+  const out = {} as Record<Locale, string>;
+
+  // Initialize with fallback (the tags list page)
+  for (const locale of SITE.locales) {
+    const path = locale === SITE.defaultLocale ? '/tags/' : `/${locale}/tags/`;
+    out[locale] = withBase(path);
+  }
+
+  // Current tag path in the current locale is definitely correct
+  out[currentLocale] = tagPath(currentLocale, currentTag);
+
+  // Find all posts with the current tag
+  const currentSlug = slugify(currentTag);
+  const posts = (await getPosts(currentLocale)).filter(
+    (p) => p.data.tags && p.data.tags.some((t) => slugify(t) === currentSlug)
+  );
+
+  for (const targetLocale of SITE.locales) {
+    if (targetLocale === currentLocale) continue;
+
+    // 1. Check if there is a tag in target locale with exact same slug/name
+    const targetTags = await getTagsWithCount(targetLocale);
+    const exactMatch = targetTags.find((t) => slugify(t.name) === currentSlug);
+    if (exactMatch) {
+      out[targetLocale] = tagPath(targetLocale, exactMatch.name);
+      continue;
+    }
+
+    // 2. Try to map via post translations
+    const targetTagCounts = new Map<string, number>();
+    for (const post of posts) {
+      const translations = await getTranslations(post);
+      const translatedPost = translations[targetLocale];
+      if (translatedPost && translatedPost.data.tags) {
+        for (const tg of translatedPost.data.tags) {
+          targetTagCounts.set(tg, (targetTagCounts.get(tg) ?? 0) + 1);
+        }
+      }
+    }
+
+    if (targetTagCounts.size > 0) {
+      let bestTag = '';
+      let maxCount = -1;
+      for (const [tg, count] of targetTagCounts.entries()) {
+        if (count > maxCount) {
+          maxCount = count;
+          bestTag = tg;
+        }
+      }
+      if (bestTag) {
+        out[targetLocale] = tagPath(targetLocale, bestTag);
+      }
+    }
+  }
+
+  return out;
+}
+

@@ -3,7 +3,7 @@ import { SITE } from '~/config';
 import BaseLayout from '~/layouts/BaseLayout.astro';
 import PostList from '~/components/PostList.astro';
 import { useTranslations, localizedPath } from '~/i18n/utils';
-import { getPosts, getCategoriesWithCount, slugify } from '~/utils/posts';
+import { getPosts, getCategoriesWithCount, slugify, getCategoryTranslations } from '~/utils/posts';
 
 interface Props {
   categoryName: string;
@@ -31,6 +31,9 @@ const t = useTranslations(locale);
 const posts = (await getPosts(locale)).filter(
   (p) => p.data.categories && p.data.categories.some((c) => slugify(c) === category),
 );
+
+// Map categories across languages to prevent 404 when switching languages.
+const translationLinks = await getCategoryTranslations(locale, categoryName);
 ---
 
 <BaseLayout
@@ -51,3 +54,9 @@ const posts = (await getPosts(locale)).filter(
   </header>
   <PostList posts={posts} locale={locale} />
 </BaseLayout>
+
+{/* Translation links exposed for the LanguageSwitcher to read at runtime */}
+<script is:inline define:vars={{ links: translationLinks }}>
+  window.__chirpyTranslations = links;
+</script>
+

@@ -3,7 +3,7 @@ import { SITE } from '~/config';
 import BaseLayout from '~/layouts/BaseLayout.astro';
 import PostList from '~/components/PostList.astro';
 import { useTranslations, localizedPath } from '~/i18n/utils';
-import { getPosts, getTagsWithCount, slugify } from '~/utils/posts';
+import { getPosts, getTagsWithCount, slugify, getTagTranslations } from '~/utils/posts';
 
 interface Props {
   tagName: string;
@@ -29,6 +29,9 @@ const { tagName, locale } = Astro.props as Props;
 const { tag } = Astro.params;
 const t = useTranslations(locale);
 const posts = (await getPosts(locale)).filter((p) => p.data.tags.some((tg) => slugify(tg) === tag));
+
+// Map tags across languages to prevent 404 when switching languages.
+const translationLinks = await getTagTranslations(locale, tagName);
 ---
 
 <BaseLayout
@@ -49,3 +52,9 @@ const posts = (await getPosts(locale)).filter((p) => p.data.tags.some((tg) => sl
   </header>
   <PostList posts={posts} locale={locale} />
 </BaseLayout>
+
+{/* Translation links exposed for the LanguageSwitcher to read at runtime */}
+<script is:inline define:vars={{ links: translationLinks }}>
+  window.__chirpyTranslations = links;
+</script>
+
