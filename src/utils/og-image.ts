@@ -6,13 +6,33 @@
  * - Indigo-blue gradient background (primary color)
  * - White card with title, description, category, date, and site branding
  * - Clean typography with good contrast
+ *
+ * Uses @resvg/resvg-wasm (pure WebAssembly) instead of @resvg/resvg-js
+ * (native binary) for compatibility with Cloudflare Pages CI environment.
  */
 
 import satori from 'satori';
-import { Resvg } from '@resvg/resvg-js';
+import { Resvg, initWasm } from '@resvg/resvg-wasm';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { SITE } from '../config';
+
+// Lazy-initialize the WASM binary once per process.
+// `@resvg/resvg-wasm` ships its `.wasm` file alongside the package, so we
+// read it from disk and pass the raw bytes to `initWasm()`. This avoids any
+// network requests and works in Node.js, Bun, and CI environments alike.
+let wasmInitialized: Promise<void> | null = null;
+function ensureWasm(): Promise<void> {
+  if (!wasmInitialized) {
+    const wasmPath = join(
+      process.cwd(),
+      'node_modules/@resvg/resvg-wasm/index_bg.wasm',
+    );
+    const wasmBytes = readFileSync(wasmPath);
+    wasmInitialized = initWasm(wasmBytes);
+  }
+  return wasmInitialized;
+}
 
 export interface OgImageData {
   title: string;
@@ -251,6 +271,9 @@ export async function generateOgImage(data: OgImageData): Promise<Buffer> {
       },
     },
   };
+
+  // Ensure the WASM binary is initialized before first use.
+  await ensureWasm();
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const svg = await satori(markup as any, {
