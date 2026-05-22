@@ -141,14 +141,8 @@ const setupSteps = [
     const mount = document.querySelector<HTMLElement>('[data-giscus-mount]');
     if (!mount) return;
 
-    const existingIframe = document.querySelector<HTMLIFrameElement>('iframe.giscus-frame');
-    if (existingIframe?.contentWindow) {
-      existingIframe.contentWindow.postMessage(
-        { giscus: { setConfig: { term: location.pathname } } },
-        'https://giscus.app',
-      );
-      return;
-    }
+    document.querySelector('iframe.giscus-frame')?.remove();
+    delete mount.dataset.mounted;
 
     if (mount.dataset.mounted === 'true') return;
     mount.dataset.mounted = 'true';
