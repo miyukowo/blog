@@ -25,7 +25,7 @@ export const messages = {
 
     'lang.switcher': 'Language',
     'lang.en': 'English',
-    'lang.fr': 'French',
+    'lang.vi': 'Vietnamese',
 
     'post.publishedOn': 'Published on',
     'post.updatedOn': 'Updated on',
@@ -123,7 +123,7 @@ export const messages = {
 
     'lang.switcher': 'Ngôn ngữ',
     'lang.en': 'Tiếng Anh',
-    'lang.fr': 'Tiếng Pháp',
+    'lang.vi': 'Tiếng Việt',
 
     'post.publishedOn': 'Đăng ngày',
     'post.updatedOn': 'Cập nhật ngày',
@@ -137,15 +137,15 @@ export const messages = {
     'post.commentsDisabled': 'Tính năng bình luận đã bị tắt cho bài viết này.',
     'post.commentsSetupTitle': 'Bình luận chưa được cấu hình',
     'post.commentsSetupBody':
-    'Giscus đã được bật nhưng chưa cấu hình. Vui lòng thêm thông tin kho lưu trữ (repository) bên dưới để bắt đầu nhận bình luận.',
+      'Giscus đã được bật nhưng chưa cấu hình. Vui lòng thêm thông tin kho lưu trữ (repository) bên dưới để bắt đầu nhận bình luận.',
     'post.commentsSetupStep1':
-    'Truy cập `giscus.app` và chọn kho lưu trữ GitHub công khai của bạn (phải bật tính năng Discussions).',
+      'Truy cập `giscus.app` và chọn kho lưu trữ GitHub công khai của bạn (phải bật tính năng Discussions).',
     'post.commentsSetupStep2':
-    'Sao chép các giá trị `data-repo-id`, `data-category` và `data-category-id` được tạo ra.',
+      'Sao chép các giá trị `data-repo-id`, `data-category` và `data-category-id` được tạo ra.',
     'post.commentsSetupStep3':
-    'Thiết lập các biến môi trường `PUBLIC_GISCUS_ENABLED`, `PUBLIC_GISCUS_REPO`, `PUBLIC_GISCUS_REPO_ID`, `PUBLIC_GISCUS_CATEGORY` và `PUBLIC_GISCUS_CATEGORY_ID` trong tệp `.env` của bạn.',
+      'Thiết lập các biến môi trường `PUBLIC_GISCUS_ENABLED`, `PUBLIC_GISCUS_REPO`, `PUBLIC_GISCUS_REPO_ID`, `PUBLIC_GISCUS_CATEGORY` và `PUBLIC_GISCUS_CATEGORY_ID` trong tệp `.env` của bạn.',
     'post.commentsSetupStep4':
-    'Build lại trang web — thông báo này sẽ được thay thế bằng khung bình luận trực tiếp.',
+      'Build lại trang web — thông báo này sẽ được thay thế bằng khung bình luận trực tiếp.',
     'post.commentsSetupDocs': 'Mở giscus.app',
     'post.share': 'Chia sẻ',
     'post.copyLink': 'Sao chép liên kết',

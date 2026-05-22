@@ -20,8 +20,8 @@ than animations and ad slots.
   right rail with “Recently Updated” and “Trending Tags”.
 - **Light & dark themes** — the original Chirpy palette, ported to
   daisyUI v5 tokens, with a circular reveal transition between modes.
-- **Bilingual content (EN + FR)** — English served at the root, French
-  under `/fr/`. Posts are paired by `translationKey`, and a language
+- **Bilingual content (EN + VI)** — English served at the root, Vietnamese
+  under `/vi/`. Posts are paired by `translationKey`, and a language
   switcher in the topbar jumps between translations. Set
   `multilingual: false` in `src/config.ts` to ship a single-language
   site.
