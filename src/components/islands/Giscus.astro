@@ -179,6 +179,7 @@ const setupSteps = [
   mountGiscus();
 
   document.addEventListener('theme-change', syncTheme);
+  document.addEventListener('astro:after-swap', syncTheme);
 
   document.addEventListener('astro:after-swap', () => {
     const mount = document.querySelector('[data-giscus-mount]');
