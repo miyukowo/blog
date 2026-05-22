@@ -139,7 +139,18 @@ const setupSteps = [
 
   function mountGiscus() {
     const mount = document.querySelector<HTMLElement>('[data-giscus-mount]');
-    if (!mount || mount.dataset.mounted === 'true') return;
+    if (!mount) return;
+
+    const existingIframe = document.querySelector<HTMLIFrameElement>('iframe.giscus-frame');
+    if (existingIframe?.contentWindow) {
+      existingIframe.contentWindow.postMessage(
+        { giscus: { setConfig: { term: location.pathname } } },
+        'https://giscus.app',
+      );
+      return;
+    }
+
+    if (mount.dataset.mounted === 'true') return;
     mount.dataset.mounted = 'true';
 
     const script = document.createElement('script');
@@ -177,19 +188,6 @@ const setupSteps = [
   }
 
   mountGiscus();
-
   document.addEventListener('theme-change', syncTheme);
-  document.addEventListener('astro:after-swap', syncTheme);
-
-  document.addEventListener('astro:after-swap', () => {
-    const mount = document.querySelector('[data-giscus-mount]');
-    if (!mount) return;
-
-    const newMount = mount.cloneNode(false);
-    mount.replaceWith(newMount);
-
-    setTimeout(() => {
-      mountGiscus();
-    }, 50);
-  });
+  document.addEventListener('astro:page-load', mountGiscus);
 </script>
