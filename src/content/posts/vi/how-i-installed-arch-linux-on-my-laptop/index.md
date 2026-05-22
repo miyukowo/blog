@@ -1,0 +1,398 @@
+---
+title: Cách mình cài Arch Linux trên Lenovo Legion Slim 5 — Hành trình quay lại Linux
+description: Sau gần sáu năm rời xa Linux, mình quyết định quay lại. Windows 11 ngày càng khiến mình khó chịu với sự cồng kềnh, telemetry và kiểu “dịch vụ hóa” mọi thứ. Thế là mình quyết định dual boot Arch Linux và ghi lại toàn bộ quá trình.
+pubDate: 2026-05-23
+tags:
+  - tutorial
+  - linux
+  - arch-linux
+categories:
+  - Hướng dẫn
+translationKey: how-i-installed-arch-linux-on-my-laptop
+pinned: false
+toc: true
+unlisted: false
+unlistedHideFromSeo: true
+---
+> **Lưu ý:** Đây không phải là hướng dẫn cài Arch Linux. Bài viết này chỉ để mình tham khảo lại trong tương lai và phục vụ mục đích học tập. Tốt nhất bạn nên làm theo [Arch Linux Wiki chính thức](https://wiki.archlinux.org/title/Installation_guide) để cài Arch. Mình không chịu trách nhiệm nếu bạn làm theo và gặp lỗi trong quá trình thực hiện.
+
+## Tại sao là Arch, và tại sao là bây giờ?
+
+Câu nói đùa “Năm của Linux Desktop” đã tồn tại hàng chục năm, nhưng 2026 thực sự cảm thấy khác. Gaming trên Linux đã thay đổi hoàn toàn nhờ Proton và Steam Deck. Wayland cuối cùng cũng đủ trưởng thành để dùng hàng ngày. Và hỗ trợ phần cứng — kể cả NVIDIA — đã cải thiện đáng kể.
+
+Mình chọn Arch vì mình đã quen, và vì triết lý của nó phù hợp với cách mình làm việc: bạn xây dựng chính xác những gì bạn cần, không thừa. Arch Wiki vẫn là một trong những nguồn tài liệu kỹ thuật tốt nhất trên internet, và rolling release giúp mình luôn có package mới nhất.
+
+---
+
+## Chuẩn bị trước khi cài: xử lý Windows
+
+### Tắt Fast Startup và Hibernation
+
+Fast Startup khiến Windows ghi snapshot ngủ đông vào phân vùng NTFS khi shutdown. Nếu Linux mount phân vùng đó khi snapshot còn tồn tại, có thể gây lỗi filesystem. Mình trước đó đã debloat Windows bằng script của Chris Titus Tech, tiện thể tắt luôn hai tính năng này.
+
+---
+
+### Shrink phân vùng Windows
+
+Mình cần tạo chỗ trống cho Arch từ phân vùng Windows hiện tại. Disk Management không shrink được nhiều do các file hệ thống “không thể di chuyển” — lỗi khá phổ biến. Mình dùng **MiniTool Partition Wizard**, và nó xử lý gọn gàng mà không cần boot live.
+
+Mình cấp **250GB cho Arch** trên SSD NVMe 1TB, vẫn để Windows dư dả.
+
+---
+
+### Mở rộng ESP
+
+EFI System Partition của mình gần đầy, có thể gây lỗi với rEFInd. Mình dùng GParted từ live USB để mở rộng trước. Không phải lúc nào cũng cần, nhưng nên biết nếu bạn gặp.
+
+---
+
+### Backup Windows
+
+Mình dùng **Macrium Reflect** để tạo full image ổ C trước khi động vào phân vùng. 300GB dữ liệu nén còn khoảng 120GB — khá nhanh và hiệu quả. Sau đó mình copy ra ổ ngoài để backup.
+
+---
+
+## Cài đặt: làm thủ công
+
+Mình chọn cài Arch thủ công thay vì dùng `archinstall`. Script này đã cải thiện nhiều, nhưng với dual boot + btrfs subvolume, làm tay vẫn kiểm soát tốt hơn và ít bất ngờ hơn.
+
+---
+
+## Vì sao chọn btrfs?
+
+ext4 truyền thống yêu cầu bạn chia dung lượng trước cho `/` và `/home`. Nếu chia sai, bạn sẽ gặp cảnh một bên đầy còn bên kia thì dư.
+
+btrfs giải quyết vấn đề này gọn gàng: subvolume dùng chung một pool, cấp phát động.
+
+Một lợi ích lớn khác là snapshot native. Backend btrfs của Timeshift tạo snapshot gần như ngay lập tức với chi phí rất thấp — cực hữu ích khi update lỗi.
+
+---
+
+## Layout phân vùng
+
+```
+/dev/nvme0n1p1  →  /boot       (ESP, dùng chung với Windows, FAT32)
+/dev/nvme0n1p2  →  (Windows)
+/dev/nvme0n1p5  →  /           (btrfs, 250GB)
+```
+
+---
+
+## Setup subvolume btrfs
+
+```bash
+mount /dev/nvme0n1p5 /mnt
+btrfs subvolume create /mnt/@
+btrfs subvolume create /mnt/@home
+btrfs subvolume create /mnt/@snapshots
+btrfs subvolume create /mnt/@var_log
+umount /mnt
+
+mount -o noatime,compress=zstd,subvol=@ /dev/nvme0n1p5 /mnt
+mkdir -p /mnt/{boot,home,.snapshots,var/log}
+mount -o noatime,compress=zstd,subvol=@home /dev/nvme0n1p5 /mnt/home
+mount -o noatime,compress=zstd,subvol=@snapshots /dev/nvme0n1p5 /mnt/.snapshots
+mount -o noatime,compress=zstd,subvol=@var_log /dev/nvme0n1p5 /mnt/var/log
+mount /dev/nvme0n1p1 /mnt/boot
+```
+
+`noatime` giảm ghi disk không cần thiết, `compress=zstd` nén trong suốt và đôi khi còn cải thiện hiệu năng do giảm I/O.
+
+---
+
+## Cài base system
+
+```bash
+pacstrap /mnt base base-devel linux linux-firmware linux-headers \
+  btrfs-progs networkmanager grub efibootmgr os-prober vim sudo
+```
+
+Sau đó làm các bước quen thuộc: `genfstab`, `arch-chroot`, timezone, locale, hostname, đặt mật khẩu root, tạo user.
+
+---
+
+## Bootloader: rEFInd thay vì GRUB
+
+Ban đầu mình định dùng GRUB nhưng chuyển sang **rEFInd**. rEFInd tự động detect tất cả entry boot trên ESP — Windows Boot Manager và kernel Linux đều được nhận mà không cần config thủ công. Không cần chạy `grub-mkconfig` mỗi lần update kernel.
+
+`refind_linux.conf`:
+
+```
+root=PARTUUID=<uuid> rw add_efi_memmap initrd=amd-ucode.img
+initrd=initramfs-linux.img rootflags=subvol=@ 
+nvidia-drm.modeset=1 nvidia_drm.fbdev=1 loglevel=3 quiet splash
+```
+
+`amd-ucode.img` load microcode cho CPU AMD (quan trọng cho bảo mật và ổn định).  
+`nvidia-drm.modeset=1` cần cho Wayland với NVIDIA.  Và `rootflags=subvol=@` để mount đúng subvolume root.
+
+---
+
+## Sau khi cài: NVIDIA trước, Desktop sau
+
+Đây là thứ tự quan trọng nhất. Hãy cài driver NVIDIA **trước khi** cài môi trường desktop. Nếu bỏ qua bước này, bạn rất dễ gặp màn hình đen sau lần reboot đầu tiên vào KDE.
+
+---
+
+### Cài đặt driver NVIDIA
+
+```bash
+sudo pacman -S nvidia-dkms nvidia-utils lib32-nvidia-utils nvidia-settings
+```
+
+`lib32-nvidia-utils` yêu cầu bật multilib trong `/etc/pacman.conf` — hãy bỏ comment phần `[multilib]` trước khi chạy lệnh này.
+
+Sau đó thêm các module NVIDIA vào initramfs:
+
+```bash
+# /etc/mkinitcpio.conf
+MODULES=(nvidia nvidia_modeset nvidia_uvm nvidia_drm)
+```
+
+```bash
+sudo mkinitcpio -P
+```
+
+Việc này đảm bảo driver NVIDIA được load ngay từ lúc boot, trước khi bất kỳ display server nào khởi động, tránh việc driver Nouveau can thiệp.
+
+---
+
+### KDE Plasma + SDDM
+
+```bash
+sudo pacman -S plasma-meta sddm
+sudo systemctl enable sddm
+```
+
+Mình bắt đầu với `plasma-meta` để giữ hệ thống gọn nhẹ, sau đó cài thêm từng ứng dụng KDE cần thiết (Dolphin, Konsole, Kate, Ark, Gwenview, Okular, Spectacle) thay vì cài toàn bộ `kde-applications-meta`.
+
+---
+
+### Fix SDDM khi dùng NVIDIA + Wayland
+
+Sau lần reboot đầu tiên, SDDM bị lỗi:
+
+```
+Failed to read display number from pipe
+```
+
+Đây là lỗi kinh điển do xung đột giữa NVIDIA và X11. Cách fix là ép SDDM chạy bằng Wayland:
+
+```bash
+sudo mkdir -p /etc/sddm.conf.d
+sudo tee /etc/sddm.conf.d/wayland.conf << 'EOF'
+[General]
+DisplayServer=wayland
+GreeterEnvironment=QT_WAYLAND_SHELL_INTEGRATION=layer-shell
+
+[Wayland]
+CompositorCommand=kwin_wayland --drm --no-lockscreen --no-global-shortcuts
+EOF
+```
+
+---
+
+## Thiết lập riêng cho Legion
+
+Chiếc Legion Slim 5 có phần cứng cần công cụ riêng để quản lý tốt trên Linux.
+
+---
+
+### Chuyển đổi GPU với envycontrol
+
+Laptop có 2 GPU: iGPU AMD Radeon và dGPU RTX 4060. `envycontrol` giúp chuyển đổi giữa chúng một cách gọn gàng:
+
+```bash
+paru -S envycontrol
+sudo envycontrol -s nvidia    # chế độ dGPU luôn bật
+```
+
+Các mode khác:
+
+- `integrated`: chỉ dùng iGPU (tiết kiệm pin nhất)
+    
+- `hybrid`: dùng dGPU khi cần qua PRIME
+    
+
+Mỗi lần chuyển mode cần reboot.
+
+Lưu ý: hai cổng USB-C trên máy được nối với các GPU khác nhau. Cổng nối với dGPU sẽ không xuất hình ở mode `integrated` vì lúc đó dGPU bị tắt hoàn toàn.
+
+---
+
+### Chế độ hiệu năng và điều khiển quạt
+
+`lenovolegionlinux` cung cấp kernel module và công cụ userspace giúp tái hiện phần lớn tính năng của Legion Vantage:
+
+```bash
+paru -S lenovolegionlinux-git
+```
+
+Cung cấp `legion_cli` và `legion_gui` để:
+
+- chuyển Silent / Balanced / Performance
+    
+- chỉnh fan curve
+    
+- xem thông tin cảm biến
+    
+
+Kết hợp với widget **PlasmaVantage** trên KDE thì tích hợp rất gọn.
+
+---
+
+### Chế độ bảo vệ pin
+
+Để bảo vệ pin lâu dài, mình bật chế độ giới hạn sạc ~80% bằng systemd service:
+
+```bash
+sudo tee /etc/systemd/system/battery-conservation.service << 'EOF'
+[Unit]
+Description=Enable Battery Conservation Mode
+After=multi-user.target
+
+[Service]
+Type=oneshot
+ExecStart=/bin/bash -c "echo 1 > /sys/bus/platform/drivers/ideapad_acpi/*/conservation_mode"
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+sudo systemctl enable battery-conservation.service
+```
+
+---
+
+### Quản lý điện năng
+
+```bash
+paru -S auto-cpufreq
+sudo auto-cpufreq --install
+```
+
+`auto-cpufreq` tự động điều chỉnh CPU governor theo tải và nguồn điện. Kết hợp với zram giúp hệ thống mượt mà mà không tốn pin không cần thiết.
+
+---
+
+## Thiết lập tiện ích (Quality of Life)
+
+---
+
+### zram
+
+Với 16GB RAM, swap trên SSD là không cần thiết và còn gây hao mòn ghi. zram nén dữ liệu ngay trong RAM:
+
+```bash
+sudo pacman -S zram-generator
+sudo tee /etc/systemd/zram-generator.conf << 'EOF'
+[zram0]
+zram-size = ram / 2
+compression-algorithm = zstd
+EOF
+```
+
+---
+
+### Gõ tiếng Việt: fcitx5 + Lotus
+
+Để gõ tiếng Việt trên Wayland, mình dùng **fcitx5** với [Lotus Input Method](https://lotusinputmethod.github.io/) — một fork tập trung vào kiểu gõ không preedit, loại bỏ lỗi gạch chân khó chịu thường gặp trên Wayland.
+
+```bash
+sudo pacman -S fcitx5 fcitx5-qt fcitx5-gtk fcitx5-configtool
+yay -S fcitx5-lotus-bin
+```
+
+Trên KDE Wayland, fcitx5 phải được khởi động bởi KWin, không phải autostart. Thiết lập tại:
+
+**System Settings → Input & Output → Keyboard → Virtual Keyboard → Fcitx 5**
+
+---
+
+### Shell: zsh + Starship
+
+```bash
+sudo pacman -S zsh starship zsh-autosuggestions zsh-syntax-highlighting
+chsh -s $(which zsh)
+```
+
+`~/.zshrc`:
+
+```bash
+source /usr/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh
+source /usr/share/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+eval "$(starship init zsh)"
+```
+
+---
+
+### Mount ổ dữ liệu Windows
+
+Mình mount trực tiếp ổ D: vào home để tiện truy cập:
+
+```
+UUID=<ntfs-partition-uuid>  /home/datadrive  ntfs3  defaults,nofail,uid=1000,gid=1000  0  0
+```
+
+`ntfs3` là driver NTFS trong kernel mới, nhanh hơn `ntfs-3g`.  
+`nofail` đảm bảo hệ thống vẫn boot nếu phân vùng không mount được (ví dụ Windows đang hibernate).
+
+---
+
+### Snapshot: Timeshift
+
+Việc đầu tiên mình làm sau khi setup xong là tạo snapshot Timeshift — bài học rút ra từ việc từng phải cài lại máy vì lỗi bootloader.
+
+Với backend btrfs, snapshot gần như tức thì và tốn rất ít dung lượng.
+
+Cấu hình:
+
+- Daily: giữ 3 bản
+    
+- Weekly: giữ 2 bản
+    
+- Monthly: giữ 1 bản
+    
+
+---
+
+## Gaming: Steam + Proton
+
+```bash
+sudo pacman -S steam
+```
+
+Trong Steam:
+
+- bật **Steam Play for all titles**
+    
+- chọn Proton Experimental
+    
+
+Mình cũng cài Proton-GE để tăng compatibility:
+
+```bash
+paru -S proton-ge-custom-bin
+```
+
+Trước khi cài game, mình luôn check ProtonDB để xem report từ cộng đồng. Đa số game rating Gold hoặc Platinum là chạy được ngay.
+
+---
+
+---
+
+## Tổng kết
+
+Sau 6 năm quay lại Linux, điều bất ngờ nhất là mọi thứ ít “đau khổ” hơn rất nhiều. Những thứ từng mất hàng giờ debug: hybrid GPU, Wayland, gaming giờ chạy luôn, hoặc chỉ cần vài bước.
+
+NVIDIA vẫn là phần phức tạp nhất, nhưng kiểm soát được.
+
+Nếu bạn không phụ thuộc Adobe hoặc game anti-cheat như Valorant, thực sự không có nhiều lý do để ở lại Windows. Và nếu có, dual boot vẫn là giải pháp tốt.
+
+Điều trớ trêu là mình rời Linux nhiều năm, quay lại và chỉ mất một buổi tối để setup xong. Nó không hoàn hảo, nhưng nó là của mình — và đó mới là điều quan trọng.
+
+Cảm ơn vì đã đọc!
+
+---
+
+_**Setup của mình**: Lenovo Legion Slim 5 R7000P · AMD Ryzen 7 8845H · RTX 4060 8GB Laptop · Arch Linux · KDE Plasma 6 · Wayland · rEFInd · btrfs_
