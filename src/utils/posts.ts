@@ -183,7 +183,7 @@ export function groupByYearMonth(
     if (!months.has(m)) months.set(m, []);
     months.get(m)!.push(post);
   }
-  const lang = locale === 'fr' ? 'fr-FR' : 'en-US';
+  const lang = locale === 'vi' ? 'vi-VN' : 'en-US';
   const fmt = new Intl.DateTimeFormat(lang, { month: 'long' });
   return Array.from(buckets.entries())
     .sort((a, b) => b[0] - a[0])
