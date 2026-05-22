@@ -41,7 +41,11 @@ function stripLocaleFromId(id: string): string {
 /** Normalize a post entry: ensure `lang` and `translationKey` are set. */
 function normalize(entry: CollectionEntry<'posts'>): Post {
   const lang = entry.data.lang ?? localeFromId(entry.id);
-  const translationKey = entry.data.translationKey ?? stripLocaleFromId(entry.id);
+  const translationKey =
+    entry.data.translationKey ??
+    stripLocaleFromId(entry.id)
+      .replace(/\.(md|mdx)$/i, '')
+      .replace(/\/index$/, '');
   return {
     ...entry,
     data: { ...entry.data, lang, translationKey },
@@ -50,7 +54,9 @@ function normalize(entry: CollectionEntry<'posts'>): Post {
 
 /** Public slug used for the URL: filename minus locale and extension. */
 export function postSlug(entry: Post): string {
-  return stripLocaleFromId(entry.id).replace(/\.(md|mdx)$/i, '');
+  return stripLocaleFromId(entry.id)
+    .replace(/\.(md|mdx)$/i, '')
+    .replace(/\/index$/, '');
 }
 
 /** Full localized URL path for a post. */
