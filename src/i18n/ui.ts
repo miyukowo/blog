@@ -175,7 +175,7 @@ export const messages = {
     'categories.empty': 'Chưa có chuyên mục nào.',
 
     'search.title': 'Tìm kiếm',
-    'search.placeholder': 'Tìm kiếm trên trang web...',
+    'search.placeholder': 'Tìm kiếm trên trang...',
     'search.openLabel': 'Mở tìm kiếm',
     'search.closeLabel': 'Đóng tìm kiếm',
     'search.empty': 'Không có kết quả.',

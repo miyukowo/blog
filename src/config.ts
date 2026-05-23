@@ -1,5 +1,5 @@
-import avatarImg from './assets/images/site/avatar.svg';
-import ogDefaultImg from './assets/images/site/og-default.svg';
+import avatarImg from './assets/images/site/avatar.png';
+import ogDefaultImg from './assets/images/site/og-default.png';
 import type { SiteConfig, NavItem, SocialLink, GiscusConfig } from './types/config';
 
 /**
@@ -58,7 +58,7 @@ export const SITE: SiteConfig = {
     bio: 'hi, im a tech noobie. feel free to look around my blog.',
   },
   /** Default OG image. */
-  defaultOgImage: ogDefaultImg.src,
+  defaultOgImage: '/og-default.png',
   /** Number of posts per page on listings. */
   postsPerPage: 8,
   /** Display ISO 8601 date format if true, otherwise locale-aware. */
