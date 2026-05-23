@@ -9,7 +9,7 @@ import type { Locale } from '../config';
 export const messages = {
   en: {
     'site.skipToContent': 'Skip to content',
-    'site.backToTop': 'Back to top',
+    'site.scrollToTop': 'Scroll to top',
     'nav.home': 'Home',
     'nav.posts': 'Posts',
     'nav.tags': 'Tags',
@@ -107,7 +107,7 @@ export const messages = {
 
   vi: {
     'site.skipToContent': 'Chuyển đến nội dung chính',
-    'site.backToTop': 'Trở về đầu trang',
+    'site.scrollToTop': 'Lên đầu trang',
     'nav.home': 'Trang chủ',
     'nav.posts': 'Bài viết',
     'nav.tags': 'Thẻ',
