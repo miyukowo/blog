@@ -15,11 +15,21 @@ toc: true
 unlisted: false
 unlistedHideFromSeo: true
 ---
+
 [//]: <> (Alert code)
 
 import Alert from '/src/components/Alert.astro';
 
-<Alert type="info" style="soft" direction="horizontal" icon="lucide:info" title="Note" > This is written for my future references and learning purposes only. It’s best that you follow the <a href="https://wiki.archlinux.org/title/Installation_guide" class="font-bold" target="_blank">official Arch Linux Wiki</a> to install Arch on your machine. I won’t take any responsibilities if you follow and messes up in the process. </Alert>
+<Alert type="info" style="soft" direction="horizontal" icon="lucide:info" title="Note">
+  {' '}
+  This is written for my future references and learning purposes only. It’s best that you follow
+  the 
+  <a href="https://wiki.archlinux.org/title/Installation_guide" class="font-bold" target="_blank">
+    official Arch Linux Wiki
+  </a>
+   to install Arch on your machine. I won’t take any responsibilities if you follow and messes up in
+  the process.{' '}
+</Alert>
 
 [//]: <> (Alert code)
 
@@ -75,7 +85,7 @@ I kept the existing ESP from Windows and created one new btrfs partition in the 
 /dev/nvme0n1p2 → (Windows partitions)
 /dev/nvme0n1p5 → / (btrfs, 250GB)
 
-````
+```
 
 ### btrfs Subvolume Setup
 
@@ -93,7 +103,7 @@ mount -o noatime,compress=zstd,subvol=@home /dev/nvme0n1p5 /mnt/home
 mount -o noatime,compress=zstd,subvol=@snapshots /dev/nvme0n1p5 /mnt/.snapshots
 mount -o noatime,compress=zstd,subvol=@var_log /dev/nvme0n1p5 /mnt/var/log
 mount /dev/nvme0n1p1 /mnt/boot
-````
+```
 
 `noatime` and `compress=zstd` are mount options worth keeping: `noatime` reduces unnecessary disk writes, and `zstd` compression is transparent and can actually improve performance on SSDs by reducing I/O.
 

@@ -1,32 +1,46 @@
 ---
 /**
- * Responsive video embed for MDX content. Supports YouTube, Vimeo,
- * and generic iframe sources. Use as:
+ * Responsive video embed for MDX content. Supports:
  *
- *   <VideoEmbed src="https://www.youtube.com/embed/dQw4w9WgXcQ" title="My video" />
- *   <VideoEmbed src="https://player.vimeo.com/video/123456789" title="Vimeo clip" />
+ * 1. **Platform embeds** (iframe) — YouTube / Vimeo via `platform` + `id`:
+ *      <VideoEmbed platform="youtube" id="dQw4w9WgXcQ" title="My video" />
+ *      <VideoEmbed platform="vimeo" id="123456789" title="Vimeo clip" />
  *
- * Or use the shorthand `id` prop for YouTube:
- *   <VideoEmbed platform="youtube" id="dQw4w9WgXcQ" title="My video" />
+ * 2. **Direct video files** (Plyr player) — via `src`:
+ *      <VideoEmbed src="/videos/demo.mp4" title="Demo" />
+ *      <VideoEmbed src="/videos/demo.mp4" title="Demo" poster="/img/thumb.jpg" />
+ *
+ * When `src` points to a direct video file, Plyr.js is loaded via CDN
+ * and wraps a native <video> element for a polished playback experience.
  */
 
 interface Props {
-  /** Full iframe src URL. Takes priority over platform+id. */
+  /** Full iframe src URL (platform embed) OR direct video file URL. */
   src?: string;
   /** Video platform for shorthand usage with `id`. */
   platform?: 'youtube' | 'vimeo';
   /** Video ID (used with `platform`). */
   id?: string;
-  /** Accessible title for the iframe. */
+  /** Accessible title for the iframe / video. */
   title: string;
   /** Optional caption displayed below the video. */
   caption?: string;
+  /** Optional poster image for direct video files. */
+  poster?: string;
 }
 
-const { src, platform, id, title, caption } = Astro.props;
+const { src, platform, id, title, caption, poster } = Astro.props;
 
-function buildSrc(): string {
-  if (src) return src;
+/**
+ * Determine whether `src` is a direct video file (to use Plyr)
+ * or a platform embed URL (to use an iframe).
+ */
+const VIDEO_EXTENSIONS = /\.(mp4|webm|ogg|mov|m4v)(\?.*)?$/i;
+const isDirectVideo = src && VIDEO_EXTENSIONS.test(src);
+const isPlatformEmbed = Boolean(platform && id) || (src && !isDirectVideo);
+
+function buildIframeSrc(): string {
+  if (src && !isDirectVideo) return src;
   if (platform === 'youtube' && id) {
     return `https://www.youtube-nocookie.com/embed/${id}`;
   }
@@ -35,21 +49,33 @@ function buildSrc(): string {
   }
   throw new Error('VideoEmbed: provide either `src` or both `platform` and `id`.');
 }
-
-const iframeSrc = buildSrc();
 ---
 
 <figure class="video-embed my-6">
-  <div class="video-embed__frame">
-    <iframe
-      src={iframeSrc}
-      title={title}
-      style="border: 0"
-      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-      referrerpolicy="strict-origin-when-cross-origin"
-      allowfullscreen
-      loading="lazy"></iframe>
-  </div>
+  {
+    isDirectVideo ? (
+      <>
+        <link rel="stylesheet" href="https://cdn.plyr.io/3.8.4/plyr.css" crossorigin="anonymous" />
+        <div class="video-embed__plyr">
+          <video class="plyr-video" playsinline controls data-plyr-title={title} poster={poster}>
+            <source src={src} />
+          </video>
+        </div>
+      </>
+    ) : isPlatformEmbed ? (
+      <div class="video-embed__frame">
+        <iframe
+          src={buildIframeSrc()}
+          title={title}
+          style="border: 0"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          referrerpolicy="strict-origin-when-cross-origin"
+          allowfullscreen
+          loading="lazy"
+        />
+      </div>
+    ) : null
+  }
   {
     caption && (
       <figcaption class="text-base-content/55 mt-2 text-center text-xs italic">
@@ -58,3 +84,70 @@ const iframeSrc = buildSrc();
     )
   }
 </figure>
+
+<script>
+  let plyrLoaded = false;
+
+  async function loadPlyrScript(): Promise<void> {
+    if (plyrLoaded) return;
+    if (document.querySelector('script[src*="plyr.io"]')) {
+      plyrLoaded = true;
+      return;
+    }
+    return new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = 'https://cdn.plyr.io/3.8.4/plyr.polyfilled.js';
+      script.crossOrigin = 'anonymous';
+      script.onload = () => {
+        plyrLoaded = true;
+        resolve();
+      };
+      script.onerror = reject;
+      document.head.appendChild(script);
+    });
+  }
+
+  function initPlyrVideos() {
+    const videos = document.querySelectorAll<HTMLVideoElement>('.plyr-video:not([data-plyr-init])');
+    if (videos.length === 0) return;
+
+    loadPlyrScript().then(() => {
+      const Plyr = (window as unknown as Record<string, unknown>).Plyr as
+        | (new (el: HTMLElement, opts?: Record<string, unknown>) => unknown)
+        | undefined;
+      if (!Plyr) return;
+
+      videos.forEach((el) => {
+        el.dataset.plyrInit = 'true';
+        new Plyr(el, {
+          controls: [
+            'play-large',
+            'play',
+            'progress',
+            'current-time',
+            'mute',
+            'volume',
+            'settings',
+            'pip',
+            'fullscreen',
+          ],
+        });
+      });
+    });
+  }
+
+  initPlyrVideos();
+  document.addEventListener('astro:page-load', initPlyrVideos);
+</script>
+
+<style>
+  .video-embed__plyr {
+    overflow: hidden;
+    border-radius: 0.375rem;
+    background: var(--color-sidebar-to);
+  }
+  .video-embed__plyr video {
+    display: block;
+    width: 100%;
+  }
+</style>

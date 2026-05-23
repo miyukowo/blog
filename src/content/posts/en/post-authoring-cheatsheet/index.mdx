@@ -11,28 +11,28 @@ draft: true
 
 ## 1) Frontmatter for posts
 
-| Field | Required | Use | Notes |
-|---|---:|---|---|
-| `title` | Yes | Post title, H1, meta title, OG title | 1–140 chars |
-| `description` | Yes | Meta description, OG, RSS | 1–280 chars |
-| `pubDate` | Yes | Publish date | Required for posts |
-| `updatedDate` | No | Update date shown in UI, RSS, sitemap, OG | Use when content changed meaningfully |
-| `tags` | No | Tag pages, trending tags | Defaults to `[]` |
-| `categories` | No | Category pages | Defaults to `[]` |
-| `draft` | No | Hide from production build, RSS, sitemap | Visible in dev |
-| `unlisted` | No | Keep page live by direct URL, hide from listings | Still deploys |
-| `unlistedHideFromSeo` | No | Add `noindex, nofollow` | Defaults to `true` when `unlisted: true` |
-| `heroImage` | No | Hero image, card thumbnail, OG preview | Local asset, public path, or remote URL |
-| `heroImageAlt` | No | Alt text for hero image | Always set if possible |
-| `showFeaturedImage` | No | Show/hide hero per post | Overrides site default |
-| `dynamicPostCardHeight` | No | Card height behavior | Overrides site default |
-| `canonicalURL` | No | Custom canonical link | Useful for republished content |
-| `comments` | No | Enable/disable Giscus per post | Overrides site-wide setting |
-| `toc` | No | Show/hide right-hand TOC | Defaults to `true` |
-| `pinned` | No | Pin post to top of listings | Defaults to `false` |
-| `math` | No | Enable KaTeX rendering | Defaults to `false` |
-| `lang` | No | Override locale | Usually inferred from path |
-| `translationKey` | No | Pair translated posts | Same key across locales |
+| Field                   | Required | Use                                              | Notes                                    |
+| ----------------------- | -------: | ------------------------------------------------ | ---------------------------------------- |
+| `title`                 |      Yes | Post title, H1, meta title, OG title             | 1–140 chars                              |
+| `description`           |      Yes | Meta description, OG, RSS                        | 1–280 chars                              |
+| `pubDate`               |      Yes | Publish date                                     | Required for posts                       |
+| `updatedDate`           |       No | Update date shown in UI, RSS, sitemap, OG        | Use when content changed meaningfully    |
+| `tags`                  |       No | Tag pages, trending tags                         | Defaults to `[]`                         |
+| `categories`            |       No | Category pages                                   | Defaults to `[]`                         |
+| `draft`                 |       No | Hide from production build, RSS, sitemap         | Visible in dev                           |
+| `unlisted`              |       No | Keep page live by direct URL, hide from listings | Still deploys                            |
+| `unlistedHideFromSeo`   |       No | Add `noindex, nofollow`                          | Defaults to `true` when `unlisted: true` |
+| `heroImage`             |       No | Hero image, card thumbnail, OG preview           | Local asset, public path, or remote URL  |
+| `heroImageAlt`          |       No | Alt text for hero image                          | Always set if possible                   |
+| `showFeaturedImage`     |       No | Show/hide hero per post                          | Overrides site default                   |
+| `dynamicPostCardHeight` |       No | Card height behavior                             | Overrides site default                   |
+| `canonicalURL`          |       No | Custom canonical link                            | Useful for republished content           |
+| `comments`              |       No | Enable/disable Giscus per post                   | Overrides site-wide setting              |
+| `toc`                   |       No | Show/hide right-hand TOC                         | Defaults to `true`                       |
+| `pinned`                |       No | Pin post to top of listings                      | Defaults to `false`                      |
+| `math`                  |       No | Enable KaTeX rendering                           | Defaults to `false`                      |
+| `lang`                  |       No | Override locale                                  | Usually inferred from path               |
+| `translationKey`        |       No | Pair translated posts                            | Same key across locales                  |
 
 ## 2) Frontmatter for pages
 
@@ -84,13 +84,15 @@ toc: true
 - Alerts: use the custom `alert` fence.
 
 Example:
+
 ````
-```ts frame="terminal" title="src/utils/example.ts" {2}
+```ts title="src/utils/example.ts" {2}
 export function greet(name: string) {
   return `Hello, ${name}!`;
 }
 ```
 ````
+
 and the results:
 
 ```ts title="src/utils/example.ts" {2}
