@@ -24,10 +24,7 @@ import { SITE } from '../config';
 let wasmInitialized: Promise<void> | null = null;
 function ensureWasm(): Promise<void> {
   if (!wasmInitialized) {
-    const wasmPath = join(
-      process.cwd(),
-      'node_modules/@resvg/resvg-wasm/index_bg.wasm',
-    );
+    const wasmPath = join(process.cwd(), 'node_modules/@resvg/resvg-wasm/index_bg.wasm');
     const wasmBytes = readFileSync(wasmPath);
     wasmInitialized = initWasm(wasmBytes);
   }

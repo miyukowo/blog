@@ -49,8 +49,7 @@ export const SITE: SiteConfig = {
   /** Default site title used as homepage <title> and meta. */
   title: `tvp's blog`,
   /** Site tagline / description. */
-  description:
-    `welcome to tvphus's personal blog.`,
+  description: `welcome to tvphus's personal blog.`,
   /** Author/handle shown in footer + meta. */
   author: {
     name: 'tvphus',

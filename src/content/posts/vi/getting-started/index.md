@@ -15,10 +15,10 @@ Chào mừng bạn đến với blog mới! Bài viết mẫu này sẽ hướng
 
 Mở file `src/config.ts` và cập nhật:
 
-* **title** — tên trang web/blog của bạn
-* **description** — hiển thị trên công cụ tìm kiếm và RSS
-* **author.name** — hiển thị ở sidebar và footer
-* **url** — URL production của bạn (được thiết lập qua biến môi trường `SITE_URL` khi deploy)
+- **title** — tên trang web/blog của bạn
+- **description** — hiển thị trên công cụ tìm kiếm và RSS
+- **author.name** — hiển thị ở sidebar và footer
+- **url** — URL production của bạn (được thiết lập qua biến môi trường `SITE_URL` khi deploy)
 
 ## Biến môi trường
 
@@ -93,9 +93,9 @@ Push lên branch `main` trên GitHub. Workflow đi kèm sẽ tự động build 
 
 ## Tìm hiểu thêm
 
-* [Tài liệu đầy đủ](https://github.com/kannansuresh/chirping-astro)
-* [Demo trực tiếp](https://kannansuresh.github.io/chirping-astro)
-* [Tài liệu Astro](https://docs.astro.build)
+- [Tài liệu đầy đủ](https://github.com/kannansuresh/chirping-astro)
+- [Demo trực tiếp](https://kannansuresh.github.io/chirping-astro)
+- [Tài liệu Astro](https://docs.astro.build)
 
 ---
 

@@ -14,11 +14,12 @@ toc: true
 unlisted: false
 unlistedHideFromSeo: true
 ---
-> **Lưu ý:** Đây không phải là hướng dẫn cài Arch Linux. Bài viết này chỉ để mình tham khảo lại trong tương lai và phục vụ mục đích học tập. Tốt nhất bạn nên làm theo [Arch Linux Wiki chính thức](https://wiki.archlinux.org/title/Installation_guide) để cài Arch. Mình không chịu trách nhiệm nếu bạn làm theo và gặp lỗi trong quá trình thực hiện.
+
+> **Lưu ý:** Bài viết này chỉ để mình tham khảo lại trong tương lai và phục vụ mục đích học tập. Tốt nhất bạn nên làm theo [Arch Linux Wiki chính thức](https://wiki.archlinux.org/title/Installation_guide) để cài Arch. Mình không chịu trách nhiệm nếu bạn làm theo và gặp lỗi trong quá trình thực hiện.
 
 ## Tại sao là Arch, và tại sao là bây giờ?
 
-Câu nói đùa “Năm của Linux Desktop” đã tồn tại hàng chục năm, nhưng 2026 thực sự cảm thấy khác. Gaming trên Linux đã thay đổi hoàn toàn nhờ Proton và Steam Deck. Wayland cuối cùng cũng đủ trưởng thành để dùng hàng ngày. Và hỗ trợ phần cứng — kể cả NVIDIA — đã cải thiện đáng kể.
+Câu nói đùa “Year of the Linux Desktop” đã tồn tại hàng chục năm, nhưng 2026 thực sự cảm thấy khác. Gaming trên Linux đã thay đổi hoàn toàn nhờ Proton và Steam Deck. Wayland cuối cùng cũng đủ trưởng thành để dùng hàng ngày. Và hỗ trợ phần cứng, kể cả NVIDIA đã được cải thiện đáng kể.
 
 Mình chọn Arch vì mình đã quen, và vì triết lý của nó phù hợp với cách mình làm việc: bạn xây dựng chính xác những gì bạn cần, không thừa. Arch Wiki vẫn là một trong những nguồn tài liệu kỹ thuật tốt nhất trên internet, và rolling release giúp mình luôn có package mới nhất.
 
@@ -119,12 +120,12 @@ Ban đầu mình định dùng GRUB nhưng chuyển sang **rEFInd**. rEFInd tự
 
 ```
 root=PARTUUID=<uuid> rw add_efi_memmap initrd=amd-ucode.img
-initrd=initramfs-linux.img rootflags=subvol=@ 
+initrd=initramfs-linux.img rootflags=subvol=@
 nvidia-drm.modeset=1 nvidia_drm.fbdev=1 loglevel=3 quiet splash
 ```
 
 `amd-ucode.img` load microcode cho CPU AMD (quan trọng cho bảo mật và ổn định).  
-`nvidia-drm.modeset=1` cần cho Wayland với NVIDIA.  Và `rootflags=subvol=@` để mount đúng subvolume root.
+`nvidia-drm.modeset=1` cần cho Wayland với NVIDIA. Và `rootflags=subvol=@` để mount đúng subvolume root.
 
 ---
 
@@ -210,9 +211,7 @@ sudo envycontrol -s nvidia    # chế độ dGPU luôn bật
 Các mode khác:
 
 - `integrated`: chỉ dùng iGPU (tiết kiệm pin nhất)
-    
 - `hybrid`: dùng dGPU khi cần qua PRIME
-    
 
 Mỗi lần chuyển mode cần reboot.
 
@@ -231,11 +230,8 @@ paru -S lenovolegionlinux-git
 Cung cấp `legion_cli` và `legion_gui` để:
 
 - chuyển Silent / Balanced / Performance
-    
 - chỉnh fan curve
-    
 - xem thông tin cảm biến
-    
 
 Kết hợp với widget **PlasmaVantage** trên KDE thì tích hợp rất gọn.
 
@@ -348,11 +344,8 @@ Với backend btrfs, snapshot gần như tức thì và tốn rất ít dung lư
 Cấu hình:
 
 - Daily: giữ 3 bản
-    
 - Weekly: giữ 2 bản
-    
 - Monthly: giữ 1 bản
-    
 
 ---
 
@@ -365,9 +358,7 @@ sudo pacman -S steam
 Trong Steam:
 
 - bật **Steam Play for all titles**
-    
 - chọn Proton Experimental
-    
 
 Mình cũng cài Proton-GE để tăng compatibility:
 

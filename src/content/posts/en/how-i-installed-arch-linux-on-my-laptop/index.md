@@ -14,7 +14,8 @@ toc: true
 unlisted: false
 unlistedHideFromSeo: true
 ---
-> **Note:** This is not a tutorial on how to install Arch Linux. This is written for my future references and education purposes only. It's best that you follow the [official Arch Linux Wiki](https://wiki.archlinux.org/title/Installation_guide) to install Arch on your machine. I won't take any responsibilities if you follow and messes up in the process.
+
+> **Note:** This is written for my future references and education purposes only. It's best that you follow the [official Arch Linux Wiki](https://wiki.archlinux.org/title/Installation_guide) to install Arch on your machine. I won't take any responsibilities if you follow and messes up in the process.
 
 ## Why Arch, and Why Now?
 
@@ -107,7 +108,7 @@ My kernel parameters in `refind_linux.conf`:
 
 ```
 root=PARTUUID=<uuid> rw add_efi_memmap initrd=amd-ucode.img
-initrd=initramfs-linux.img rootflags=subvol=@ 
+initrd=initramfs-linux.img rootflags=subvol=@
 nvidia-drm.modeset=1 nvidia_drm.fbdev=1 loglevel=3 quiet splash
 ```
 

@@ -60,14 +60,21 @@ const fallbackBase = stripLocale(Astro.url.pathname);
           {t('lang.switcher')}
         </li>
         <li>
-          <a href={translations?.[locale] ?? localizedPath(fallbackBase, locale)} aria-current="true" class="font-medium">
+          <a
+            href={translations?.[locale] ?? localizedPath(fallbackBase, locale)}
+            aria-current="true"
+            class="font-medium"
+          >
             <span class="badge badge-primary badge-sm">{locale.toUpperCase()}</span>
             {localeLabel(locale)}
           </a>
         </li>
         {otherLocales.map((target) => (
           <li>
-            <a href={translations?.[target] ?? localizedPath(fallbackBase, target)} data-lang-target={target}>
+            <a
+              href={translations?.[target] ?? localizedPath(fallbackBase, target)}
+              data-lang-target={target}
+            >
               <span class="badge badge-ghost badge-sm">{target.toUpperCase()}</span>
               {localeLabel(target)}
             </a>
@@ -77,4 +84,3 @@ const fallbackBase = stripLocale(Astro.url.pathname);
     </div>
   )
 }
-

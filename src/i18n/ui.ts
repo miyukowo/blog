@@ -105,7 +105,6 @@ export const messages = {
     'footer.copyright': 'All rights reserved.',
   },
 
-
   vi: {
     'site.skipToContent': 'Chuyển đến nội dung chính',
     'site.backToTop': 'Trở về đầu trang',

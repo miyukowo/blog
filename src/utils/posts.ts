@@ -291,7 +291,7 @@ export async function getCategoryTranslations(
   // Find all posts in the current category
   const currentSlug = slugify(currentCategory);
   const posts = (await getPosts(currentLocale)).filter(
-    (p) => p.data.categories && p.data.categories.some((c) => slugify(c) === currentSlug)
+    (p) => p.data.categories && p.data.categories.some((c) => slugify(c) === currentSlug),
   );
 
   for (const targetLocale of SITE.locales) {
@@ -354,7 +354,7 @@ export async function getTagTranslations(
   // Find all posts with the current tag
   const currentSlug = slugify(currentTag);
   const posts = (await getPosts(currentLocale)).filter(
-    (p) => p.data.tags && p.data.tags.some((t) => slugify(t) === currentSlug)
+    (p) => p.data.tags && p.data.tags.some((t) => slugify(t) === currentSlug),
   );
 
   for (const targetLocale of SITE.locales) {
@@ -397,4 +397,3 @@ export async function getTagTranslations(
 
   return out;
 }
-

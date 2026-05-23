@@ -59,8 +59,8 @@ We rely on third-party providers that may process data under their own privacy p
 
 Please review their policies:
 
-- Cloudflare Privacy Policy  
-- GitHub Privacy Policy  
+- Cloudflare Privacy Policy
+- GitHub Privacy Policy
 
 ## 6. Legal basis (EEA/UK, if applicable)
 
