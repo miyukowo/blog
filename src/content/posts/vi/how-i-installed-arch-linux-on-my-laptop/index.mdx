@@ -2,6 +2,7 @@
 title: Cách mình cài Arch Linux trên Lenovo Legion Slim 5 — Hành trình quay lại Linux
 description: Sau gần sáu năm rời xa Linux, mình quyết định quay lại. Windows 11 ngày càng khiến mình khó chịu với sự cồng kềnh, telemetry và kiểu “dịch vụ hóa” mọi thứ. Thế là mình quyết định dual boot Arch Linux và ghi lại toàn bộ quá trình.
 pubDate: 2026-05-23
+updatedDate: 2026-05-24
 tags:
   - tutorial
   - linux
@@ -14,14 +15,19 @@ toc: true
 unlisted: false
 unlistedHideFromSeo: true
 ---
+[//]: <> (Alert code)
 
-> **Lưu ý:** Bài viết này chỉ để mình tham khảo lại trong tương lai và phục vụ mục đích học tập. Tốt nhất bạn nên làm theo [Arch Linux Wiki chính thức](https://wiki.archlinux.org/title/Installation_guide) để cài Arch. Mình không chịu trách nhiệm nếu bạn làm theo và gặp lỗi trong quá trình thực hiện.
+import Alert from '/src/components/Alert.astro';
+
+<Alert type="info" style="soft" direction="horizontal" icon="lucide:info" title="Lưu ý" > Bài viết này chỉ để mình tham khảo lại trong tương lai và phục vụ cho mục đích tìm hiểu. Tốt nhất bạn nên làm theo hướng dẫn trong <a href="https://wiki.archlinux.org/title/Installation_guide" class="font-bold" target="_blank">Wiki của Arch Linux</a> để cài Arch. Mình không chịu trách nhiệm nếu bạn làm theo và gặp lỗi trong quá trình thực hiện. </Alert>
+
+[//]: <> (Alert code)
 
 ## Tại sao là Arch, và tại sao là bây giờ?
 
-Câu nói đùa “Year of the Linux Desktop” đã tồn tại hàng chục năm, nhưng 2026 thực sự cảm thấy khác. Gaming trên Linux đã thay đổi hoàn toàn nhờ Proton và Steam Deck. Wayland cuối cùng cũng đủ trưởng thành để dùng hàng ngày. Và hỗ trợ phần cứng, kể cả NVIDIA đã được cải thiện đáng kể.
+Câu đùa “Year of the Linux Desktop” đã tồn tại hàng chục năm, nhưng mình cảm thấy 2026 thật sự đã khác. Gaming trên Linux đã thay đổi hoàn toàn nhờ Proton và Steam Deck. Wayland cuối cùng cũng đủ trưởng thành để dùng hàng ngày. Và hỗ trợ phần cứng, kể cả NVIDIA đã được cải thiện đáng kể.
 
-Mình chọn Arch vì mình đã quen, và vì triết lý của nó phù hợp với cách mình làm việc: bạn xây dựng chính xác những gì bạn cần, không thừa. Arch Wiki vẫn là một trong những nguồn tài liệu kỹ thuật tốt nhất trên internet, và rolling release giúp mình luôn có package mới nhất.
+Mình chọn Arch vì mình đã quen, và vì triết lý của nó phù hợp với cách mình làm việc: xây dựng chính xác những gì mình cần, không thừa không thiếu. Arch Wiki vẫn là một trong những nguồn tài liệu kỹ thuật tốt nhất trên internet, và rolling release giúp mình luôn có package mới nhất.
 
 ---
 

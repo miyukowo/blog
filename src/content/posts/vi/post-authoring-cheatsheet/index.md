@@ -1,0 +1,117 @@
+---
+title: 'Cheatsheet soạn bài'
+description: 'Tài liệu tham khảo nhanh cho việc viết bài trong theme này.'
+pubDate: 2026-04-27
+tags: [code, syntax-highlighting, expressive-code, shiki, markdown]
+categories: [Authoring]
+translationKey: post-authoring-cheatsheet
+lang: vi
+toc: true
+draft: true
+---
+
+## 1) Frontmatter cho bài viết
+
+| Trường | Bắt buộc | Dùng để | Ghi chú |
+|---|---:|---|---|
+| `title` | Có | Tiêu đề bài, H1, meta title, OG title | 1–140 ký tự |
+| `description` | Có | Meta description, OG, RSS | 1–280 ký tự |
+| `pubDate` | Có | Ngày xuất bản | Bắt buộc với bài viết |
+| `updatedDate` | Không | Ngày cập nhật hiển thị trong UI, RSS, sitemap, OG | Dùng khi nội dung thay đổi đáng kể |
+| `tags` | Không | Trang tag, phần trending tags | Mặc định là `[]` |
+| `categories` | Không | Trang category | Mặc định là `[]` |
+| `draft` | Không | Ẩn khỏi build production, RSS, sitemap | Vẫn thấy trong dev |
+| `unlisted` | Không | Giữ bài có thể truy cập bằng URL trực tiếp nhưng ẩn khỏi danh sách | Vẫn được deploy |
+| `unlistedHideFromSeo` | Không | Thêm `noindex, nofollow` | Mặc định là `true` khi `unlisted: true` |
+| `heroImage` | Không | Ảnh hero, thumbnail card, OG preview | Có thể là local asset, đường dẫn public hoặc URL ngoài |
+| `heroImageAlt` | Không | Alt text cho ảnh hero | Nên điền nếu có thể |
+| `showFeaturedImage` | Không | Bật/tắt hero theo từng bài | Ghi đè mặc định của site |
+| `dynamicPostCardHeight` | Không | Cách hiển thị chiều cao của card | Ghi đè mặc định của site |
+| `canonicalURL` | Không | Canonical link tuỳ chỉnh | Hữu ích khi bài được xuất bản lại |
+| `comments` | Không | Bật/tắt Giscus theo từng bài | Ghi đè thiết lập toàn site |
+| `toc` | Không | Hiện/ẩn TOC bên phải | Mặc định là `true` |
+| `pinned` | Không | Ghim bài lên đầu danh sách | Mặc định là `false` |
+| `math` | Không | Bật render KaTeX | Mặc định là `false` |
+| `lang` | Không | Ghi đè ngôn ngữ | Thường được suy ra từ đường dẫn |
+| `translationKey` | Không | Ghép các bản dịch của cùng một bài | Dùng cùng một key giữa các locale |
+
+## 2) Frontmatter cho trang
+
+Trang dùng cùng bộ field như bài viết, nhưng `pubDate` là tuỳ chọn.
+
+Field riêng cho page:
+
+```yaml
+showInNav: true
+```
+
+Lưu ý: hiện tại menu điều hướng vẫn được điều khiển từ `src/config.ts`, nên field này chủ yếu mang tính dự phòng.
+
+## 3) Mẫu frontmatter cơ bản
+
+```yaml
+---
+title: Bài viết của tôi
+description: Mô tả ngắn để dùng cho tìm kiếm và chia sẻ.
+pubDate: 2026-05-24
+tags: [astro, markdown]
+categories: [Tutorials]
+translationKey: my-post
+toc: true
+---
+```
+
+## 4) Cú pháp nội dung hữu ích
+
+- Markdown cơ bản: heading, danh sách, bảng, blockquote, link, ảnh, code fence.
+- Dùng `.md` khi bạn chỉ cần Markdown thuần và muốn file thật dễ di chuyển.
+- Dùng `.mdx` khi bạn cần import component Astro, dùng biểu thức `{...}`, hoặc ghép UI phong phú hơn.
+- Mở rộng GFM: task list, footnote, definition list.
+- Chỉ có trong MDX: import Astro component, dùng biểu thức JSX, truyền slot/children.
+- Công thức toán: dùng `$...$` cho inline và `$$...$$` cho khối hiển thị, kèm `math: true`.
+- Callout: `<Callout type="info|success|warning|error" title="...">`.
+- Component Alert: `<Alert type="info|success|warning|error" style="soft|outline|dash" direction="vertical|horizontal|responsive" icon="..." title="...">`.
+- Video: `<VideoEmbed platform="youtube" id="..." title="..." />` hoặc `src="..."`.
+- Ảnh: nên ưu tiên import từ `astro:assets` để ảnh local được tối ưu.
+
+## 5) Khối code
+
+- Code block cơ bản: dùng ngôn ngữ như `ts`, `bash`, `diff`.
+- Tiêu đề frame: thêm `title="..."`.
+- Kiểu terminal: thêm `frame="terminal"`.
+- Highlight dòng: dùng `{3-5}` hoặc `ins={4-6}` hoặc `del={2}`.
+- Thu gọn đoạn dài: dùng `collapse={1-6}`.
+- Tự xuống dòng: thêm `wrap`.
+- Alert: dùng fenced code block `alert` tuỳ biến.
+
+Ví dụ:
+
+```ts title="src/utils/example.ts" {2}
+export function greet(name: string) {
+  return `Hello, ${name}!`;
+}
+```
+
+## 6) Quy tắc về ảnh
+
+- Mặc định tốt nhất: ảnh local đặt trong `src/assets/images/posts/<post-slug>/`.
+- Với bài nhiều ảnh, nên để bài ở `src/content/posts/en/<post-slug>/index.mdx` và đặt ảnh liên quan trong `src/assets/images/posts/<post-slug>/`.
+- Đường dẫn public: `/images/...` vẫn dùng được, nhưng không được tối ưu.
+- URL ngoài: vẫn dùng được nếu được cho phép trong `astro.config.mjs`.
+- Luôn viết `heroImageAlt` cho ảnh có ý nghĩa.
+- Dùng `showFeaturedImage: false` cho bài thiên về chữ.
+
+## 7) i18n và bản dịch
+
+- English ở root, tiếng Việt ở `/vi`.
+- Đặt bài trong thư mục locale như `src/content/posts/en/...` và `src/content/posts/vi/...`.
+- Dùng cùng một `translationKey` để nối các bản dịch lại với nhau.
+- `lang` thường được suy ra từ đường dẫn.
+
+## 8) Tham chiếu nhanh
+
+- `toc: false` cho những bài không cần mục lục.
+- `math: true` để chỉ tải KaTeX ở những bài có công thức.
+- `comments: false` để tắt bình luận cho một bài cụ thể.
+- `unlisted: true` để ẩn bài khỏi danh sách nhưng vẫn giữ URL sống.
+- `draft: true` để giữ bài ngoài production.

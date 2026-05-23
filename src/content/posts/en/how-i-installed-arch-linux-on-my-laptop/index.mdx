@@ -2,6 +2,7 @@
 title: How I Installed Arch Linux on My Lenovo Legion Slim 5 — A Returning User's Journey
 description: After six years away from Linux, I moved back to Arch on a Lenovo Legion Slim 5 (AMD Ryzen + RTX 4060). Frustrated by Windows 11 bloat and telemetry, I decided to dual boot Arch Linux and document the whole installation and setup process.
 pubDate: 2026-05-23
+updatedDate: 2026-05-24
 tags:
   - tutorial
   - linux
@@ -14,8 +15,13 @@ toc: true
 unlisted: false
 unlistedHideFromSeo: true
 ---
+[//]: <> (Alert code)
 
-> **Note:** This is written for my future references and education purposes only. It's best that you follow the [official Arch Linux Wiki](https://wiki.archlinux.org/title/Installation_guide) to install Arch on your machine. I won't take any responsibilities if you follow and messes up in the process.
+import Alert from '/src/components/Alert.astro';
+
+<Alert type="info" style="soft" direction="horizontal" icon="lucide:info" title="Note" > This is written for my future references and learning purposes only. It’s best that you follow the <a href="https://wiki.archlinux.org/title/Installation_guide" class="font-bold" target="_blank">official Arch Linux Wiki</a> to install Arch on your machine. I won’t take any responsibilities if you follow and messes up in the process. </Alert>
+
+[//]: <> (Alert code)
 
 ## Why Arch, and Why Now?
 
@@ -64,10 +70,12 @@ The other major benefit is native snapshot support. Timeshift's btrfs backend cr
 I kept the existing ESP from Windows and created one new btrfs partition in the unallocated space:
 
 ```
-/dev/nvme0n1p1  →  /boot       (ESP, shared with Windows, FAT32)
-/dev/nvme0n1p2  →  (Windows partitions)
-/dev/nvme0n1p5  →  /           (btrfs, 250GB)
-```
+
+/dev/nvme0n1p1 → /boot (ESP, shared with Windows, FAT32)
+/dev/nvme0n1p2 → (Windows partitions)
+/dev/nvme0n1p5 → / (btrfs, 250GB)
+
+````
 
 ### btrfs Subvolume Setup
 
@@ -85,7 +93,7 @@ mount -o noatime,compress=zstd,subvol=@home /dev/nvme0n1p5 /mnt/home
 mount -o noatime,compress=zstd,subvol=@snapshots /dev/nvme0n1p5 /mnt/.snapshots
 mount -o noatime,compress=zstd,subvol=@var_log /dev/nvme0n1p5 /mnt/var/log
 mount /dev/nvme0n1p1 /mnt/boot
-```
+````
 
 `noatime` and `compress=zstd` are mount options worth keeping: `noatime` reduces unnecessary disk writes, and `zstd` compression is transparent and can actually improve performance on SSDs by reducing I/O.
 

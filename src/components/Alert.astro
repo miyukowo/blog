@@ -1,0 +1,74 @@
+---
+/**
+ * Reusable daisyUI alert component. Use as:
+ *
+ *   <Alert type="info" title="Heads up">Body text here.</Alert>
+ *   <Alert type="success" icon="lucide:check-circle" style="outline">Done!</Alert>
+ *   <Alert type="warning" icon="none">No icon shown.</Alert>
+ *
+ * Mirrors the HTML structure produced by the remark-alert plugin so
+ * both MDX usage and fenced-code-block alerts render identically.
+ */
+
+import { Icon } from 'astro-icon/components';
+
+interface Props {
+  type?: 'info' | 'success' | 'warning' | 'error';
+  style?: 'soft' | 'outline' | 'dash';
+  direction?: 'vertical' | 'horizontal' | 'responsive';
+  icon?: string;
+  title?: string;
+}
+
+/** Default icon name for each alert type (matches remark-alert). */
+const DEFAULT_ICONS: Record<string, string> = {
+  info: 'lucide:info',
+  success: 'lucide:check-circle',
+  warning: 'lucide:triangle-alert',
+  error: 'lucide:x-circle',
+};
+
+const { type = 'info', style = 'soft', direction = 'horizontal', icon, title } = Astro.props;
+
+// Resolve which icon to render (if any).
+const showIcon = icon !== 'none';
+const iconName = icon && icon !== 'none' ? icon : DEFAULT_ICONS[type];
+
+// Build the class list.
+const classes: string[] = ['alert', `alert-${type}`, `alert-${style}`];
+
+switch (direction) {
+  case 'vertical':
+    classes.push('alert-vertical');
+    break;
+  case 'responsive':
+    classes.push('alert-vertical', 'sm:alert-horizontal');
+    break;
+  case 'horizontal':
+  default:
+    // daisyUI default is horizontal — no extra class needed, but we add
+    // it explicitly for clarity.
+    classes.push('alert-horizontal');
+    break;
+}
+---
+
+<div role="alert" class:list={classes}>
+  {showIcon && iconName && <Icon name={iconName} class="h-6 w-6 shrink-0" />}
+  {
+    title ? (
+      <div>
+        <h3 class="font-bold" style="margin:0;font-size:1.25rem;font-weight:700;">
+          {title}
+        </h3>
+        <div class="text-base">
+          <slot />
+        </div>
+      </div>
+    ) : (
+      <span>
+        <slot />
+      </span>
+    )
+  }
+</div>
