@@ -96,7 +96,7 @@ export const messages = {
     'code.copied': 'Copied',
 
     '404.title': 'Page not found',
-    '404.description': 'The page you are looking for has flown away.',
+    '404.description': 'Whoops. The page you are looking for has flown away.',
     '404.cta': 'Back to home',
 
     'footer.poweredBy': 'Powered by',
@@ -194,11 +194,11 @@ export const messages = {
     'code.copied': 'Đã sao chép',
 
     '404.title': 'Không tìm thấy trang',
-    '404.description': 'Trang bạn đang tìm kiếm đã bay đi mất rồi.',
+    '404.description': 'Whoops. Trang bạn đang tìm kiếm đã bay đi mất rồi.',
     '404.cta': 'Quay lại trang chủ',
 
-    'footer.poweredBy': 'Phát triển trên nền tảng',
-    'footer.theme': 'Giao diện',
+    'footer.poweredBy': 'Phát triển trên',
+    'footer.theme': 'Theme',
     'footer.privacy': 'Chính sách bảo mật',
     'footer.copyright': 'Toàn bộ bản quyền được bảo lưu.',
   },
