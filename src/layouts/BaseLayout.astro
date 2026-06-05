@@ -99,6 +99,8 @@ const meta: SeoMeta =
       title={`${SITE.title} (VI)`}
       href={withBase('/vi/rss.xml')}
     />
+    <link rel="preload" as="font" type="font/woff2" href={withBase('/_astro/inter-latin-wght-normal.Dx4kXJAl.woff2')} crossorigin />
+    <link rel="preload" as="font" type="font/woff2" href={withBase('/_astro/inter-latin-wght-italic.DpCbqKDY.woff2')} crossorigin />
     <SEO meta={meta} />
 
     <ClientRouter />

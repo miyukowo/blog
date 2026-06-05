@@ -44,8 +44,9 @@ const navItems = NAV.map((item) => ({
               <Image
                 src={avatarSrc.startsWith('/') ? withBase(avatarSrc) : avatarSrc}
                 alt={SITE.author.name}
-                width="112"
-                height="112"
+                width={112}
+                height={112}
+                densities={[1, 1.5, 2]}
                 class="h-full w-full object-cover"
                 loading="eager"
                 decoding="async"
@@ -56,6 +57,7 @@ const navItems = NAV.map((item) => ({
                 alt={SITE.author.name}
                 width={112}
                 height={112}
+                densities={[1, 1.5, 2]}
                 class="h-full w-full object-cover"
                 loading="eager"
                 decoding="async"
