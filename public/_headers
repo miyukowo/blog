@@ -1,17 +1,19 @@
 # Astro static assets — có content hash trong tên, safe to cache 1 năm
 /_astro/*
   Cache-Control: public, max-age=31536000, immutable
+  Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
 
 # Public assets (images, favicon, etc.)
 /avatar.png
   Cache-Control: public, max-age=604800
 
 /favicon.ico
-  Cache-Control: public, max-age=604800
+  Cache-Control: public, max-age=31536000, immutable
 
 /og-default.png
   Cache-Control: public, max-age=604800
 
 # HTML pages — không cache để nhận update ngay
 /*
-  Cache-Control: public, max-age=0, must-revalidate
+  Cache-Control: public, max-age=3600, stale-while-revalidate=86400
+  Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
