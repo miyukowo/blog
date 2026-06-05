@@ -1,0 +1,306 @@
+---
+title: Cách thay thế rEFInd bootloader bằng Limine kết hợp với Snapper Sync
+description: Bài viết này hướng dẫn cách thay thế bootloader rEFInd bằng Limine kết hợp với Snapper Sync để có thể truy cập vào snapshot ngay từ màn hình Limine. Rất thuận tiện cho việc khôi phục nếu máy gặp lỗi khi cập nhật hệ thống.
+pubDate: 2026-05-25T00:00:00.000Z
+tags:
+  - arch
+  - linux
+  - tutorial
+categories:
+  - Hướng dẫn
+translationKey: how-to-migrate-from-refind-to-limine-bootloader-with-snapper-sync
+toc: true
+---
+
+[//]: <> (Alert code)
+
+import Alert from '/src/components/Alert.astro';
+
+<Alert type="info" style="soft" direction="horizontal" icon="lucide:info" title="Lưu ý">
+Bài viết chỉ mang tính chất tham khảo, bạn nên đọc và làm theo hướng dẫn tại <a href="https://wiki.archlinux.org/title/Limine" class="font-bold" target="_blank">Limine - Arch Linux Wiki</a> để tham khảo cách cài đặt chính xác nhất cho máy tính của bạn. Mình không chịu trách nhiệm nếu bạn làm theo và gặp lỗi trong quá trình thực hiện.
+</Alert>
+
+[//]: <> (Alert code)
+
+## 🛡️ Bước 0: Tạo Snapshot (Failsafe)
+Trước khi đụng chạm sâu vào hệ thống boot, hãy tạo một bản sao lưu thủ công bằng Snapper. Nếu quá trình cài đặt Limine gặp sự cố ngoài ý muốn, có thể dễ dàng chroot hoặc dùng USB Live để rollback về trạng thái an toàn này.
+
+Mở terminal và chạy lệnh sau:
+
+```bash
+sudo snapper -c root create -d "Backup truoc khi cai dat Limine"
+```
+
+Đặt nội dung là gì cũng được, nhưng nên ghi cái gì đó dễ nhớ.
+
+## 🧹 Bước 1: Dọn dẹp phân vùng ESP (Phòng tránh lỗi Full Disk)
+Để tránh lỗi No space left on device khi công cụ tự động copy các file kernel khổng lồ, chúng ta cần dọn sạch các tàn dư của hệ thống cũ.
+
+Mở terminal và dọn dẹp các file kernel nằm ở thư mục gốc /boot cùng với rEFInd:
+```bash
+# Xóa kernel và initramfs cũ (Chỉ giữ lại thư mục mã máy và amd-ucode.img)
+sudo rm -f /boot/vmlinuz-*
+sudo rm -f /boot/initramfs-*
+
+# Gỡ bỏ triệt để rEFInd (chỉ nên gỡ nếu quá đầy, cài xong Limine rồi gỡ cũng chưa muộn)
+sudo rm -rf /boot/EFI/refind
+sudo rm -f /boot/refind_linux.conf
+sudo pacman -Rs refind
+```
+
+- Nếu chưa gỡ rEFInd: Cứ để đấy, nếu cài Limine mà gặp lỗi thì có thể vào bằng rEFInd, không cần phải restore về snapshot mất thời gian.
+- Nếu đã quyết định gỡ rEFInd: Nếu rEFInd vẫn còn trong BIOS, dùng efibootmgr để xem mã số và xóa bằng ```sudo efibootmgr -b <mã số> -B```.
+
+
+## 📦 Bước 2: Cài đặt các gói tự động hóa từ AUR
+CachyOS thường sử dụng mkinitcpio làm trình tạo initramfs mặc định. Bạn cần cài đặt Limine cùng công cụ hook tự động tương ứng:
+
+```bash
+# Cài đặt bootloader
+sudo pacman -S limine efibootmgr
+
+# Cài đặt các gói tự động hóa (Dùng yay hoặc paru)
+paru -S limine-mkinitcpio-hook limine-snapper-sync snap-pac
+```
+
+- **Lưu ý**: Nếu hệ thống bạn dùng **dracut** thay vì **mkinitcpio-hook**, hãy cài gói **limine-dracut-support**.
+
+## ⚙️ Bước 3: Thiết lập cấu hình trung tâm
+Chúng ta sẽ không tự viết file `limine.conf` nữa, mà thiết lập các thông số để hệ thống tự sinh ra file đó.
+
+### 1. Copy file cấu hình gốc:
+```bash
+sudo cp /etc/limine-entry-tool.conf /etc/default/limine
+```
+
+- Tài liệu chuẩn yêu cầu copy file này nếu nó chưa tồn tại ở thư mục đích.
+
+### 2. Chỉnh sửa thông số Kernel: 
+Mở file cấu hình vừa copy:
+
+```bash
+sudo nano /etc/default/limine
+```
+
+- Sử dụng `+=` để đảm bảo không ghi đè mất các thông số mặc định của hệ thống. Thêm các dòng sau vào cuối file:
+
+```yaml
+# 1. Khai báo phân vùng Btrfs và kích hoạt modeset cho NVIDIA
+KERNEL_CMDLINE[default]+=rw root=PARTUUID=713edcc1-746d-4838-976f-ef5220e20e64 rootflags=subvol=@ nvidia_drm.modeset=1 nvidia_drm.fbdev=1 nvidia.NVreg_UseKernelSuspendNotifiers=1 loglevel=3
+KERNEL_CMDLINE[default]+=initrd=/amd-ucode.img
+
+# 2. Tự động dò tìm và thêm Windows vào menu Boot (mặc định đã bật)
+FIND_BOOTLOADERS=yes
+
+# 3. Khai báo giới hạn Snapper: Chỉ lưu tối đa 2 bản snapshot để bảo vệ phân vùng. Kéo xuống dưới cùng của file rồi tự ghi 2 dòng này vào
+
+# Limit the number of snapshot entries and limit of the maximum boot partition disk usage
+MAX_SNAPSHOT_ENTRIES=2
+LIMIT_USAGE_PERCENT=85
+```
+
+- Các **parameter** **1** và **2** đã được khai báo sẵn trong file config, nếu cần tìm (trong trình editor nano) có thể dùng Ctrl+F, nhập nội dung (vd: **KERNEL_CMDLINE**) rồi bấm Enter.
+- Nên dùng **PARTUUID** thay cho **UUID** vì giá trị nó luôn cố định kể cả khi format (trừ trường hợp xoá phân vùng rồi tạo mới), tránh gặp tình trạng lỗi khi boot.
+- Công cụ tự động hỗ trợ chuyển đổi tham số `initrd=` thành module path cho Limine và nhận diện các EFI loader khác trong cùng phân vùng **ESP**.
+- **Tự khai báo giới hạn Snapper**: Gói **limine-snapper-sync** sẽ snapshot mỗi khi có cập nhật hệ thống hoặc muốn vào snapshot nhanh ngay từ màn hình Limine. Mình giới hạn lại còn 2 snapshot bảo vệ do phân vùng của mình chỉ có 700Mb, Wiki khuyến khích tối thiểu đến 4Gb, nếu muốn config chính xác nhất có thể làm theo Wiki.
+
+
+## 🛡️ Bước 4: Thiết lập OverlayFS cho Snapshot (Wayland)
+Để có thể boot vào các bản sao lưu chỉ đọc (Read-only) của Btrfs mà không làm crash giao diện Wayland, cần tạo một lớp ghi tạm thời (OverlayFS).
+
+1. Mở file cấu hình mkinitcpio:
+```bash
+sudo nano /etc/mkinitcpio.conf
+```
+
+Tìm dòng ```HOOKS=(...)``` và thêm ```sd-btrfs-overlayfs``` vào ngay sau hook ```filesystems``` (hoặc các systemd hooks).
+
+## 🏗️ Bước 5: Áp dụng cấu hình và Cài đặt
+Bây giờ, để cho Limine tự làm việc:
+
+### 1. Cài đặt Limine EFI binary vào phân vùng Boot:
+```bash
+sudo limine-install
+
+# Cài đặt thành công EFI Limine
+Limine EFI install completed successfully.
+```
+
+Lệnh này sẽ cài đặt Limine và tự động chép file BOOTX64.EFI vào đúng vị trí trên hệ thống UEFI của bạn.
+
+### 2. Sinh initramfs và tạo file limine.conf tự động:
+```bash
+sudo limine-update
+
+# Sinh initramfs và tự tạo file limine.conf
+Limine EFI update completed successfully.
+Building initramfs for linux (7.0.9-arch2-1)
+==> Starting build: '7.0.9-arch2-1'
+  -> Running build hook: [base]
+  -> Running build hook: [systemd]
+  -> Running build hook: [autodetect]
+  -> Running build hook: [microcode]
+  -> Running build hook: [modconf]
+  -> Running build hook: [kms]
+  -> Running build hook: [keyboard]
+  -> Running build hook: [sd-vconsole]
+  -> Running build hook: [block]
+  -> Running build hook: [filesystems]
+  -> Running build hook: [fsck]
+==> Generating module dependencies
+==> Creating zstd-compressed initcpio image: '/tmp/staging_initramfs.img'
+  -> Early uncompressed CPIO image generation successful
+==> Initcpio image generation successful
+Kernel stored in /boot/8d3cacd7063045c0b66b489e305d358b/linux/vmlinuz-linux
+Initramfs stored in /boot/8d3cacd7063045c0b66b489e305d358b/linux/initramfs-linux
+Updated: /boot/limine.conf
+```
+
+Lệnh này sẽ cập nhật Limine, quét kernel, và tự động gọi `mkinitcpio/dracut` để đóng gói hệ thống.
+
+### 3. Quét lại Windows (Kiểm tra chéo):
+Để thêm Windows 11 vào menu, chạy lệnh quét, chọn số thứ tự của **Windows Boot Manager**, rồi nhấn **Enter** để thêm entry vào Limine:
+
+```bash
+sudo limine-scan
+
+Available EFI Boot Entries:
+#  │ Name                 │ GPT UUID                             │ EFI Path                        
+───┼──────────────────────┼──────────────────────────────────────┼─────────────────────────────────
+1  │ rEFInd Boot Manager  │ 07d4dccd-51f7-4b8a-80d7-3bacdc77d6cc │ /EFI/refind/refind_x64.efi      
+2  │ Limine               │ 07d4dccd-51f7-4b8a-80d7-3bacdc77d6cc │ /EFI/limine/limine_x64.efi      
+3  │ Windows Boot Manager │ 07d4dccd-51f7-4b8a-80d7-3bacdc77d6cc │ /EFI/Microsoft/Boot/bootmgfw.efi
+
+ Use ↑/↓ to select a boot entry (1-3), or type [c]ancel to abort.
+
+Your input: 3
+New entry name: Windows Boot Manager
+Entry added to Limine: /EFI/Microsoft/Boot/bootmgfw.efi
+```
+
+Cuối cùng, chạy lệnh `limine-update`:
+```bash
+sudo limine-update
+
+# Log báo update thành công EFI
+Limine EFI update completed successfully.
+Building initramfs for linux (7.0.9-arch2-1)
+==> Starting build: '7.0.9-arch2-1'...
+
+...Kernel stored in /boot/8d3cacd7063045c0b66b489e305d358b/linux/vmlinuz-linux
+Initramfs stored in /boot/8d3cacd7063045c0b66b489e305d358b/linux/initramfs-linux
+Updated: /boot/limine.conf
+```
+
+## 🧹 Bước 6: Khởi động lại và Dọn dẹp
+Khởi động lại máy và vào Arch Linux bằng Limine bootloader.
+
+Nếu đã boot thành công vào Arch Linux và Windows, thì bây giờ có thể xóa rEFInd:
+
+```bash
+sudo rm -rf /boot/EFI/refind
+sudo rm -f /boot/refind_linux.conf
+sudo pacman -Rs refind
+```
+
+Dùng efibootmgr để xem ID của rEFInd và xóa nó để nó không xuất hiện trong BIOS nữa:
+
+```bash
+# Xem danh sách boot và mã số
+efibootmgr
+
+# Xoá entry rEFInd
+sudo efibootmgr -b <mã id> -B.
+```
+
+## 🔄 Bước 7: Kích hoạt dịch vụ Snapper Sync
+Khởi động dịch vụ chạy ngầm để mỗi khi pacman update, hệ thống tự động đồng bộ 2 bản snapshot mới nhất vào menu Limine.
+
+```bash
+# Chạy đồng bộ thủ công lần đầu để kiểm tra 
+sudo limine-snapper-sync
+
+# Kích hoạt dịch vụ tự động chạy ngầm 
+sudo systemctl enable --now limine-snapper-sync.service
+```
+
+## 🐞 Gỡ lỗi
+
+### Lỗi khi chạy limine-snapper-sync:
+
+#### 1. Lỗi đường dẫn thư mục snapshots
+```bash
+ROOT_SNAPSHOTS_PATH="/@/.snapshots" does not match the expected path "/@snapshots" from /proc/mounts
+Please set 'ROOT_SNAPSHOTS_PATH=/@snapshots' in /etc/default/limine
+```
+
+- **Nguyên nhân**: Mặc định, công cụ **limine-snapper-sync** được thiết kế theo cấu trúc Btrfs chuẩn của Snapper, mặc định thư mục chứa bản sao lưu sẽ nằm lồng bên trong thư mục root theo đường dẫn `/@/.snapshots.`
+
+**Cách khắc phục**:
+
+1. Mở file cấu hình:
+```bash
+sudo nano /etc/default/limine
+```
+
+2. Thêm dòng này vào dưới cùng của file:
+```yaml
+ROOT_SNAPSHOTS_PATH=/@snapshots
+```
+
+3. Lưu file lại và chạy lệnh đồng bộ lần nữa:
+```bash
+sudo limine-snapper-sync
+```
+
+---
+
+#### 2. Vẫn còn nhìn thấy rEFInd trong menu bootloader Limine
+
+Điều này xảy ra do Limine sử dụng `auto-scan`, nó sẽ quét tất cả những file EFI nào có trong ESP và hiển thị ở menu, kể cả sau khi đã xoá ở `efibootmgr`. Chỉ cần tìm những chỗ nào còn sót lại của rEFInd trong `/boot` và xoá đi là được.
+
+Bạn có thể dùng trình duyệt tệp (Dolphin trên KDE) thay vì dùng dòng lệnh để tìm và đọc các thư mục & file dễ dàng hơn.
+
+```bash
+# rEFInd vẫn còn sót lại tại /boot/EFI/Boot (đường dẫn của bạn có thể khác một chút, e.g. `/efi/EFI/Boot`; `/boot/efi/EFI/Boot`)
+ls /boot/EFI/Boot -al
+
+total 416
+drwxr-xr-x 5 root root   4096 May 19 04:50 .
+drwxr-xr-x 8 root root   4096 May 25 06:26 ..
+-rwxr-xr-x 1 root root    134 May 19 04:50 BOOT.CSV
+-rwxr-xr-x 1 root root 320568 May 25 20:46 bootx64.efi
+drwxr-xr-x 2 root root   4096 May 19 04:50 drivers_x64
+drwxr-xr-x 3 root root   8192 May 19 04:50 icons
+drwxr-xr-x 2 root root   4096 May 19 04:50 keys
+-rwxr-xr-x 1 root root  36407 May 19 04:50 refind.conf
+-rwxr-xr-x 1 root root  36399 May 19 04:50 refind.conf-sample
+```
+
+Ở đây có rất nhiều file và thư mục, để chắc chắn rằng ta đang không xoá nhầm, hãy chạy lệnh `strings | grep` để tìm rEFInd.
+
+```bash
+# String grep để tìm refind
+strings /boot/EFI/Boot/bootx64.efi | grep -i -E "refind|grub|limine|systemd"
+
+refind,1,Roderick W. Smith,refind,0.14.1,https://www.rodsbooks.com/refind
+refind.arch,1,Arch Linux,refind,0.14.2-2,https://archlinux.org/packages/?q=refind
+```
+
+Sau khi xác nhận được đây là các file còn sót lại từ rEFInd, hãy xoá hết và thay thế file `bootx64.efi` bằng cái của Limine vì đây là EFI dự phòng.
+
+```bash
+# Luôn luôn kiểm tra và xác nhận lại khi chạy lệnh `rm -rf`!
+sudo rm -rf /boot/EFI/Boot/*
+
+# Copy the bootx64.efi from Limine
+sudo cp /usr/share/limine/BOOTX64.EFI /boot/EFI/Boot/bootx64.efi
+
+# Finally, do a limine-update command to update it
+sudo limine-update
+```
+
+Reboot your system, and you should no longer see the rEFInd boot entry again.
+
+## Tổng kết
+Sau khi setup hoàn thành, sau này nếu có bản update Kernel mới, hooks của pacman sẽ tự động làm hết mọi thứ, hoàn toàn tự động. Kể cả khi có cập nhật hệ thống, snapper sẽ tự động snapshot ngay trước khi cập nhật, nếu có lỗi có thể ngay lập tức revert để sửa lỗi.

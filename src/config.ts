@@ -22,7 +22,7 @@ const THEME_REPO_URL = 'https://github.com/kannansuresh/chirping-astro';
 
 // Export imported site images for use in components
 export const SITE_IMAGES = {
-  avatar: GITHUB_HANDLE ? `https://github.com/${GITHUB_HANDLE}.png` : avatarImg,
+  avatar: GITHUB_HANDLE ? `https://avatars.githubusercontent.com/u/40559090?v=4` : avatarImg,
   ogDefault: ogDefaultImg,
 } as const;
 
@@ -54,7 +54,7 @@ export const SITE: SiteConfig = {
   author: {
     name: 'tvphus',
     url: GITHUB_HANDLE ? `https://github.com/${GITHUB_HANDLE}` : undefined,
-    avatar: GITHUB_HANDLE ? `https://github.com/${GITHUB_HANDLE}.png` : avatarImg,
+    avatar: GITHUB_HANDLE ? `https://avatars.githubusercontent.com/u/40559090?v=4` : avatarImg,
     bio: 'hi, im a tech noobie. feel free to look around my blog.',
   },
   /** Default OG image. */

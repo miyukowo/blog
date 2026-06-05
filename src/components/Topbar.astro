@@ -78,7 +78,7 @@ const avatarSrc = isStringAvatar ? avatar.trim() : '';
       {
         avatar ? (
           isStringAvatar ? (
-            <img
+            <Image
               src={avatarSrc.startsWith('/') ? withBase(avatarSrc) : avatarSrc}
               alt={SITE.author.name}
               width="24"
