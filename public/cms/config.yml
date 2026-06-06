@@ -4,6 +4,7 @@ backend:
   name: github
   repo: miyukowo/blog
   branch: main
+  skip_ci: true
 
 media_folder: /public/uploads
 public_folder: /uploads
@@ -24,6 +25,7 @@ collections:
     path: "{{slug}}/index"
     extension: mdx
     format: frontmatter
+    frontmatter_delimiter: "---"
     fields:
       - label: Title
         name: title
