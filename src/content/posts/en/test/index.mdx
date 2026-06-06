@@ -16,4 +16,44 @@ math: false
 unlisted: true
 ---
 
-asdfasdfasdf
+[//]: <> (Alert code)
+
+import Alert from '/src/components/Alert.astro';
+
+<Alert type="info" style="soft" direction="horizontal" icon="lucide:info" title="Note">
+This is written for my future references and learning purposes only. It’s best that you follow the <a href="https://wiki.archlinux.org/title/Installation_guide" class="font-bold" target="_blank">official Arch Linux Wiki</a> to install Arch on your machine. I won’t take any responsibilities if you follow and messes up in the process.
+</Alert>
+
+[//]: <> (Alert code)
+
+## Why Arch, and Why Now?
+
+The "Year of the Linux Desktop" joke has been running for decades, but 2026 genuinely feels different. Gaming on Linux has transformed thanks to Valve's Proton and Steam Deck. Wayland is finally mature enough for daily use. And hardware support — even for NVIDIA — has improved dramatically.
+
+I chose Arch because I already knew it, and because its philosophy aligns with how I like to work: you build exactly what you need, nothing more. The Arch Wiki remains one of the best technical documentation resources on the internet, and the rolling release model means I'm always on the latest packages.
+
+***
+
+## Pre-Installation: Getting Windows Ready
+
+Before touching a live ISO, there are a few things to handle on the Windows side.
+
+### Disabling Fast Startup and Hibernation
+
+Fast Startup causes Windows to write a hibernation snapshot to the NTFS partition on shutdown. If Linux mounts that partition while the snapshot is active, filesystem corruption can occur. I had previously debloated Windows using the [Chris Titus Tech script](https://christitus.com/win/), which conveniently disables both features.
+
+### Shrinking the Windows Partition
+
+I needed to carve out space for Arch from the existing Windows partition. Disk Management couldn't shrink far enough due to unmovable system files — a common issue. I used **MiniTool Partition Wizard** instead, which handled it cleanly without needing to boot from a live environment.
+
+I ended up allocating **250GB for Arch** out of a 1TB NVMe SSD, leaving Windows plenty of room.
+
+### Expanding the ESP
+
+My EFI System Partition was nearly full, which would have caused problems with rEFInd. I used GParted from a live USB to expand it before proceeding. Not something you normally need to do, but worth knowing if you hit the same wall.
+
+### Backing Up Windows
+
+I used **Macrium Reflect** to create a full image backup of the C: drive before touching anything. Macrium compressed 300GB of used space down to about 120GB — fast and efficient. I copied the backup to an external drive for safekeeping.
+
+***
