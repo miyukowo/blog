@@ -9,6 +9,9 @@ backend:
 media_folder: /public/uploads
 public_folder: /uploads
 
+output:
+  omit_empty_optional_fields: true
+
 i18n:
   structure: multiple_folders
   locales: [en, vi]
@@ -87,9 +90,9 @@ collections:
       - label: Translation Key
         name: translationKey
         widget: string
-        required: false
+        required: true
         i18n: duplicate
-        hint: "Kết nối bài viết EN ↔ VI với nhau."
+        hint: "Phải có gạch nối, dùng để kết nối bài viết EN ↔ VI với nhau."
 
       - label: Table of Contents
         name: toc
@@ -102,6 +105,7 @@ collections:
         name: pinned
         widget: boolean
         default: false
+        required: false
         i18n: duplicate
         hint: "Ghim bài viết lên đầu trang."
 
@@ -109,6 +113,7 @@ collections:
         name: draft
         widget: boolean
         default: false
+        required: false
         i18n: duplicate
         hint: "Giữ bài viết thành bản thảo. Bài viết sẽ không hiển thị trên trang."
 
@@ -124,6 +129,7 @@ collections:
         name: math
         widget: boolean
         default: false
+        required: false
         i18n: duplicate
         hint: "Bật tắt chức năng diễn giải công thức toán học bằng KaTeX."
 
@@ -131,6 +137,7 @@ collections:
         name: unlisted
         widget: boolean
         default: false
+        required: false
         i18n: duplicate
         hint: "Ẩn bài viết khỏi blog nhưng vẫn truy cập được nếu có liên kết trực tiếp."
 
@@ -145,7 +152,7 @@ collections:
     label_singular: Page
     folder: /src/content/pages
     i18n: true
-    create: false
+    create: true
     slug: "{{slug}}"
     extension: md
     format: frontmatter
@@ -174,3 +181,4 @@ collections:
       - { label: Unlisted, name: unlisted, widget: boolean, default: false, i18n: duplicate }
       - { label: Canonical URL, name: canonicalURL, widget: string, required: false, i18n: duplicate }
       - { label: Body, name: body, widget: markdown, i18n: true }
+      - { label: Translation Key, name: translationKey, widget: string, required: true, i18n: duplicate}
