@@ -23,6 +23,7 @@ collections:
     slug: "{{slug}}"
     path: "{{slug}}/index"
     extension: mdx
+    format: frontmatter
     fields:
       - label: Title
         name: title
@@ -135,3 +136,38 @@ collections:
         widget: markdown
         i18n: true
         hint: "Nội dung của bài viết."
+
+  - name: pages
+    label: Pages
+    label_singular: Page
+    folder: /src/content/pages
+    i18n: true
+    create: false
+    slug: "{{slug}}"
+    extension: md
+    format: frontmatter
+    fields:
+      - { label: Title, name: title, widget: string, i18n: true }
+      - { label: Description, name: description, widget: text, i18n: true }
+      - label: Publish Date
+        name: pubDate
+        widget: datetime
+        date_format: YYYY-MM-DD
+        time_format: false
+        required: false
+        i18n: duplicate
+      - label: Updated Date
+        name: updatedDate
+        widget: datetime
+        date_format: YYYY-MM-DD
+        time_format: false
+        required: false
+        i18n: duplicate
+      - { label: Hero Image, name: heroImage, widget: image, required: false, i18n: duplicate }
+      - { label: Hero Image Alt, name: heroImageAlt, widget: string, required: false, i18n: true }
+      - { label: Show in Nav, name: showInNav, widget: boolean, default: false, i18n: duplicate }
+      - { label: Table of Contents, name: toc, widget: boolean, default: true, i18n: duplicate }
+      - { label: Comments, name: comments, widget: boolean, required: false, i18n: duplicate }
+      - { label: Unlisted, name: unlisted, widget: boolean, default: false, i18n: duplicate }
+      - { label: Canonical URL, name: canonicalURL, widget: string, required: false, i18n: duplicate }
+      - { label: Body, name: body, widget: markdown, i18n: true }
