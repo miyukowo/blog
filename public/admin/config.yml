@@ -22,16 +22,19 @@ collections:
     create: true
     slug: "{{slug}}"
     path: "{{slug}}/index"
+    extension: mdx
     fields:
       - label: Title
         name: title
         widget: string
         i18n: true
+        hint: "Tiêu đề của bài viết."
 
       - label: Description
         name: description
         widget: text
         i18n: true
+        hint: "Mô tả của bài viết."
 
       - label: Publish Date
         name: pubDate
@@ -39,6 +42,7 @@ collections:
         date_format: YYYY-MM-DD
         time_format: false
         i18n: duplicate
+        hint: "Ngày đăng của bài viết."
 
       - label: Updated Date
         name: updatedDate
@@ -47,75 +51,87 @@ collections:
         time_format: false
         required: false
         i18n: duplicate
+        hint: "Ngày cập nhật bài viết."
 
       - label: Hero Image
         name: heroImage
         widget: image
         required: false
         i18n: duplicate
+        hint: "Thêm ảnh hero."
 
       - label: Hero Image Alt
         name: heroImageAlt
         widget: string
         required: false
         i18n: true
+        hint: "Thêm mô tả cho hình ảnh hero."
 
       - label: Tags
         name: tags
         widget: list
         required: false
         i18n: duplicate
+        hint: "Gắn thẻ cho bài viết."
 
       - label: Categories
         name: categories
         widget: list
         required: false
         i18n: true
+        hint: "Thêm chuyên mục cho bài viết."
 
       - label: Translation Key
         name: translationKey
         widget: string
         required: false
         i18n: duplicate
-        hint: "Kết nối bài viết EN ↔ VI với nhau. Ví dụ: getting-started"
+        hint: "Kết nối bài viết EN ↔ VI với nhau."
 
       - label: Table of Contents
         name: toc
         widget: boolean
         default: true
         i18n: duplicate
+        hint: "Bật tắt mục lục."
 
       - label: Pinned
         name: pinned
         widget: boolean
         default: false
         i18n: duplicate
+        hint: "Ghim bài viết lên đầu trang."
 
       - label: Draft
         name: draft
         widget: boolean
         default: false
         i18n: duplicate
+        hint: "Giữ bài viết thành bản thảo. Bài viết sẽ không hiển thị trên trang."
 
       - label: Comments
         name: comments
         widget: boolean
         required: false
         i18n: duplicate
+        hint: "Bật tắt chức năng bình luận."
 
       - label: Math (KaTeX)
         name: math
         widget: boolean
         default: false
         i18n: duplicate
+        hint: "Bật tắt chức năng diễn giải công thức toán học bằng KaTeX."
 
       - label: Unlisted
         name: unlisted
         widget: boolean
         default: false
         i18n: duplicate
+        hint: "Ẩn bài viết khỏi blog nhưng vẫn truy cập được nếu có liên kết trực tiếp."
 
       - label: Body
         name: body
         widget: markdown
         i18n: true
+        hint: "Nội dung của bài viết."
