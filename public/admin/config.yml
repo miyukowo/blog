@@ -21,6 +21,7 @@ collections:
     i18n: true
     create: true
     slug: "{{slug}}"
+    path: "{{slug}}/index"
     fields:
       - label: Title
         name: title
