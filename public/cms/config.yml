@@ -21,8 +21,8 @@ collections:
     folder: /src/content/posts
     i18n: true
     create: true
-    slug: "{{slug}}"
-    path: "{{slug}}/index"
+    slug: "{{fields.translationKey}}"
+    path: "{{fields.translationKey}}/index"
     extension: mdx
     format: frontmatter
     frontmatter_delimiter: "---"
@@ -115,7 +115,8 @@ collections:
       - label: Comments
         name: comments
         widget: boolean
-        required: false
+        default: true
+        required: true
         i18n: duplicate
         hint: "Bật tắt chức năng bình luận."
 
