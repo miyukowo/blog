@@ -32,7 +32,7 @@ The "Year of the Linux Desktop" joke has been running for decades, but 2026 genu
 
 I chose Arch because I already knew it, and because its philosophy aligns with how I like to work: you build exactly what you need, nothing more. The Arch Wiki remains one of the best technical documentation resources on the internet, and the rolling release model means I'm always on the latest packages.
 
----
+***
 
 ## Pre-Installation: Getting Windows Ready
 
@@ -56,7 +56,7 @@ My EFI System Partition was nearly full, which would have caused problems with r
 
 I used **Macrium Reflect** to create a full image backup of the C: drive before touching anything. Macrium compressed 300GB of used space down to about 120GB — fast and efficient. I copied the backup to an external drive for safekeeping.
 
----
+***
 
 ## Installation: The Manual Way
 
@@ -109,7 +109,7 @@ pacstrap /mnt base base-devel linux linux-firmware linux-headers \
 
 The usual post-pacstrap config: `genfstab`, `arch-chroot`, timezone, locale, hostname, root password, user creation.
 
----
+***
 
 ## Bootloader: rEFInd Instead of GRUB
 
@@ -125,7 +125,7 @@ nvidia-drm.modeset=1 nvidia_drm.fbdev=1 loglevel=3 quiet splash
 
 A few things worth noting: `amd-ucode.img` loads CPU microcode updates for the AMD Ryzen — important for security and stability. `nvidia-drm.modeset=1` is required for Wayland with NVIDIA. And `rootflags=subvol=@` tells the kernel to mount the `@` subvolume as root.
 
----
+***
 
 ## Post-Installation: NVIDIA First, Desktop Second
 
@@ -177,7 +177,7 @@ CompositorCommand=kwin_wayland --drm --no-lockscreen --no-global-shortcuts
 EOF
 ```
 
----
+***
 
 ## Legion-Specific Setup
 
@@ -236,7 +236,7 @@ sudo auto-cpufreq --install
 
 `auto-cpufreq` handles CPU governor switching automatically based on system load and power source. Combined with zram for memory compression, the system stays responsive without unnecessary battery drain.
 
----
+***
 
 ## Quality of Life Setup
 
@@ -295,7 +295,7 @@ The first thing I did after finishing setup was create a Timeshift snapshot. I l
 
 With the btrfs backend, snapshots are nearly instant and take up almost no space. I run: daily (keep 3), weekly (keep 2), monthly (keep 1).
 
----
+***
 
 ## Gaming: Steam + Proton
 
@@ -311,7 +311,7 @@ paru -S proton-ge-custom-bin
 
 Before installing any game, I check [ProtonDB](https://www.protondb.com/) for community reports. Most games with a Gold or Platinum rating just work out of the box.
 
----
+***
 
 ## Reflections
 
@@ -325,6 +325,6 @@ The irony isn't lost on me that I spent years away from Linux, came back, and sp
 
 Thanks for reading!
 
----
+***
 
 _**My setup**: Lenovo Legion Slim 5 R7000P · AMD Ryzen 7 8845H · RTX 4060 8GB Laptop · Arch Linux · KDE Plasma 6 · Wayland · rEFInd · btrfs_
