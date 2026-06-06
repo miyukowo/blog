@@ -1,0 +1,120 @@
+# yaml-language-server: $schema=https://unpkg.com/@sveltia/cms/schema/sveltia-cms.json
+
+backend:
+  name: github
+  repo: miyukowo/blog
+  branch: main
+
+media_folder: /public/uploads
+public_folder: /uploads
+
+i18n:
+  structure: multiple_folders
+  locales: [en, vi]
+  default_locale: en
+
+collections:
+  - name: posts
+    label: Blog Posts
+    label_singular: Post
+    folder: /src/content/posts
+    i18n: true
+    create: true
+    slug: "{{slug}}"
+    fields:
+      - label: Title
+        name: title
+        widget: string
+        i18n: true
+
+      - label: Description
+        name: description
+        widget: text
+        i18n: true
+
+      - label: Publish Date
+        name: pubDate
+        widget: datetime
+        date_format: YYYY-MM-DD
+        time_format: false
+        i18n: duplicate
+
+      - label: Updated Date
+        name: updatedDate
+        widget: datetime
+        date_format: YYYY-MM-DD
+        time_format: false
+        required: false
+        i18n: duplicate
+
+      - label: Hero Image
+        name: heroImage
+        widget: image
+        required: false
+        i18n: duplicate
+
+      - label: Hero Image Alt
+        name: heroImageAlt
+        widget: string
+        required: false
+        i18n: true
+
+      - label: Tags
+        name: tags
+        widget: list
+        required: false
+        i18n: duplicate
+
+      - label: Categories
+        name: categories
+        widget: list
+        required: false
+        i18n: true
+
+      - label: Translation Key
+        name: translationKey
+        widget: string
+        required: false
+        i18n: duplicate
+        hint: "Kết nối bài viết EN ↔ VI với nhau. Ví dụ: getting-started"
+
+      - label: Table of Contents
+        name: toc
+        widget: boolean
+        default: true
+        i18n: duplicate
+
+      - label: Pinned
+        name: pinned
+        widget: boolean
+        default: false
+        i18n: duplicate
+
+      - label: Draft
+        name: draft
+        widget: boolean
+        default: false
+        i18n: duplicate
+
+      - label: Comments
+        name: comments
+        widget: boolean
+        required: false
+        i18n: duplicate
+
+      - label: Math (KaTeX)
+        name: math
+        widget: boolean
+        default: false
+        i18n: duplicate
+
+      - label: Unlisted
+        name: unlisted
+        widget: boolean
+        default: false
+        i18n: duplicate
+
+      - label: Body
+        name: body
+        widget: markdown
+        i18n: true
