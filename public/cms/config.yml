@@ -24,8 +24,8 @@ collections:
     folder: /src/content/posts
     i18n: true
     create: true
-    slug: "{{fields.translationKey}}"
-    path: "{{fields.translationKey}}/index"
+    slug: "{{fields.slug}}"
+    path: "{{fields.slug}}/index"
     extension: mdx
     format: frontmatter
     frontmatter_delimiter: "---"
@@ -41,6 +41,20 @@ collections:
         widget: text
         i18n: true
         hint: "Mô tả của bài viết."
+
+      - label: Slug
+        name: slug
+        widget: string
+        required: true
+        i18n: duplicate
+        hint: "Phải có gạch nối, dùng làm tên folder."
+
+      - label: Translation Key
+        name: translationKey
+        widget: string
+        required: true
+        i18n: duplicate
+        hint: "Phải có gạch nối, dùng để kết nối bài viết EN ↔ VI với nhau."
 
       - label: Publish Date
         name: pubDate
@@ -87,13 +101,6 @@ collections:
         i18n: true
         hint: "Thêm chuyên mục cho bài viết."
 
-      - label: Translation Key
-        name: translationKey
-        widget: string
-        required: true
-        i18n: duplicate
-        hint: "Phải có gạch nối, dùng để kết nối bài viết EN ↔ VI với nhau."
-
       - label: Table of Contents
         name: toc
         widget: boolean
@@ -104,7 +111,6 @@ collections:
       - label: Pinned
         name: pinned
         widget: boolean
-        default: false
         required: false
         i18n: duplicate
         hint: "Ghim bài viết lên đầu trang."
@@ -112,7 +118,6 @@ collections:
       - label: Draft
         name: draft
         widget: boolean
-        default: false
         required: false
         i18n: duplicate
         hint: "Giữ bài viết thành bản thảo. Bài viết sẽ không hiển thị trên trang."
@@ -128,7 +133,6 @@ collections:
       - label: Math (KaTeX)
         name: math
         widget: boolean
-        default: false
         required: false
         i18n: duplicate
         hint: "Bật tắt chức năng diễn giải công thức toán học bằng KaTeX."
