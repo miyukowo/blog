@@ -20,9 +20,6 @@ i18n:
   structure: multiple_folders
   locales: [en, vi]
   default_locale: en
-  canonical_slug:
-    key: translationKey
-    value: '{{slug}}'
 
 collections:
   - name: posts
@@ -36,13 +33,6 @@ collections:
     extension: mdx
     format: frontmatter
     fields:
-      - label: Slug
-        name: slug
-        widget: string
-        required: true
-        i18n: duplicate
-        hint: "Dùng gạch nối, làm slug URL và translationKey. Ví dụ: arch-linux-install"
-
       - label: Title
         name: title
         widget: string
@@ -54,6 +44,20 @@ collections:
         widget: text
         i18n: true
         hint: "Mô tả ngắn, tối đa 280 ký tự."
+
+      - label: Slug
+        name: slug
+        widget: string
+        required: true
+        i18n: duplicate
+        hint: "Dùng gạch nối, làm slug URL. Ví dụ: arch-linux-install"
+
+      - label: Translation Key
+        name: translationKey
+        widget: string
+        required: true
+        i18n: duplicate
+        hint: "Điền giống slug. Ví dụ: arch-linux-install"
 
       - label: Publish Date
         name: pubDate
@@ -97,6 +101,7 @@ collections:
       - label: Table of Contents
         name: toc
         widget: boolean
+        default: true
         required: false
         i18n: duplicate
         hint: "Mặc định bật. Chỉ cần set khi muốn tắt."
@@ -118,6 +123,7 @@ collections:
       - label: Comments
         name: comments
         widget: boolean
+        default: true
         required: false
         i18n: duplicate
         hint: "Mặc định bật. Chỉ cần set khi muốn tắt."
