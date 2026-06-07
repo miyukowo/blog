@@ -6,19 +6,19 @@ backend:
   branch: main
   skip_ci: true
 
+media_folder: blog
+public_folder: blog
+
 media_libraries:
   cloudinary:
     config:
       cloud_name: tvphus
-      api_key: 963199547532212
+      api_key: "963199547532212"
       default_transformations:
         - - quality: auto
             fetch_format: auto
-    output_filename_only: true
-    use_transformations: false  # false vì tự ghép transform trong cdnUrl
-
-media_folder: blog
-public_folder: blog
+    output_filename_only: false
+    use_transformations: true  # false vì tự ghép transform trong cdnUrl
 
 output:
   omit_empty_optional_fields: true
@@ -39,8 +39,8 @@ collections:
     folder: /src/content/posts
     i18n: true
     create: true
-    slug: "{{fields.slug}}"
-    path: "{{fields.slug}}/index"
+    slug: "{{fields.postSlug}}"
+    path: "{{fields.postSlug}}/index"
     extension: mdx
     format: frontmatter
     sortable_fields:
@@ -104,6 +104,13 @@ collections:
         widget: image
         required: false
         i18n: duplicate
+        media_libraries:
+        cloudinary:             
+          config:
+            default_transformations:
+              - - quality: auto
+                  fetch_format: auto
+          output_filename_only: true
 
       - label: Hero Image Alt
         name: heroImageAlt
@@ -213,6 +220,13 @@ collections:
         widget: image
         required: false
         i18n: duplicate
+        media_libraries:
+          cloudinary:
+            config:
+              default_transformations:
+                - - quality: auto
+                    fetch_format: auto
+            output_filename_only: true
 
       - label: Hero Image Alt
         name: heroImageAlt
