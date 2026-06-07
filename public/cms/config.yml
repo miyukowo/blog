@@ -33,10 +33,19 @@ collections:
     extension: mdx
     format: frontmatter
     sortable_fields:
-      fields: [title, pubDate, updatedDate]
+      fields: [title, published_date, author.name, category]
       default:
-        field: pubDate
-        direction: Descending
+        field: published_date
+        direction: descending
+    view_groups:
+      - label: Year
+        field: published_date
+        pattern: '\d{4}'
+      - label: Month
+        field: published_date
+        pattern: '\d{4}-\d{2}'
+      - label: Draft
+        field: draft
     fields:
       - label: Title
         name: title
