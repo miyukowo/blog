@@ -9,8 +9,8 @@ backend:
 media_libraries:
   cloudinary:
     config:
-      cloud_name: YOUR_CLOUD_NAME
-      api_key: YOUR_API_KEY
+      cloud_name: tvphus
+      api_key: 963199547532212
       default_transformations:
         - - quality: auto
             fetch_format: auto
