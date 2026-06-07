@@ -32,6 +32,11 @@ collections:
     path: "{{fields.slug}}/index"
     extension: mdx
     format: frontmatter
+    sortable_fields:
+      fields: [title, pubDate, updatedDate]
+      default:
+        field: pubDate
+        direction: Descending
     fields:
       - label: Title
         name: title
@@ -46,7 +51,7 @@ collections:
         hint: "Mô tả ngắn, tối đa 280 ký tự."
 
       - label: Slug
-        name: slug
+        name: postSlug
         widget: string
         required: true
         i18n: duplicate

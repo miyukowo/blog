@@ -87,6 +87,7 @@ const baseFrontmatter = ({ image }: SchemaContext) =>
      * you control).
      */
     unlistedHideFromSeo: z.boolean().optional(),
+    postSlug: z.string().optional(),
   });
 
 export type PostFrontmatter = z.infer<ReturnType<typeof baseFrontmatter>>;
