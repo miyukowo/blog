@@ -12,10 +12,17 @@ public_folder: /uploads
 output:
   omit_empty_optional_fields: true
 
+slug:
+  encoding: ascii
+  clean_accents: true
+
 i18n:
   structure: multiple_folders
   locales: [en, vi]
   default_locale: en
+  canonical_slug:
+    key: translationKey
+    value: '{{slug}}'
 
 collections:
   - name: posts
@@ -28,33 +35,25 @@ collections:
     path: "{{fields.slug}}/index"
     extension: mdx
     format: frontmatter
-    frontmatter_delimiter: "---"
     fields:
-      - label: Title
-        name: title
-        widget: string
-        i18n: true
-        hint: "Tiêu đề của bài viết."
-
-      - label: Description
-        name: description
-        widget: text
-        i18n: true
-        hint: "Mô tả của bài viết."
-
       - label: Slug
         name: slug
         widget: string
         required: true
         i18n: duplicate
-        hint: "Phải có gạch nối, dùng làm tên folder."
+        hint: "Dùng gạch nối, làm slug URL và translationKey. Ví dụ: arch-linux-install"
 
-      - label: Translation Key
-        name: translationKey
+      - label: Title
+        name: title
         widget: string
-        required: true
-        i18n: duplicate
-        hint: "Phải có gạch nối, dùng để kết nối bài viết EN ↔ VI với nhau."
+        i18n: true
+        hint: "Tiêu đề bài viết, tối đa 140 ký tự."
+
+      - label: Description
+        name: description
+        widget: text
+        i18n: true
+        hint: "Mô tả ngắn, tối đa 280 ký tự."
 
       - label: Publish Date
         name: pubDate
@@ -62,7 +61,6 @@ collections:
         date_format: YYYY-MM-DD
         time_format: false
         i18n: duplicate
-        hint: "Ngày đăng của bài viết."
 
       - label: Updated Date
         name: updatedDate
@@ -71,85 +69,77 @@ collections:
         time_format: false
         required: false
         i18n: duplicate
-        hint: "Ngày cập nhật bài viết."
 
       - label: Hero Image
         name: heroImage
         widget: image
         required: false
         i18n: duplicate
-        hint: "Thêm ảnh hero."
 
       - label: Hero Image Alt
         name: heroImageAlt
         widget: string
         required: false
         i18n: true
-        hint: "Thêm mô tả cho hình ảnh hero."
 
       - label: Tags
         name: tags
         widget: list
         required: false
         i18n: duplicate
-        hint: "Gắn thẻ cho bài viết."
 
       - label: Categories
         name: categories
         widget: list
         required: false
         i18n: true
-        hint: "Thêm chuyên mục cho bài viết."
 
       - label: Table of Contents
         name: toc
         widget: boolean
-        default: true
+        required: false
         i18n: duplicate
-        hint: "Bật tắt mục lục."
+        hint: "Mặc định bật. Chỉ cần set khi muốn tắt."
 
       - label: Pinned
         name: pinned
         widget: boolean
         required: false
         i18n: duplicate
-        hint: "Ghim bài viết lên đầu trang."
+        hint: "Ghim bài lên đầu trang."
 
       - label: Draft
         name: draft
         widget: boolean
         required: false
         i18n: duplicate
-        hint: "Giữ bài viết thành bản thảo. Bài viết sẽ không hiển thị trên trang."
+        hint: "Bài sẽ không hiển thị khi bật."
 
       - label: Comments
         name: comments
         widget: boolean
-        default: true
-        required: true
+        required: false
         i18n: duplicate
-        hint: "Bật tắt chức năng bình luận."
+        hint: "Mặc định bật. Chỉ cần set khi muốn tắt."
 
       - label: Math (KaTeX)
         name: math
         widget: boolean
         required: false
         i18n: duplicate
-        hint: "Bật tắt chức năng diễn giải công thức toán học bằng KaTeX."
+        hint: "Bật khi bài có công thức toán học."
 
       - label: Unlisted
         name: unlisted
         widget: boolean
-        default: false
         required: false
         i18n: duplicate
-        hint: "Ẩn bài viết khỏi blog nhưng vẫn truy cập được nếu có liên kết trực tiếp."
+        hint: "Ẩn khỏi listing nhưng vẫn truy cập được qua link trực tiếp."
 
       - label: Body
         name: body
         widget: markdown
         i18n: true
-        hint: "Nội dung của bài viết."
 
   - name: pages
     label: Pages
@@ -161,8 +151,16 @@ collections:
     extension: md
     format: frontmatter
     fields:
-      - { label: Title, name: title, widget: string, i18n: true }
-      - { label: Description, name: description, widget: text, i18n: true }
+      - label: Title
+        name: title
+        widget: string
+        i18n: true
+
+      - label: Description
+        name: description
+        widget: text
+        i18n: true
+
       - label: Publish Date
         name: pubDate
         widget: datetime
@@ -170,6 +168,7 @@ collections:
         time_format: false
         required: false
         i18n: duplicate
+
       - label: Updated Date
         name: updatedDate
         widget: datetime
@@ -177,12 +176,50 @@ collections:
         time_format: false
         required: false
         i18n: duplicate
-      - { label: Hero Image, name: heroImage, widget: image, required: false, i18n: duplicate }
-      - { label: Hero Image Alt, name: heroImageAlt, widget: string, required: false, i18n: true }
-      - { label: Show in Nav, name: showInNav, widget: boolean, default: false, i18n: duplicate }
-      - { label: Table of Contents, name: toc, widget: boolean, default: true, i18n: duplicate }
-      - { label: Comments, name: comments, widget: boolean, required: false, i18n: duplicate }
-      - { label: Unlisted, name: unlisted, widget: boolean, default: false, i18n: duplicate }
-      - { label: Canonical URL, name: canonicalURL, widget: string, required: false, i18n: duplicate }
-      - { label: Body, name: body, widget: markdown, i18n: true }
-      - { label: Translation Key, name: translationKey, widget: string, required: true, i18n: duplicate}
+
+      - label: Hero Image
+        name: heroImage
+        widget: image
+        required: false
+        i18n: duplicate
+
+      - label: Hero Image Alt
+        name: heroImageAlt
+        widget: string
+        required: false
+        i18n: true
+
+      - label: Show in Nav
+        name: showInNav
+        widget: boolean
+        required: false
+        i18n: duplicate
+
+      - label: Table of Contents
+        name: toc
+        widget: boolean
+        required: false
+        i18n: duplicate
+
+      - label: Comments
+        name: comments
+        widget: boolean
+        required: false
+        i18n: duplicate
+
+      - label: Unlisted
+        name: unlisted
+        widget: boolean
+        required: false
+        i18n: duplicate
+
+      - label: Canonical URL
+        name: canonicalURL
+        widget: string
+        required: false
+        i18n: duplicate
+
+      - label: Body
+        name: body
+        widget: markdown
+        i18n: true
