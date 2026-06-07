@@ -56,8 +56,8 @@ collections:
         name: translationKey
         widget: string
         required: true
-        i18n: duplicate
-        hint: "Điền giống slug. Ví dụ: arch-linux-install"
+        i18n: true
+        hint: "Điền giống nhau ở cả EN và VI để link bài viết"
 
       - label: Publish Date
         name: pubDate
