@@ -6,8 +6,19 @@ backend:
   branch: main
   skip_ci: true
 
-media_folder: /public/uploads
-public_folder: /uploads
+media_libraries:
+  cloudinary:
+    config:
+      cloud_name: YOUR_CLOUD_NAME
+      api_key: YOUR_API_KEY
+      default_transformations:
+        - - quality: auto
+            fetch_format: auto
+    output_filename_only: true
+    use_transformations: false  # false vì tự ghép transform trong cdnUrl
+
+media_folder: blog
+public_folder: blog
 
 output:
   omit_empty_optional_fields: true

@@ -9,6 +9,7 @@
  *  - resolve translation siblings via `translationKey`
  */
 
+import { cdnUrl } from './image';
 import { getCollection, type CollectionEntry } from 'astro:content';
 import type { ImageMetadata } from 'astro';
 
@@ -223,13 +224,13 @@ export function heroImageSrc(post: Post): string | undefined {
   if (!img) return undefined;
   let src: string | undefined;
   if (typeof img === 'string') src = img;
-  // Imported asset (ImageMetadata): unwrap to its public URL.
   else if (typeof img === 'object' && 'src' in (img as Record<string, unknown>)) {
     src = (img as { src: string }).src;
   }
   if (!src) return undefined;
-  // Prefix the configured base for absolute paths into /public.
-  return src.startsWith('/') && !src.startsWith('//') ? withBase(src) : src;
+  if (src.startsWith('/') && !src.startsWith('//')) return withBase(src);
+  // Filename từ Cloudinary → CDN URL cho OG image
+  return cdnUrl(src);
 }
 
 /**
@@ -242,7 +243,9 @@ export function heroImage(post: Post): ImageMetadata | string | undefined {
   const img = post.data.heroImage;
   if (!img) return undefined;
   if (typeof img === 'string') {
-    return img.startsWith('/') && !img.startsWith('//') ? withBase(img) : img;
+    if (img.startsWith('/') && !img.startsWith('//')) return withBase(img);
+    // Filename từ CDN → CDN URL để SmartImage optimize được
+    return cdnUrl(img);
   }
   return img as ImageMetadata;
 }

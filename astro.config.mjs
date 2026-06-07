@@ -153,6 +153,7 @@ export default defineConfig({
       { protocol: 'https', hostname: 'cdn.jsdelivr.net' },
       { protocol: 'https', hostname: 'res.cloudinary.com' },
       { protocol: 'https', hostname: 'imagedelivery.net' },
+      { protocol: 'https', hostname: 'cdn.tvphus.dev' },
     ],
   },
 
