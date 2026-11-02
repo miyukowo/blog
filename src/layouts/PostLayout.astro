@@ -120,6 +120,7 @@ if (post.data.mermaid) {
   seo={seo}
   availableLocales={availableLocales}
   translations={translationLinks}
+  pagefindIgnore={post.data.unlisted}
 >
   {post.data.math && MathStylesComponent && <MathStylesComponent />}
   {post.data.mermaid && MermaidComponent && <MermaidComponent />}

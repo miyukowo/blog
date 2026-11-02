@@ -12,6 +12,7 @@
  */
 import { GISCUS, type Locale } from '../../config';
 import { useTranslations } from '../../i18n/utils';
+import { localePresentation } from '../../site/locales';
 import { Icon } from 'astro-icon/components';
 
 interface Props {
@@ -83,7 +84,7 @@ const setupSteps = [
         data-emit-metadata={GISCUS.emitMetadata}
         data-input-position={GISCUS.inputPosition}
         data-loading={GISCUS.loading}
-        data-locale={locale === 'vi' ? 'vi' : 'en'}
+        data-locale={localePresentation[locale].giscusLang}
       />
     )
   }
@@ -132,51 +133,70 @@ const setupSteps = [
 </section>
 
 <script>
-  function giscusTheme() {
-    const t = document.documentElement.getAttribute('data-theme');
-    return t === 'chirpy-dark' ? 'dark' : 'light';
-  }
+  import { giscusScriptAttributes, giscusThemeName, planGiscusMount } from '../../site/giscus';
 
   function mountGiscus() {
     const mount = document.querySelector<HTMLElement>('[data-giscus-mount]');
     if (!mount) return;
 
-    document.querySelector('iframe.giscus-frame')?.remove();
-    delete mount.dataset.mounted;
+    const plan = planGiscusMount({
+      hasClientScript: Boolean(document.querySelector('script[data-giscus-client]')),
+      hasFrame: Boolean(document.querySelector('iframe.giscus-frame')),
+      markedMounted: mount.dataset.mounted === 'true',
+    });
 
-    if (mount.dataset.mounted === 'true') return;
+    if (plan.cleanup) {
+      // Tear down a previous mount fully (script + iframe), so client
+      // navigation cannot leave a stale or duplicated discussion frame.
+      document.querySelectorAll('script[data-giscus-client]').forEach((node) => node.remove());
+      document.querySelector('iframe.giscus-frame')?.remove();
+      delete mount.dataset.mounted;
+    }
+    if (plan.action === 'skip') return;
     mount.dataset.mounted = 'true';
 
     const script = document.createElement('script');
     script.src = 'https://giscus.app/client.js';
     script.async = true;
     script.crossOrigin = 'anonymous';
+    script.dataset.giscusClient = '';
 
-    const set = (key: string, value: string | undefined) => {
-      if (value !== undefined) script.setAttribute(key, value);
-    };
-
-    set('data-repo', mount.dataset.repo);
-    set('data-repo-id', mount.dataset.repoId);
-    set('data-category', mount.dataset.category);
-    set('data-category-id', mount.dataset.categoryId);
-    set('data-mapping', mount.dataset.mapping);
-    set('data-strict', mount.dataset.strict);
-    set('data-reactions-enabled', mount.dataset.reactionsEnabled);
-    set('data-emit-metadata', mount.dataset.emitMetadata);
-    set('data-input-position', mount.dataset.inputPosition);
-    set('data-loading', mount.dataset.loading);
-    set('data-lang', mount.dataset.locale);
-    set('data-theme', giscusTheme());
+    const attributes = giscusScriptAttributes(
+      {
+        repo: mount.dataset.repo ?? '',
+        repoId: mount.dataset.repoId ?? '',
+        category: mount.dataset.category ?? '',
+        categoryId: mount.dataset.categoryId ?? '',
+        mapping: mount.dataset.mapping ?? 'pathname',
+        strict: mount.dataset.strict ?? '0',
+        reactionsEnabled: mount.dataset.reactionsEnabled ?? '1',
+        emitMetadata: mount.dataset.emitMetadata ?? '0',
+        inputPosition: mount.dataset.inputPosition ?? 'top',
+        loading: mount.dataset.loading ?? 'lazy',
+        locale: mount.dataset.locale ?? 'en',
+      },
+      giscusThemeName(document.documentElement.getAttribute('data-theme')),
+    );
+    for (const [key, value] of Object.entries(attributes)) {
+      script.setAttribute(key, value);
+    }
 
     mount.appendChild(script);
   }
 
   function syncTheme() {
     const iframe = document.querySelector<HTMLIFrameElement>('iframe.giscus-frame');
+    // A theme change only updates the live discussion; it never remounts the
+    // iframe, so comments are not reloaded or duplicated.
     if (!iframe?.contentWindow) return;
     iframe.contentWindow.postMessage(
-      { giscus: { setConfig: { theme: giscusTheme() } } },
+      {
+        giscus: {
+          setConfig: {
+            theme: giscusThemeName(document.documentElement.getAttribute('data-theme')),
+          },
+        },
+      },
       'https://giscus.app',
     );
   }

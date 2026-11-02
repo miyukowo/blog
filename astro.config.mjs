@@ -6,8 +6,9 @@ import tailwindcss from '@tailwindcss/vite';
 import expressiveCode from 'astro-expressive-code';
 import icon from 'astro-icon';
 import { defineConfig, fontProviders, svgoOptimizer } from 'astro/config';
-import { readdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
+import { join, relative } from 'node:path';
+import { parse as parseYaml } from 'yaml';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 import satteriExternalLinks from 'satteri-external-links';
@@ -20,6 +21,7 @@ import { satteriAutolinkHeadings } from './src/plugins/satteri-autolink-headings
 import { satteriMermaid } from './src/plugins/satteri-mermaid.ts';
 
 import { SITE } from './src/config';
+import { contentSlug } from './src/site/urls';
 
 const rawBase = (process.env.BASE_PATH ?? '/').replace(/\/$/, '');
 const BASE = rawBase.startsWith('/') ? rawBase : `/${rawBase}`;
@@ -27,52 +29,61 @@ const SITEMAP_XSL_HREF = `${BASE}/sitemap/styles.xsl`;
 const SKIP_RSS_SITEMAP = process.env.CI_SKIP_RSS_SITEMAP === 'true';
 
 /**
- * Set of URL path segments that belong to unlisted posts/pages.
- * Populated by `collectUnlistedUrls()` integration before the sitemap
- * integration runs, so the sitemap `filter` can exclude them.
+ * Set of URL path segments that belong to unlisted posts/pages, used by the
+ * sitemap filter below.
  *
- * We use path segments (e.g. "posts/my-slug") rather than full URLs so
- * the check works regardless of `SITE_URL` or `BASE_PATH` values.
+ * Upstream populated this from `astro:content` inside an `astro:build:start`
+ * integration. Under Astro 7 that dynamic import fails ("Vite module runner
+ * has been closed"), and the failure was swallowed — so unlisted posts leaked
+ * into the sitemap. Scanning the content directory at config time is
+ * deterministic, has no build-lifecycle dependency, and uses the same
+ * filesystem URL identity as the pages (`contentSlug`).
  */
 const unlistedPathSegments = new Set();
 
-/**
- * Integration that reads the content collection at build time and
- * populates `unlistedPathSegments` with the URL path segments of every
- * unlisted post. Must be listed BEFORE `@astrojs/sitemap` in the
- * integrations array.
- */
-function collectUnlistedUrls() {
-  return {
-    name: 'chirpy:collect-unlisted-urls',
-    hooks: {
-      'astro:build:start': async () => {
-        try {
-          // Dynamically import so this only runs during builds (not in
-          // the config evaluation phase where astro:content isn't ready).
-          const { getCollection } = await import('astro:content');
-          const entries = await getCollection('posts');
-          for (const entry of entries) {
-            if (!entry.data.unlisted) continue;
-            // Derive locale and slug from the entry id (e.g. "en/my-post.md").
-            const segs = entry.id.split(/[\\/]/);
-            const locale = segs[0] && /** @type {readonly string[]} */ (SITE.locales).includes(segs[0]) ? segs[0] : SITE.defaultLocale;
-            const slug = segs.slice(1).join('/').replace(/\.(md|mdx)$/i, '');
-            if (locale === SITE.defaultLocale) {
-              unlistedPathSegments.add(`posts/${slug}`);
-            } else {
-              unlistedPathSegments.add(`${locale}/posts/${slug}`);
-            }
-          }
-        } catch {
-          // Content collections aren't available in all build contexts
-          // (e.g. CI fast mode). Silently skip — the sitemap will include
-          // unlisted posts in that case, which is acceptable for CI.
-        }
-      },
-    },
+function collectUnlistedPathSegments() {
+  const postsRoot = join(process.cwd(), 'src', 'content', 'posts');
+  /** @param {string} dir */
+  const walk = (dir) => {
+    for (const entry of readdirSync(dir)) {
+      const full = join(dir, entry);
+      if (statSync(full).isDirectory()) {
+        walk(full);
+        continue;
+      }
+      if (!/\.(md|mdx)$/i.test(entry)) continue;
+      const source = readFileSync(full, 'utf8');
+      const match = /^---\r?\n([\s\S]*?)\r?\n---/.exec(source);
+      if (!match) continue;
+      let data;
+      try {
+        data = parseYaml(match[1]);
+      } catch {
+        continue;
+      }
+      if (!data || data.unlisted !== true) continue;
+      const id = relative(postsRoot, full).split(/[\\/]/).join('/');
+      const segs = id.split('/');
+      const locale =
+        segs[0] && /** @type {readonly string[]} */ (SITE.locales).includes(segs[0])
+          ? segs[0]
+          : SITE.defaultLocale;
+      const slug = contentSlug(id, SITE.locales);
+      if (locale === SITE.defaultLocale) {
+        unlistedPathSegments.add(`posts/${slug}`);
+      } else {
+        unlistedPathSegments.add(`${locale}/posts/${slug}`);
+      }
+    }
   };
+  try {
+    walk(postsRoot);
+  } catch {
+    // No content directory (e.g. a tooling-only checkout): nothing to filter.
+  }
 }
+
+collectUnlistedPathSegments();
 
 /**
  * Tiny inline integration: after `@astrojs/sitemap` runs, rewrite the
@@ -193,7 +204,7 @@ export default defineConfig({
         satteriAutolinkHeadings(),
         satteriExternalLinks({
           target: '_blank',
-          rel: ['nofollow', 'noopener', 'noreferrer']
+          rel: ['nofollow', 'noopener', 'noreferrer'],
         }),
         satteriBaseLinks({ base: BASE }),
       ],
@@ -239,7 +250,6 @@ export default defineConfig({
     ...(SKIP_RSS_SITEMAP
       ? []
       : [
-          collectUnlistedUrls(),
           sitemap({
             i18n: {
               defaultLocale: SITE.defaultLocale,

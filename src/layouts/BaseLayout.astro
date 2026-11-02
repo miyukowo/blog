@@ -39,6 +39,11 @@ interface Props {
   availableLocales?: readonly Locale[];
   /** Optional pre-calculated translation URLs for each locale. */
   translations?: Partial<Record<Locale, string>>;
+  /**
+   * Exclude this page from the Pagefind search index. Used for unlisted
+   * (direct-link only) content, which must not surface in search.
+   */
+  pagefindIgnore?: boolean;
 }
 
 const {
@@ -55,6 +60,7 @@ const {
   seo,
   availableLocales,
   translations,
+  pagefindIgnore = false,
 } = Astro.props;
 
 const locale: Locale = detectLocale(Astro.url.pathname);
@@ -132,7 +138,7 @@ const meta: SeoMeta =
     </script>
   </head>
 
-  <body>
+  <body data-pagefind-ignore={pagefindIgnore ? '' : undefined}>
     <a
       href="#main"
       class="focus:bg-primary focus:text-primary-content sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:rounded focus:px-3 focus:py-2"
