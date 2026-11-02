@@ -13,7 +13,7 @@ The user approved the plan and DSH execution. This record covers host-only prepa
 - Latest successful main Cloudflare workflow run: https://github.com/miyukowo/blog/actions/runs/27092205173 at b278874. Exact Cloudflare deployment ID/account/custom-domain settings require later read-only verification; an Actions success is not itself a verified rollback deployment.
 - Fresh explicit Node production-shaped build passed: 33 HTML pages, six OG images, 32 sitemap URLs. Pagefind passed: 33 pages, EN/VI. Local avatar and installed dependencies were used; no environment file was copied and no external write was performed.
 - Refreshed baseline: ../research/2026-11-02-dsh-preflight-baseline.json. All protected content hashes, routes, feed data, sitemap URLs and OG paths match the original measured baseline exactly.
-- Node 26.12.1, Bun 1.3.14. Existing dependency directory exposes parse5 and fast-xml-parser for the initial contract task. It is linked locally and excluded through Git info/exclude; no dependency link belongs in snapshots.
+- Node 26.12.1, Bun 1.3.14. Existing dependency directory exposes parse5 and fast-xml-parser for the initial contract task. It was initially linked, then replaced with a regular dependency directory after controller bootstrap validation rejected symlinks; Git info/exclude keeps dependency material out of snapshots.
 
 ## Next bounded task
 
@@ -22,3 +22,7 @@ Submit docs/handoffs/2026-11-02-dsh-task-1a.md through agent-controller with an 
 ## Deferred release gates
 
 Cold-cache final Astro 7 installation/build, authenticated isolated CMS/media round-trip, Cloudflare account/domain/rollback-ID confirmation, live read-only comments check, staging deployment and final content reconciliation remain required at the owning later phases. None blocks the isolated fixture-based contract implementation.
+
+## First DSH attempt — blocked
+
+Task task-20261102153518-196db98a was submitted from the canonical blog repository at reviewed base d036734. The controller denied ordinary commands within its own assigned worktree as protected state, then requested approval for the worker diagnostic /bin/ls /tmp. The task was cancelled; no files changed, no tests ran, no snapshot was made. Artifacts/worktree remain available. See ../handoffs/2026-11-02-dsh-controller-blocker.md for evidence and the read-only source diagnosis. No controller permissions were relaxed and no further model turns were started.
