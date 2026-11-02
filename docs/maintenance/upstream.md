@@ -15,9 +15,9 @@ The user approved the plan and DSH execution. This record covers host-only prepa
 - Refreshed baseline: ../research/2026-11-02-dsh-preflight-baseline.json. All protected content hashes, routes, feed data, sitemap URLs and OG paths match the original measured baseline exactly.
 - Node 26.12.1, Bun 1.3.14. Existing dependency directory exposes parse5 and fast-xml-parser for the initial contract task. It was initially linked, then replaced with a regular dependency directory after controller bootstrap validation rejected symlinks; Git info/exclude keeps dependency material out of snapshots.
 
-## Next bounded task
+## Current execution method — manual DeepSeek
 
-Submit docs/handoffs/2026-11-02-dsh-task-1a.md through agent-controller with an isolated worktree and offline verification. Report task ID and artifacts here after review. The remaining plan continues only from reviewed snapshots.
+The user switched to manual DeepSeek implementation and deferred controller troubleshooting. Follow [the manual task brief](../handoffs/2026-11-02-manual-deepseek-tasks.md) and [report template](../handoffs/2026-11-02-manual-deepseek-report-template.md). Work in the prepared staging-derived checkout, commit reviewable phases, and return the report/branch/HEAD for independent Codex validation. Do not invoke the controller, repair its permissions, merge into main or publish production as part of this handoff.
 
 ## Deferred release gates
 

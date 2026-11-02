@@ -1,6 +1,6 @@
 # Upstream Catch-up and Maintainability Implementation Plan
 
-> **For agentic workers:** REQUIRED execution workflow: dsh-handoff, as explicitly selected by the user. Codex orchestrates Git operations and independently reviews/verifies each DeepSeek result. Do not substitute Codex implementation or another worker workflow. Steps use checkbox syntax.
+> **Execution update, 2026-11-02:** The user switched to manual DeepSeek implementation after controller failures. Follow [the current manual task brief](../../handoffs/2026-11-02-manual-deepseek-tasks.md) and its report template. The controller lifecycle, hidden-Git restrictions and host/worker merge-transfer steps below are historical and superseded for this execution. Technical requirements and independent Codex review remain in effect.
 
 **Goal:** Adopt the verified current Chirping starter while preserving public/editorial compatibility, then demonstrate a repeatable reviewed upstream-update workflow.
 
@@ -23,7 +23,7 @@
 - Favor long-term upstream compatibility without unnecessary rewrites or architectural complexity.
 - Preserve all existing content/draft body bytes unless a documented mechanical compatibility edit is reviewed. Do not import demos, restore FR content, or remove personal posts during upstream resolution.
 - No history rewrite, force push, blanket conflict strategy, automatic production deployment from an update preparer, or credentials in worker material.
-- DeepSeek cannot inspect .git, commit, merge or push. Those are orchestrator operations.
+- In the current manual workflow, DeepSeek may use ordinary Git and dependency tools within its environment's permissions, on the prepared staging-derived branch. Do not merge into main or publish production before independent review.
 
 ## Review focus
 
@@ -53,7 +53,7 @@ Read the spec before each task. Map current code with graph tools first; fetch c
 
 Keep src/components/Alert.astro and VideoEmbed.astro import paths. Existing Astro routes and src/utils/posts.ts remain the theme interface. Small shared-file imports/changes are enumerated in the manifest. Do not move the whole theme into a vendor folder.
 
-### Controller lifecycle for every worker task
+### Historical controller lifecycle — inactive in manual mode
 
 - [ ] Discover the existing agent-controller tools and inspect their actual schemas. They were not exposed in the planning session. Stop delegation if unavailable; do not replace them with direct API scripts.
 - [ ] Register/use one isolated task worktree based on the last reviewed snapshot. Supply only needed non-secret files, the spec, this task, and explicit dependency directories. Dependencies must exist before delegation; target Astro 7 needs its own hydrated dependency tree, not copied Astro 6 node_modules.
@@ -281,4 +281,4 @@ Interfaces:
 - Shared interfaces, script names and baseline schema are consistent across tasks.
 - The design received a fresh independent builder check: “nothing important left.”
 - This planning session changed documentation/evidence only. No upstream bridge/merge, dependency installation, DeepSeek execution, staging deployment or production change has been made.
-- The user should review this proposed plan before implementation. The preserved execution method is dsh-handoff; controller availability is the first tooling preflight.
+- The user approved this plan, then switched execution to manual DeepSeek. The current manual task brief governs execution; controller troubleshooting is deferred. Return actual commits and the required report for independent Codex review.

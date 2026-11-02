@@ -1,7 +1,7 @@
 # Upstream catch-up and maintainability design
 
-Status: proposed for user review; implementation is not authorized by this document.
-Date: 2026-11-02. Execution method: DeepSeek through dsh-handoff, followed by independent Codex review.
+Status: approved by the user; implementation is authorized under the agreed scope.
+Date: 2026-11-02. Current execution method: manual DeepSeek implementation, followed by independent Codex review. The user deferred dsh-handoff/controller troubleshooting after a failed attempt. See [the manual task brief](../../handoffs/2026-11-02-manual-deepseek-tasks.md); its execution instructions supersede controller-specific statements below.
 
 ## Outcome and agreed constraints
 
