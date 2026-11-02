@@ -1,14 +1,62 @@
 name: Deploy to Cloudflare Pages
+
 on:
   push:
-    branches: [main, staging]  # 👈 thêm staging
+    branches: [main, staging]
   workflow_dispatch:
+
+# WARNING: this workflow holds deployment credentials. It intentionally does
+# NOT run on pull_request events, so untrusted PR code never sees the
+# Cloudflare token. Keep it that way when editing.
+permissions:
+  contents: read
+  deployments: write
+
 concurrency:
-  group: cloudflare-pages-${{ github.ref_name }}  # 👈 tách concurrency theo branch
+  group: cloudflare-pages-${{ github.ref_name }}
   cancel-in-progress: false
+
 jobs:
-  build-and-deploy:
+  checks:
+    name: Required checks
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.14
+
+      - name: Install dependencies (frozen)
+        run: bun install --frozen-lockfile
+
+      - name: Typecheck
+        run: bun run typecheck
+
+      - name: Lint
+        run: bun run lint
+
+      - name: Scoped formatting
+        run: bun run format:site:check
+
+      - name: Site compatibility tests
+        run: bun run test:site
+
+      - name: Upstream slug tests
+        run: bun test src/utils/posts.test.ts
+
+  deploy:
     name: Build & Deploy
+    needs: checks
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -16,13 +64,25 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
         with:
-          bun-version: 1.3.13
-      - name: Install dependencies
+          bun-version: 1.3.14
+
+      - name: Install dependencies (frozen)
         run: bun install --frozen-lockfile
-      - name: Build with Astro
+
+      # Full output validation build: content, OG, RSS, sitemap and Pagefind
+      # are all enabled for staging as well as production. The previous
+      # staging-only OG skip is removed so previews cannot qualify with
+      # missing required output.
+      - name: Build full static site
         env:
           SITE_URL: ${{ github.ref_name == 'staging' && 'https://staging-blog.tvphus.dev' || vars.SITE_URL || 'https://blog.tvphus.dev' }}
           BASE_PATH: ''
@@ -35,8 +95,22 @@ jobs:
           PUBLIC_GISCUS_REPO_ID: ${{ vars.PUBLIC_GISCUS_REPO_ID }}
           PUBLIC_GISCUS_CATEGORY: ${{ vars.PUBLIC_GISCUS_CATEGORY }}
           PUBLIC_GISCUS_CATEGORY_ID: ${{ vars.PUBLIC_GISCUS_CATEGORY_ID }}
-          CI_SKIP_AUTO_OG_IMAGE: ${{ github.ref_name == 'staging' && 'true' || 'false' }}  # 👈 bỏ qua OG image trên staging cho build nhanh hơn
         run: bun run build
+
+      - name: Generate isolated preview CMS config
+        if: github.ref_name != 'main'
+        env:
+          PREVIEW_SITE_URL: ${{ github.ref_name == 'staging' && 'https://staging-blog.tvphus.dev' || vars.SITE_URL || 'https://blog.tvphus.dev' }}
+        run: |
+          node scripts/prepare-preview.mjs \
+            --dist dist \
+            --branch "codex/cms-validation-${{ github.run_id }}" \
+            --site-url "${PREVIEW_SITE_URL}"
+
+      - name: Mark preview deployments noindex
+        if: github.ref_name != 'main'
+        run: node scripts/mark-preview-noindex.mjs --dist dist --branch "${{ github.ref_name }}"
+
       - name: Deploy to Cloudflare Pages
         uses: cloudflare/wrangler-action@v3
         with:

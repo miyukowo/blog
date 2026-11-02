@@ -1,0 +1,19 @@
+=== DEPENDENCY UPDATE REHEARSAL (starter f63a255 -> 821bc61; package.json + bun.lock) ===
+before ref: f63a255317c8851d0f354de2fc7580d57873af3e
+a5de73bc0ca5f5912202184063ba42d152cab778592c4e5bc97d3e9bc3f4a717  package.json
+3e8a7d065bb6f3c8051fc75ae9f2136e6c86dcd6f83931b57895cd7e14aaebe4  bun.lock
+--- intended upstream delta paths ---
+M	bun.lock
+M	package.json
+--- frozen lockfile coherence before merge ---
+exit=0
+--- normal fast-forward merge of the candidate ---
+ package.json | 2 +-
+ 2 files changed, 6 insertions(+), 4 deletions(-)
+after ref: 821bc6171f2ed0f74d920cc5ab70794c3f779971
+--- frozen lockfile coherence after merge ---
+exit=0
+--- rollback to before ref ---
+a5de73bc0ca5f5912202184063ba42d152cab778592c4e5bc97d3e9bc3f4a717  package.json
+3e8a7d065bb6f3c8051fc75ae9f2136e6c86dcd6f83931b57895cd7e14aaebe4  bun.lock
+rollback ref: f63a255317c8851d0f354de2fc7580d57873af3e
