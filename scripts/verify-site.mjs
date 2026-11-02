@@ -39,7 +39,8 @@
  * 2. `/categories/guide/` `hreflangs.vi`: the baseline recorded
  *    `/vi/categories/guide/`, which does not exist; the real translated
  *    destination is `/vi/categories/huong-dan/`.
- * 3. `/vi/categories/huong-dan/` `hreflangs.en`: the baseline recorded
+ * 3. `/vi/categories/huong-dan/` `hreflangs.en` (and `hreflangs.x-default`,
+ *    which follows the default-locale sibling): the baseline recorded
  *    `/categories/huong-dan/`, which does not exist; the real EN counterpart
  *    is `/categories/guide/`.
  *
@@ -113,6 +114,14 @@ const ALLOWED_CHANGES = {
       to: 'https://blog.tvphus.dev/categories/guide/',
       reason:
         'Baseline recorded a non-existent EN taxonomy destination; the real EN counterpart is /categories/guide/.',
+    },
+    {
+      path: '/vi/categories/huong-dan/',
+      field: 'hreflangs.x-default',
+      from: 'https://blog.tvphus.dev/categories/huong-dan/',
+      to: 'https://blog.tvphus.dev/categories/guide/',
+      reason:
+        'x-default follows the default-locale sibling, so it records the same non-existent EN taxonomy destination as hreflangs.en.',
     },
   ],
 };
