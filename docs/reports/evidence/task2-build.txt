@@ -1,0 +1,72 @@
+(node:5) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+22:54:32 [content] Syncing content
+22:54:32 [content] Synced content
+22:54:32 [types] Generated 269ms
+22:54:32 [build] output: "static"
+22:54:32 [build] mode: "static"
+22:54:32 [build] directory: /home/tvp/.codex/worktrees/upstream-preflight/blog/dist/
+22:54:32 [build] Collecting build info...
+22:54:32 [build] ✓ Completed in 339ms.
+22:54:32 [build] Building static entrypoints...
+22:54:34 [vite] ✓ built in 2.40s
+22:54:34 [vite] ✓ built in 57ms
+22:54:34 [build] Rearranging server assets...
+
+ generating static routes 
+22:54:34   ├─ /404.html (+17ms) 
+22:54:34   ├─ /og/getting-started.png (+1.74s) 
+22:54:36   ├─ /og/how-to-migrate-from-refind-to-limine-bootloader.png (+1.16s) 
+22:54:37   ├─ /og/how-i-installed-arch-linux-on-my-laptop.png (+1.15s) 
+22:54:38   ├─ /og/vi/getting-started.png (+1.15s) 
+22:54:39   ├─ /og/vi/how-to-migrate-from-refind-to-limine-bootloader.png (+1.14s) 
+22:54:41   ├─ /og/vi/how-i-installed-arch-linux-on-my-laptop.png (+1.15s) 
+22:54:42   ├─ /about/index.html (+5ms) 
+22:54:42   ├─ /vi/about/index.html (+5ms) 
+22:54:42   ├─ /archives/index.html (+4ms) 
+22:54:42   ├─ /vi/archives/index.html (+4ms) 
+22:54:42   ├─ /categories/guide/index.html (+11ms) 
+22:54:42   ├─ /vi/categories/huong-dan/index.html (+6ms) 
+22:54:42   ├─ /categories/index.html (+4ms) 
+22:54:42   ├─ /vi/categories/index.html (+3ms) 
+22:54:42   ├─ /posts/getting-started/index.html (+13ms) 
+22:54:42   ├─ /posts/how-to-migrate-from-refind-to-limine-bootloader/index.html (+17ms) 
+22:54:42   ├─ /posts/how-i-installed-arch-linux-on-my-laptop/index.html (+13ms) 
+22:54:42   ├─ /vi/posts/getting-started/index.html (+8ms) 
+22:54:42   ├─ /vi/posts/how-to-migrate-from-refind-to-limine-bootloader/index.html (+18ms) 
+22:54:42   ├─ /vi/posts/how-i-installed-arch-linux-on-my-laptop/index.html (+14ms) 
+22:54:42   ├─ /privacy/index.html (+3ms) 
+22:54:42   ├─ /vi/privacy/index.html (+5ms) 
+22:54:42   ├─ /rss.xml (+4ms) 
+22:54:42   ├─ /vi/rss.xml (+2ms) 
+22:54:42   ├─ /search/index.html (+2ms) 
+22:54:42   ├─ /vi/search/index.html (+3ms) 
+22:54:42   ├─ /tags/tutorial/index.html (+5ms) 
+22:54:42   ├─ /tags/linux/index.html (+4ms) 
+22:54:42   ├─ /tags/arch/index.html (+3ms) 
+22:54:42   ├─ /tags/arch-linux/index.html (+2ms) 
+22:54:42   ├─ /tags/getting-started/index.html (+7ms) 
+22:54:42   ├─ /vi/tags/tutorial/index.html (+4ms) 
+22:54:42   ├─ /vi/tags/linux/index.html (+4ms) 
+22:54:42   ├─ /vi/tags/arch/index.html (+2ms) 
+22:54:42   ├─ /vi/tags/arch-linux/index.html (+4ms) 
+22:54:42   ├─ /vi/tags/getting-started/index.html (+4ms) 
+22:54:42   ├─ /tags/index.html (+3ms) 
+22:54:42   ├─ /vi/tags/index.html (+2ms) 
+22:54:42   ├─ /index.html (+3ms) 
+22:54:42   ├─ /vi/index.html (+2ms) 
+22:54:42 ✓ Completed in 7.82s.
+
+ generating optimized images 
+22:54:42   ▶ /_astro/avatar.zaAod0c8_7Kka1.webp (reused cache entry) (+1ms) (1/6)
+22:54:42   ▶ /_astro/avatar.zaAod0c8_1SjO0.webp (reused cache entry) (+0ms) (2/6)
+22:54:42   ▶ /_astro/avatar.zaAod0c8_1Lx2p.webp (reused cache entry) (+0ms) (3/6)
+22:54:42   ▶ /_astro/avatar.zaAod0c8_Zsm2eO.webp (reused cache entry) (+0ms) (4/6)
+22:54:42   ▶ /_astro/avatar.zaAod0c8_ZxYBXT.webp (reused cache entry) (+0ms) (5/6)
+22:54:42   ▶ /_astro/avatar.zaAod0c8_Z1CTmhr.webp (reused cache entry) (+0ms) (6/6)
+22:54:42 ✓ Completed in 2ms.
+
+22:54:42 [build] ✓ Completed in 10.32s.
+22:54:42 [@astrojs/sitemap] `sitemap-index.xml` created at `dist`
+22:54:42 [build] 33 page(s) built in 10.67s
+22:54:42 [build] Complete!
