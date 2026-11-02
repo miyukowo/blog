@@ -1,33 +1,32 @@
 import avatarImg from './assets/images/site/avatar.png';
-import ogDefaultImg from './assets/images/site/og-default.png';
 import type { SiteConfig, NavItem, SocialLink, GiscusConfig } from './types/config';
+import {
+  SITE_DEFAULT_OG_IMAGE,
+  SITE_GISCUS,
+  SITE_IDENTITY,
+  SITE_IMAGES,
+  SITE_NAV,
+  SITE_URL_FALLBACK,
+} from './site/config';
+import { siteLocales } from './site/locales';
 
 /**
  * Global site + theme configuration.
- * Edit values here to rebrand the theme. All values are typed and consumed
- * across layouts, components, RSS, sitemap, and SEO.
+ *
+ * Upstream-compatible shared file: the theme consumes `SITE`, `NAV`,
+ * `SOCIALS`, `GISCUS` and `PAGEFIND` exactly as before. Personal values live
+ * in the small site-owned modules under `src/site/` so this file stays close
+ * to upstream and does not accumulate a large local diff.
  */
+
+/** Branding images (site-owned choices). */
+export { SITE_IMAGES };
 
 const GITHUB_HANDLE = import.meta.env.PUBLIC_GITHUB_HANDLE ?? '';
 const GITHUB_REPO = import.meta.env.PUBLIC_GITHUB_REPO ?? 'chirping-astro';
 const TWITTER_HANDLE = import.meta.env.PUBLIC_TWITTER_HANDLE ?? '';
 const CONTACT_EMAIL = import.meta.env.PUBLIC_CONTACT_EMAIL ?? '';
-const THEME_REPO_URL = 'https://github.com/kannansuresh/chirping-astro';
-
-/**
- * Global site + theme configuration.
- * Edit values here to rebrand the theme. All values are typed and consumed
- * across layouts, components, RSS, sitemap, and SEO.
- */
-
-// Export imported site images for use in components
-export const SITE_IMAGES = {
-  avatar: GITHUB_HANDLE ? `https://avatars.githubusercontent.com/u/40559090?v=4` : avatarImg,
-  ogDefault: ogDefaultImg,
-} as const;
-
-export const locales = ['en', 'vi'] as const;
-export type Locale = (typeof locales)[number];
+const THEME_REPO_URL = SITE_IDENTITY.footer.themeUrl;
 
 /**
  * Public GitHub coordinates of the deployed source. Useful for custom links
@@ -41,38 +40,44 @@ export const REPO = {
   url: GITHUB_HANDLE ? `https://github.com/${GITHUB_HANDLE}/${GITHUB_REPO}` : 'https://github.com',
 } as const;
 
+/** Supported locales (site-owned EN/VI policy). */
+export const locales = siteLocales;
+export type Locale = (typeof locales)[number];
+
 export const SITE: SiteConfig = {
   // ==========================================
   // ✅ SAFE TO EDIT (Content & Presentation)
   // ==========================================
 
   /** Default site title used as homepage <title> and meta. */
-  title: `tvp's blog`,
+  title: SITE_IDENTITY.title,
   /** Site tagline / description. */
-  description: `welcome to tvphus's personal blog.`,
+  description: SITE_IDENTITY.description,
   /** Author/handle shown in footer + meta. */
   author: {
-    name: 'tvphus',
+    name: SITE_IDENTITY.author.name,
     url: GITHUB_HANDLE ? `https://github.com/${GITHUB_HANDLE}` : undefined,
+    // A configured GitHub handle keeps the upstream behaviour of showing the
+    // GitHub avatar; otherwise use the site-owned local avatar asset.
     avatar: GITHUB_HANDLE ? `https://avatars.githubusercontent.com/u/40559090?v=4` : avatarImg,
-    bio: 'hi, im a tech noobie. feel free to look around my blog.',
+    bio: SITE_IDENTITY.author.bio,
   },
   /** Default OG image. */
-  defaultOgImage: '/og-default.png',
+  defaultOgImage: SITE_DEFAULT_OG_IMAGE,
   /** Number of posts per page on listings. */
-  postsPerPage: 8,
+  postsPerPage: SITE_IDENTITY.postsPerPage,
   /** Display ISO 8601 date format if true, otherwise locale-aware. */
-  isoDates: false,
+  isoDates: SITE_IDENTITY.isoDates,
   /** Site-wide default for whether posts should display their featured image. */
-  showFeaturedImages: true,
+  showFeaturedImages: SITE_IDENTITY.showFeaturedImages,
   /** Wrap the article body of posts and pages in a bordered, card-like container. */
-  boxedArticles: false,
+  boxedArticles: SITE_IDENTITY.boxedArticles,
   /** Allow listing cards to grow when title/description content is longer. */
-  dynamicPostCardHeight: false,
+  dynamicPostCardHeight: SITE_IDENTITY.dynamicPostCardHeight,
   /** Automatically generate Open Graph images for posts that don't have a `heroImage`. */
-  autoOgImage: true,
+  autoOgImage: SITE_IDENTITY.autoOgImage,
   /** Show a link to the Privacy Policy page in the footer. */
-  showPrivacyPolicy: true,
+  showPrivacyPolicy: SITE_IDENTITY.showPrivacyPolicy,
   /** Footer text/link controls. */
   footer: {
     /**
@@ -90,7 +95,7 @@ export const SITE: SiteConfig = {
     /** Whether to show theme credits in the footer right side. Theme <themeName> */
     showThemeCredits: true,
     /** Label for the theme repository link in the right footer line. */
-    themeName: 'Chirping Astro',
+    themeName: SITE_IDENTITY.footer.themeName,
     /** Default upstream theme repository. */
     themeUrl: THEME_REPO_URL,
   },
@@ -102,22 +107,16 @@ export const SITE: SiteConfig = {
   /** Public URL of the deployed site, no trailing slash. Breaks SEO/RSS if incorrect. */
   // `||` (not `??`) so an explicitly empty `SITE_URL=` in `.env` also
   // falls back to the default. Astro requires `site` to be a valid URL.
-  url: import.meta.env.SITE_URL || 'https://blog.tvphus.dev',
+  url: import.meta.env.SITE_URL || SITE_URL_FALLBACK,
   /** Supported locales. Changing this requires adding/removing locale folders, content, and i18n entries. */
-  locales: locales,
+  locales,
   /** Default locale. Changing this is a breaking, atomic, multi-file operation. */
   defaultLocale: 'en',
   /** Show the language switcher and link to translated pages. */
   multilingual: true,
 };
 
-export const NAV: readonly NavItem[] = [
-  { key: 'home', href: '/', icon: 'lucide:home' },
-  { key: 'categories', href: '/categories', icon: 'lucide:layers' },
-  { key: 'tags', href: '/tags', icon: 'lucide:tag' },
-  { key: 'archives', href: '/archives', icon: 'lucide:archive' },
-  { key: 'about', href: '/about', icon: 'lucide:info' },
-] as const;
+export const NAV: readonly NavItem[] = SITE_NAV;
 
 /**
  * SOCIALS is built from the env-driven handles above so users only edit
@@ -153,19 +152,16 @@ export const SOCIALS: readonly SocialLink[] = [
  *
  * Generate values at https://giscus.app and either set them here or
  * (recommended) provide them via PUBLIC_GISCUS_* env vars at build time.
+ * The mapping/render defaults are site-owned because discussion identity is
+ * `pathname` based and must not drift.
  */
 export const GISCUS: GiscusConfig = {
+  ...SITE_GISCUS,
   enabled: (import.meta.env.PUBLIC_GISCUS_ENABLED ?? 'false') === 'true',
   repo: import.meta.env.PUBLIC_GISCUS_REPO ?? '',
   repoId: import.meta.env.PUBLIC_GISCUS_REPO_ID ?? '',
-  category: import.meta.env.PUBLIC_GISCUS_CATEGORY ?? 'Announcements',
+  category: import.meta.env.PUBLIC_GISCUS_CATEGORY ?? SITE_GISCUS.category,
   categoryId: import.meta.env.PUBLIC_GISCUS_CATEGORY_ID ?? '',
-  mapping: 'pathname',
-  strict: '0',
-  reactionsEnabled: '1',
-  emitMetadata: '0',
-  inputPosition: 'top',
-  loading: 'lazy',
 };
 
 /**
@@ -175,6 +171,6 @@ export const GISCUS: GiscusConfig = {
 export const PAGEFIND = {
   /** Public path where the Pagefind bundle is served. */
   bundlePath: '/_pagefind/',
-  /** Number of results to render per locale. */
+  /** Number of posts per page on listings. */
   pageSize: 10,
 } as const;

@@ -3,7 +3,9 @@ import { SITE } from '~/config';
 import BaseLayout from '~/layouts/BaseLayout.astro';
 import PostList from '~/components/PostList.astro';
 import { useTranslations, localizedPath } from '~/i18n/utils';
-import { getPosts, getCategoriesWithCount, slugify, getCategoryTranslations } from '~/utils/posts';
+import { getPosts, getCategoriesWithCount } from '~/utils/posts';
+import { legacyTaxonomySlug as slugify } from '~/site/urls';
+import { getCategoryTranslations } from '~/site/taxonomy';
 
 interface Props {
   categoryName: string;

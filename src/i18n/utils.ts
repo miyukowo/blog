@@ -10,6 +10,7 @@
  */
 
 import { SITE, type Locale } from '../config';
+import { localePresentation } from '../site/locales';
 import { messages, type UIKey } from './ui';
 
 const DEFAULT_LOCALE: Locale = SITE.defaultLocale;
@@ -118,8 +119,7 @@ export function formatDate(
   const d = typeof date === 'string' ? new Date(date) : date;
   if (Number.isNaN(d.getTime())) return '';
   if (SITE.isoDates) return d.toISOString().slice(0, 10);
-  const lang = locale === 'vi' ? 'vi-VN' : 'en-US';
-  return new Intl.DateTimeFormat(lang, options).format(d);
+  return new Intl.DateTimeFormat(localePresentation[locale].dateLocale, options).format(d);
 }
 
 /** Short ISO 8601 date used for <time datetime="..."> attributes. */
@@ -165,24 +165,27 @@ export function canonicalUrl(pathname: string): string {
   return new URL(pathname, SITE.url).toString();
 }
 
-/** Pretty label for the language switcher. */
+/** Pretty label for the language switcher (site-owned presentation). */
 export function localeLabel(locale: Locale): string {
-  switch (locale) {
-    case 'vi':
-      return 'Tiếng Việt';
-    case 'en':
-    default:
-      return 'English';
-  }
+  return localePresentation[locale].label;
 }
 
 /** ISO BCP 47 language tag for `<html lang>` and date formatters. */
 export function htmlLang(locale: Locale): string {
-  switch (locale) {
-    case 'vi':
-      return 'vi-VN';
-    case 'en':
-    default:
-      return 'en-US';
-  }
+  return localePresentation[locale].htmlLang;
+}
+
+/** Open Graph locale (underscored form) for meta tags. */
+export function ogLocale(locale: Locale): string {
+  return localePresentation[locale].ogLocale;
+}
+
+/** Giscus `data-lang` value for the comments iframe. */
+export function giscusLang(locale: Locale): string {
+  return localePresentation[locale].giscusLang;
+}
+
+/** RSS feed language code (`<language>` element). */
+export function rssLanguage(locale: Locale): string {
+  return localePresentation[locale].rssLanguage;
 }
