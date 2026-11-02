@@ -12,6 +12,7 @@ import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 import satteriExternalLinks from 'satteri-external-links';
 import { katex } from '@nullpinter/satteri-katex';
+import { siteMediaPlugin } from './src/site/markdown';
 import { satteriAlert } from './src/plugins/satteri-alert';
 import { satteriAsHTML } from './src/plugins/satteri-ashtml';
 import { satteriBaseLinks } from './src/plugins/satteri-base-links';
@@ -184,7 +185,9 @@ export default defineConfig({
     // CSS (~25kB gzipped) off pages that don't need it.
     processor: satteri({
       features: { math: true },
-      mdastPlugins: [satteriAlert(), satteriAsHTML(), katex(), satteriMermaid()],
+      // The site media visitor runs before Astro's image collection so both
+      // Markdown and MDX image URLs use the shared CDN policy.
+      mdastPlugins: [siteMediaPlugin(), satteriAlert(), satteriAsHTML(), katex(), satteriMermaid()],
       hastPlugins: [
         satteriHeadingIdsPlugin(),
         satteriAutolinkHeadings(),

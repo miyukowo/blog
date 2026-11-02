@@ -10,13 +10,13 @@
  */
 
 /* global console */
-import { cdnUrl } from './image';
 import { getCollection, type CollectionEntry } from 'astro:content';
 import type { ImageMetadata } from 'astro';
 
 import { SITE, type Locale } from '../config';
 import { withBase } from '../i18n/utils';
 import { localePresentation } from '../site/locales';
+import { resolveMediaUrl } from '../site/media';
 import {
   contentSlug,
   legacyTaxonomySlug,
@@ -242,8 +242,8 @@ export function heroImageSrc(post: Post): string | undefined {
   }
   if (!src) return undefined;
   if (src.startsWith('/') && !src.startsWith('//')) return withBase(src);
-  // Filename từ Cloudinary → CDN URL cho OG image
-  return cdnUrl(src);
+  // Cloudinary upload URL → this site's optimized CDN path (shared policy).
+  return resolveMediaUrl(src);
 }
 
 /**
@@ -257,8 +257,8 @@ export function heroImage(post: Post): ImageMetadata | string | undefined {
   if (!img) return undefined;
   if (typeof img === 'string') {
     if (img.startsWith('/') && !img.startsWith('//')) return withBase(img);
-    // Filename từ CDN → CDN URL để SmartImage optimize được
-    return cdnUrl(img);
+    // Cloudinary upload URL → CDN URL so SmartImage can optimize it.
+    return resolveMediaUrl(img);
   }
   return img as ImageMetadata;
 }

@@ -76,6 +76,12 @@ export default [
       '.obsidian/**',
       '**/.obsidian/**',
       '.idea/**',
+      // Generated/test fixture trees (built by tests, not maintained code).
+      'tests/site/fixtures/**',
+      // Agent worktrees and local package-manager caches.
+      '.teammates/**',
+      '.bun-install/**',
+      '.bun-tmp/**',
     ],
   },
 ];

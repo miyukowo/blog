@@ -1,0 +1,11 @@
+---
+import SmartImage from '../../../../../../src/components/SmartImage.astro';
+import pixel from '../assets/pixel.png';
+---
+
+<html lang="en">
+  <body>
+    <SmartImage src={pixel} alt="imported asset" />
+    <SmartImage src="/pixel.png" alt="public path" />
+  </body>
+</html>
