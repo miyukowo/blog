@@ -113,7 +113,7 @@ function buildIframeSrc(): string {
 
     loadPlyrScript().then(() => {
       const Plyr = (window as unknown as Record<string, unknown>).Plyr as
-        | (new (el: HTMLElement, opts?: Record<string, unknown>) => unknown)
+        | (new (_el: HTMLElement, _opts?: Record<string, unknown>) => unknown)
         | undefined;
       if (!Plyr) return;
 

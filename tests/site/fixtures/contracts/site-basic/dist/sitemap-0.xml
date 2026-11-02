@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
+  <url><loc>https://fixture.example.dev/</loc></url>
+  <url><loc>https://fixture.example.dev/about/</loc></url>
+  <url><loc>https://fixture.example.dev/posts/hello/</loc></url>
+  <url><loc>https://fixture.example.dev/vi/</loc></url>
+  <url><loc>https://fixture.example.dev/vi/about/</loc></url>
+  <url><loc>https://fixture.example.dev/vi/categories/huong-dan/</loc></url>
+  <url><loc>https://fixture.example.dev/vi/posts/xin-chao/</loc></url>
+</urlset>

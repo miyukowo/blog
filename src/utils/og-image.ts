@@ -1,4 +1,4 @@
-/* global process, Buffer, URL */
+/* global process, URL */
 /**
  * OG Image generator using Satori + Resvg.
  *
