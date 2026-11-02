@@ -1,23 +1,22 @@
 // @ts-check
-import { defineConfig, svgoOptimizer } from 'astro/config';
-import process from 'node:process';
-import { readFileSync, writeFileSync, readdirSync } from 'node:fs';
-import { join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { satteri, satteriHeadingIdsPlugin } from '@astrojs/markdown-satteri';
 import mdx from '@astrojs/mdx';
 import sitemap from '@astrojs/sitemap';
-import icon from 'astro-icon';
-import expressiveCode from 'astro-expressive-code';
 import tailwindcss from '@tailwindcss/vite';
-import rehypeSlug from 'rehype-slug';
-import rehypeAutolinkHeadings from 'rehype-autolink-headings';
-import rehypeExternalLinks from 'rehype-external-links';
-import rehypeKatex from 'rehype-katex';
-import remarkGfm from 'remark-gfm';
-import remarkMath from 'remark-math';
-import { remarkAsHtml } from './src/plugins/remark-ashtml.ts';
-import { remarkAlert } from './src/plugins/remark-alert.ts';
-import { remarkCdnImages } from './src/plugins/remark-cdn-images.mjs';
+import expressiveCode from 'astro-expressive-code';
+import icon from 'astro-icon';
+import { defineConfig, fontProviders, svgoOptimizer } from 'astro/config';
+import { readdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
+import process from 'node:process';
+import { fileURLToPath } from 'node:url';
+import satteriExternalLinks from 'satteri-external-links';
+import { katex } from '@nullpinter/satteri-katex';
+import { satteriAlert } from './src/plugins/satteri-alert';
+import { satteriAsHTML } from './src/plugins/satteri-ashtml';
+import { satteriBaseLinks } from './src/plugins/satteri-base-links';
+import { satteriAutolinkHeadings } from './src/plugins/satteri-autolink-headings.ts';
+import { satteriMermaid } from './src/plugins/satteri-mermaid.ts';
 
 import { SITE } from './src/config';
 
@@ -130,6 +129,7 @@ export default defineConfig({
   build: {
     format: 'directory',
   },
+  prefetch: true,
 
   // Image optimization (https://docs.astro.build/en/guides/images/).
   //
@@ -154,6 +154,8 @@ export default defineConfig({
       { protocol: 'https', hostname: 'cdn.jsdelivr.net' },
       { protocol: 'https', hostname: 'res.cloudinary.com' },
       { protocol: 'https', hostname: 'imagedelivery.net' },
+      // Site-owned optimized media CDN (Cloudinary uploads are published
+      // through this host by src/site/media.ts).
       { protocol: 'https', hostname: 'cdn.tvphus.dev' },
     ],
   },
@@ -180,30 +182,19 @@ export default defineConfig({
     // loaded ONLY on pages that opt in via `math: true` in frontmatter,
     // through `<MathStyles />` in the post / page layouts. This keeps the
     // CSS (~25kB gzipped) off pages that don't need it.
-    remarkPlugins: [remarkAlert, remarkAsHtml, remarkGfm, remarkMath, remarkCdnImages],
-    rehypePlugins: [
-      rehypeKatex,
-      rehypeSlug,
-      [
-        rehypeAutolinkHeadings,
-        {
-          behavior: 'wrap',
-          properties: {
-            className: ['heading-anchor'],
-            ariaHidden: 'true',
-            tabIndex: -1,
-          },
-        },
-      ],
-      [
-        rehypeExternalLinks,
-        {
+    processor: satteri({
+      features: { math: true },
+      mdastPlugins: [satteriAlert(), satteriAsHTML(), katex(), satteriMermaid()],
+      hastPlugins: [
+        satteriHeadingIdsPlugin(),
+        satteriAutolinkHeadings(),
+        satteriExternalLinks({
           target: '_blank',
-          rel: ['nofollow', 'noopener', 'noreferrer'],
-        },
+          rel: ['nofollow', 'noopener', 'noreferrer']
+        }),
+        satteriBaseLinks({ base: BASE }),
       ],
-    ],
-    gfm: true,
+    }),
   },
 
   integrations: [
@@ -277,7 +268,7 @@ export default defineConfig({
 
   experimental: {
     contentIntellisense: true,
-    // Astro 6.2.x still exposes SVG optimization as an experimental flag.
+    // Astro 7.x still exposes SVG optimization as an experimental flag.
     // The 6.2 change renamed the old `experimental.svgo` flag to the new
     // `experimental.svgOptimizer` API; it is not a stable top-level config yet.
     svgOptimizer: svgoOptimizer({
@@ -285,4 +276,136 @@ export default defineConfig({
     }),
   },
 
+  fonts: [
+    // Source Sans 3 — main UI font from @fontsource/source-sans-3 npm package
+    {
+      name: 'Source Sans 3',
+      cssVariable: '--font-source-sans-3',
+      provider: fontProviders.local(),
+      options: {
+        variants: [
+          {
+            weight: '400',
+            style: 'normal',
+            src: [
+              './node_modules/@fontsource/source-sans-3/files/source-sans-3-latin-400-normal.woff2',
+            ],
+          },
+          {
+            weight: '400',
+            style: 'normal',
+            src: [
+              './node_modules/@fontsource/source-sans-3/files/source-sans-3-vietnamese-400-normal.woff2',
+            ],
+            // Site-owned Vietnamese subset: upstream ships latin files only, which
+            // would push VI diacritics to a fallback font.
+            unicodeRange: [
+              'U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB',
+            ],
+          },
+          {
+            weight: '600',
+            style: 'normal',
+            src: [
+              './node_modules/@fontsource/source-sans-3/files/source-sans-3-latin-600-normal.woff2',
+            ],
+          },
+          {
+            weight: '600',
+            style: 'normal',
+            src: [
+              './node_modules/@fontsource/source-sans-3/files/source-sans-3-vietnamese-600-normal.woff2',
+            ],
+            // Site-owned Vietnamese subset: upstream ships latin files only, which
+            // would push VI diacritics to a fallback font.
+            unicodeRange: [
+              'U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB',
+            ],
+          },
+          {
+            weight: '700',
+            style: 'normal',
+            src: [
+              './node_modules/@fontsource/source-sans-3/files/source-sans-3-latin-700-normal.woff2',
+            ],
+          },
+          {
+            weight: '700',
+            style: 'normal',
+            src: [
+              './node_modules/@fontsource/source-sans-3/files/source-sans-3-vietnamese-700-normal.woff2',
+            ],
+            // Site-owned Vietnamese subset: upstream ships latin files only, which
+            // would push VI diacritics to a fallback font.
+            unicodeRange: [
+              'U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB',
+            ],
+          },
+          {
+            weight: '900',
+            style: 'normal',
+            src: [
+              './node_modules/@fontsource/source-sans-3/files/source-sans-3-latin-900-normal.woff2',
+            ],
+          },
+          {
+            weight: '900',
+            style: 'normal',
+            src: [
+              './node_modules/@fontsource/source-sans-3/files/source-sans-3-vietnamese-900-normal.woff2',
+            ],
+            // Site-owned Vietnamese subset: upstream ships latin files only, which
+            // would push VI diacritics to a fallback font.
+            unicodeRange: [
+              'U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB',
+            ],
+          },
+        ],
+      },
+    },
+    // Lato — secondary font from @fontsource/lato npm package
+    {
+      name: 'Lato',
+      cssVariable: '--font-lato',
+      provider: fontProviders.local(),
+      options: {
+        variants: [
+          {
+            weight: '300',
+            style: 'normal',
+            src: ['./node_modules/@fontsource/lato/files/lato-latin-300-normal.woff2'],
+          },
+          {
+            weight: '400',
+            style: 'normal',
+            src: ['./node_modules/@fontsource/lato/files/lato-latin-400-normal.woff2'],
+          },
+        ],
+      },
+    },
+    // JetBrains Mono — monospace font from @fontsource/jetbrains-mono npm package
+    {
+      name: 'JetBrains Mono',
+      cssVariable: '--font-jetbrains-mono',
+      provider: fontProviders.local(),
+      options: {
+        variants: [
+          {
+            weight: '400',
+            style: 'normal',
+            src: [
+              './node_modules/@fontsource/jetbrains-mono/files/jetbrains-mono-latin-400-normal.woff2',
+            ],
+          },
+          {
+            weight: '600',
+            style: 'normal',
+            src: [
+              './node_modules/@fontsource/jetbrains-mono/files/jetbrains-mono-latin-600-normal.woff2',
+            ],
+          },
+        ],
+      },
+    },
+  ],
 });

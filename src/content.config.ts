@@ -1,5 +1,5 @@
 /**
- * Content Collections (Astro v6 loader API).
+ * Content Collections (Astro v7 loader API).
  *
  * Folder convention: `src/content/<collection>/<locale>/**`
  *  - posts/en/**  -> EN posts
@@ -11,8 +11,8 @@
  * manually (but they may override it in frontmatter).
  */
 
-import { defineCollection, type SchemaContext } from 'astro:content';
 import { glob } from 'astro/loaders';
+import { defineCollection, type SchemaContext } from 'astro:content';
 import { z } from 'zod';
 
 import { SITE } from './config';
@@ -59,6 +59,13 @@ const baseFrontmatter = ({ image }: SchemaContext) =>
      * off posts/pages that don't use math.
      */
     math: z.boolean().default(false),
+    /**
+     * Opt in to Mermaid diagram rendering. When `true`, the layout
+     * loads the Mermaid client library and initializes diagrams.
+     * Defaults to `false` to keep the heavy Mermaid library off posts/pages
+     * that don't use it.
+     */
+    mermaid: z.boolean().default(false),
     /** Optional locale override; otherwise inferred from path. */
     lang: localeEnum.optional(),
     /**

@@ -271,7 +271,9 @@ export function heroImage(post: Post): ImageMetadata | string | undefined {
  * `/vi/categories/huong-dan/` never change. Upstream's Unicode slug utility
  * remains authoritative for its own tests.
  */
-export { legacyTaxonomySlug as slugify };
+// Upstream's Unicode slug utility stays exported/meaningful for its own tests;
+// this blog's published taxonomy URLs use the legacy policy below.
+export { slugify } from './slugify';
 
 /** Build the URL for a tag listing page in a given locale. */
 export function tagPath(locale: Locale, tag: string): string {
