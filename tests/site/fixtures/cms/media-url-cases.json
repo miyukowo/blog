@@ -1,0 +1,30 @@
+{
+  "description": "Cloudinary URLs a CMS save can produce with output_filename_only: false. `src/site/media.ts` must map every one to the optimized CDN path; a bare filename must NOT be treated as a full URL.",
+  "cases": [
+    {
+      "name": "full URL with derived transformations (use_transformations: true)",
+      "cmsUrl": "https://res.cloudinary.com/tvphus/image/upload/q_auto,f_auto/blog/cms-validation/hero.jpg",
+      "expectedRenderUrl": "https://cdn.tvphus.dev/image/optimized/blog/cms-validation/hero.jpg"
+    },
+    {
+      "name": "full URL without transformations",
+      "cmsUrl": "https://res.cloudinary.com/tvphus/image/upload/blog/cms-validation/hero.jpg",
+      "expectedRenderUrl": "https://cdn.tvphus.dev/image/optimized/blog/cms-validation/hero.jpg"
+    },
+    {
+      "name": "versioned nested public id",
+      "cmsUrl": "https://res.cloudinary.com/tvphus/image/upload/q_auto,f_auto/v1730000000/blog/cms-validation/nested/hero.webp",
+      "expectedRenderUrl": "https://cdn.tvphus.dev/image/optimized/v1730000000/blog/cms-validation/nested/hero.webp"
+    },
+    {
+      "name": "query string is preserved",
+      "cmsUrl": "https://res.cloudinary.com/tvphus/image/upload/q_auto,f_auto/blog/cms-validation/hero.jpg?v=2",
+      "expectedRenderUrl": "https://cdn.tvphus.dev/image/optimized/blog/cms-validation/hero.jpg?v=2"
+    },
+    {
+      "name": "bare filename is not a full URL and is left untouched (must never be saved by the CMS)",
+      "cmsUrl": "blog/cms-validation/hero.jpg",
+      "expectedRenderUrl": "blog/cms-validation/hero.jpg"
+    }
+  ]
+}

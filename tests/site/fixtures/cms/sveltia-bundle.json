@@ -1,0 +1,16 @@
+{
+  "package": "@sveltia/cms",
+  "version": "0.256.1",
+  "registry": "https://registry.npmjs.org/@sveltia/cms",
+  "publishedAt": "2026-10-31T00:29:50Z",
+  "verifiedAt": "2026-11-02",
+  "cdn": "https://unpkg.com/@sveltia/cms@0.256.1/dist/sveltia-cms.js",
+  "integrity": "sha384-LPT86oZkLhmoF84O1jKZBSaFJOVvKv8sjXDKap1SOaSwzbC8F6HH7rTJWekmAzG9",
+  "sha256": "b1692493e7bb56303a5bfab08f09d334f2ed0e85b96b17d0f2e2cccb10724cb6",
+  "bytes": 2635006,
+  "checks": [
+    "npm dist-tag latest was 0.256.1 and the v0.256.1 GitHub release was published 2026-10-31",
+    "the unpkg URL above returned HTTP 200 and its bytes hashed to the sha384/SRI value recorded here",
+    "https://unpkg.com/@sveltia/cms@0.256.1/schema/sveltia-cms.json accepts public/cms/config.yml unchanged"
+  ]
+}

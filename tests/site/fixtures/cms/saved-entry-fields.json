@@ -1,0 +1,41 @@
+{
+  "description": "Simulated Sveltia save payload for one translated draft, used to prove that CMS output survives save -> reload and matches the Astro content schema. Values are intentionally typed like the CMS widgets produce them (dates as YYYY-MM-DD strings, hero image as a full Cloudinary URL).",
+  "en": {
+    "title": "Validating the CMS preview branch",
+    "description": "Temporary translated draft used to verify save/reload, media output and rendering on an isolated CMS validation branch.",
+    "postSlug": "cms-validation-save-reload",
+    "translationKey": "cms-validation-save-reload",
+    "pubDate": "2026-11-02",
+    "updatedDate": "2026-11-03",
+    "heroImage": "https://res.cloudinary.com/tvphus/image/upload/q_auto,f_auto/blog/cms-validation/hero.jpg",
+    "heroImageAlt": "Preview branch test image",
+    "tags": ["cms", "validation"],
+    "categories": ["Validation"],
+    "toc": true,
+    "pinned": false,
+    "draft": true,
+    "comments": false,
+    "math": false,
+    "unlisted": true,
+    "body": "A translated draft created and edited on a `codex/cms-validation-<run>` branch.\n\nIt must render, then be deleted again."
+  },
+  "vi": {
+    "title": "Kiểm tra nhánh CMS preview",
+    "description": "Bản nháp song ngữ tạm thời dùng để kiểm tra lưu/tải lại, media và render trên nhánh CMS validation riêng.",
+    "postSlug": "cms-validation-save-reload",
+    "translationKey": "cms-validation-save-reload",
+    "pubDate": "2026-11-02",
+    "updatedDate": "2026-11-03",
+    "heroImage": "https://res.cloudinary.com/tvphus/image/upload/q_auto,f_auto/blog/cms-validation/hero.jpg",
+    "heroImageAlt": "Ảnh kiểm tra nhánh preview",
+    "tags": ["cms", "validation"],
+    "categories": ["Validation"],
+    "toc": true,
+    "pinned": false,
+    "draft": true,
+    "comments": false,
+    "math": false,
+    "unlisted": true,
+    "body": "Bản nháp dịch được tạo và sửa trên nhánh `codex/cms-validation-<run>`.\n\nPhải render được, sau đó xóa đi."
+  }
+}

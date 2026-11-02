@@ -13,19 +13,11 @@
  *   - docs/               (maintenance/handoff documentation)
  *   - src/site/           (local site policy modules; added by Task 2, so its
  *                          absence must not fail the check)
+ *   - public/cms/         (Sveltia admin shell + config, adopted by Task 6)
  *   - explicit local/shared files changed by the maintainability work
  *
- * CMS config/admin assets are currently recorded as deferred debt below (see
- * DEFERRED_FORMATTING_DEBT); add `public/cms` to SCOPED_PATHS when Task 6
- * reformats them. `bunfig.toml` is intentionally not listed because Prettier
- * has no TOML parser.
- *
- * Pre-existing imported formatting debt is recorded, not reformatted:
- * `public/cms/config.yml` and `public/cms/index.html` are still upstream CMS
- * files slated for the Task 6 CMS rewrite. Reformatting them now would create
- * an out-of-scope `public/` diff, so they are reported as deferred and are
- * expected to be removed from DEFERRED_FORMATTING_DEBT once Task 6 adopts
- * them. Unchanged upstream theme source and authored content are never
+ * `bunfig.toml` is intentionally not listed because Prettier has no TOML
+ * parser. Unchanged upstream theme source and authored content are never
  * touched.
  *
  * Usage: node scripts/format-site-check.mjs [--check|--write]
@@ -44,27 +36,12 @@ const SCOPED_PATHS = [
   'tests/site',
   'docs',
   'src/site',
+  'public/cms',
   'src/components/VideoEmbed.astro',
   'src/utils/og-image.ts',
   'package.json',
   'eslint.config.js',
   '.prettierrc.json',
-];
-
-/**
- * Recorded imported formatting debt: reported here, not reformatted, and not
- * part of the failing check until the owning task adopts the file.
- */
-const DEFERRED_FORMATTING_DEBT = [
-  {
-    path: 'public/cms/config.yml',
-    reason: 'imported CMS config slated for the Task 6 rewrite (public/ is out of Task 1 scope)',
-  },
-  {
-    path: 'public/cms/index.html',
-    reason:
-      'imported CMS admin shell slated for the Task 6 rewrite (public/ is out of Task 1 scope)',
-  },
 ];
 
 const mode = process.argv.includes('--write') ? '--write' : '--check';
@@ -86,9 +63,6 @@ if (matchedPaths.length === 0) {
 }
 
 console.log(`format-site-check (${mode}): ${matchedPaths.join(', ')}`);
-for (const entry of DEFERRED_FORMATTING_DEBT) {
-  console.log(`  deferred formatting debt: ${entry.path} - ${entry.reason}`);
-}
 
 const child = spawn(
   process.execPath,
