@@ -61,6 +61,8 @@ jobs:
           PUBLIC_GISCUS_ENABLED: 'false'
         run: bun run build
 
-      # Validate the directory this workflow built; never rebuild here.
+      # Validate the directory this workflow built against CURRENT source
+      # expectations (no historical snapshot, no self-blessed output); never
+      # rebuild here.
       - name: Validate built artifact
-        run: node scripts/validate-built-site.mjs --dist dist --profile production --site-url https://blog.tvphus.dev
+        run: node scripts/validate-built-site.mjs --dist dist --mode routine --profile production --site-url https://blog.tvphus.dev

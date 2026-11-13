@@ -43,3 +43,5 @@ pagefind/
 .obsidian/
 # temporary SEO fixture project used by tests/site/seo.test.mjs
 .tmp-seo-fixtures/
+# temporary publishing-validation fixture project
+.tmp-publishing-fixtures/

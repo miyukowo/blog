@@ -195,6 +195,66 @@ test('a preview artifact without noindex headers fails validation', async (t) =>
   await expectInvalid(validatePreview(fixture), /noindex|_headers/);
 });
 
+test('a scoped /cms/* noindex rule does not prove global preview protection', async (t) => {
+  const fixture = await makePreviewFixture(t);
+  await writeFile(
+    join(fixture.distDir, '_headers'),
+    ['/cms/*', '  X-Robots-Tag: noindex', '', '/*', '  Cache-Control: no-store', ''].join('\n'),
+  );
+  await expectInvalid(validatePreview(fixture), /catch-all|noindex/);
+});
+
+test('a comment or noindexing token does not prove global preview protection', async (t) => {
+  for (const headers of [
+    '# X-Robots-Tag: noindex\n/*\n  Cache-Control: no-store\n',
+    '/*\n  X-Robots-Tag: noindexing\n',
+  ]) {
+    const fixture = await makePreviewFixture(t);
+    await writeFile(join(fixture.distDir, '_headers'), headers);
+    await expectInvalid(validatePreview(fixture), /catch-all|noindex/);
+  }
+});
+
+test('production accepts a harmless CMS-only noindex rule but rejects site-wide noindex', async (t) => {
+  const scoped = await makeValidFixture(t);
+  await writeFile(
+    join(scoped.distDir, '_headers'),
+    [
+      '/*',
+      '  Cache-Control: public, max-age=0, must-revalidate',
+      '',
+      '/cms/*',
+      '  X-Robots-Tag: noindex',
+      '',
+    ].join('\n'),
+  );
+  const result = await validateProduction(scoped);
+  assert.equal(result.profile, 'production');
+
+  const global = await makeValidFixture(t);
+  await writeFile(
+    join(global.distDir, '_headers'),
+    ['/*', '  X-Robots-Tag: noindex, nofollow', ''].join('\n'),
+  );
+  await expectInvalid(validateProduction(global), /site-wide|noindex/);
+});
+
+test('routine mode refuses to certify an artifact without a build manifest', async (t) => {
+  const fixture = await makeValidFixture(t);
+  await assert.rejects(
+    validateBuiltSite({
+      distDir: fixture.distDir,
+      profile: 'production',
+      mode: 'routine',
+      siteUrl: FIXTURE_ORIGIN,
+      sourceDir: fixture.sourceDir,
+      allowedChanges: {},
+    }),
+    (error) =>
+      error instanceof BuiltSiteValidationError && /build manifest missing/.test(error.message),
+  );
+});
+
 test('the validator CLI exits nonzero on a broken artifact and zero after restore', async (t) => {
   const fixture = await makeValidFixture(t);
   const allowedPath = join(fixture.dir, 'allowed.json');

@@ -20,7 +20,7 @@
     "test": "bun test",
     "lint": "eslint . --max-warnings=0",
     "lint:fix": "eslint . --fix",
-    "test:site": "node --test tests/site/",
+    "test:site": "node --test --test-concurrency=1 tests/site/",
     "verify:site": "node scripts/verify-site.mjs --profile offline",
     "format:site:check": "node scripts/format-site-check.mjs --check",
     "format": "prettier --write \"**/*.{astro,ts,tsx,js,jsx,md,mdx,css,json}\"",

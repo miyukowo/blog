@@ -1,31 +1,38 @@
 #!/usr/bin/env node
 /**
- * Read-only validation of an already-built site directory (review repair Task 6).
+ * Read-only validation of an already-built site directory (review repair Task 6,
+ * extended by follow-up Task 2).
  *
  * This is the gate that runs immediately before the Cloudflare upload. It never
- * rebuilds and never writes: it captures the supplied `dist/` with the existing
- * `captureSite()` contract and asserts it against the measured baseline with
- * the shared exact allowances in `scripts/site-allowed-changes.mjs`. In
- * particular, it validates the directory *after* `prepare-preview.mjs` and
- * `mark-preview-noindex.mjs`, so a separate rebuild cannot conceal a broken
- * deployment directory.
+ * rebuilds and never writes.
  *
- * Checks:
- *  - source content identities and body hashes (protected content),
- *  - HTML routes/canonical/lang/hreflang and robots metadata,
- *  - feed language/items, sitemap URLs, generated OG files and Pagefind output,
- *  - configured-origin consistency across HTML, feeds and sitemap (every URL
- *    origin must equal the explicit expected origin; origins are never
- *    normalized into a placeholder),
+ * Two modes:
+ *  - `routine` (default): derive expected routes, feeds, sitemap identities,
+ *    generated OG files, Pagefind count and per-route metadata from the
+ *    CURRENT checked-out source. A build manifest under `.astro/` binds the
+ *    artifact to the source fingerprint, so a source edit without a rebuild is
+ *    rejected as stale. Normal CMS publishing therefore needs no baseline edit.
+ *  - `historical` (explicit `--baseline` / `--mode historical`): compare the
+ *    artifact against the measured November migration snapshot with the shared
+ *    exact allowances. Used only for migration preflight/regression checks.
+ *
+ * In both modes it validates the directory *after* `prepare-preview.mjs` and
+ * `mark-preview-noindex.mjs`, so a separate rebuild cannot conceal a broken
+ * deployment directory, and it checks:
+ *  - configured-origin consistency across HTML, feeds and sitemap,
  *  - every referenced OG image and every captured generated OG PNG exists,
- *  - preview only: noindex headers, isolated CMS branch/site URL, tracked
- *    production CMS still on main, and no production Giscus mount,
- *  - production: no global noindex rule and built CMS still targeting main.
+ *  - preview only: effective catch-all noindex headers (scope-aware), isolated
+ *    CMS branch/site URL, tracked production CMS still on main, and no
+ *    production Giscus mount,
+ *  - production: no effective site-wide noindex rule and built CMS still
+ *    targeting main.
  *
  * Usage:
  *   node scripts/validate-built-site.mjs --dist dist \
  *     --profile production|preview --site-url <origin> \
- *     [--source <dir>] [--baseline <baseline.json>] [--allowed <allowed.json>] \
+ *     [--source <dir>] [--mode routine|historical] \
+ *     [--manifest .astro/site-build-manifest.json] \
+ *     [--baseline <baseline.json>] [--allowed <allowed.json>] \
  *     [--cms-branch codex/cms-validation-<run>]
  */
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
@@ -37,6 +44,13 @@ import { parse as parseYaml } from 'yaml';
 
 import { assertSiteContract, captureSite, SiteContractError } from './site-contract.mjs';
 import { ALLOWED_CHANGES } from './site-allowed-changes.mjs';
+import { hasGlobalNoindex } from './header-policy.mjs';
+import {
+  BUILD_MANIFEST_RELATIVE_PATH,
+  computeSourceFingerprint,
+} from '../src/site/build-manifest.ts';
+import { buildSourceExpectations, expectedRouteMetadata } from './site-source-expectations.mjs';
+import { normalizeSitemapPathname } from '../src/site/sitemap.ts';
 
 const SCRIPTS_DIR = dirname(fileURLToPath(import.meta.url));
 export const REPO_ROOT = resolve(SCRIPTS_DIR, '..');
@@ -48,6 +62,7 @@ export const DEFAULT_BASELINE_PATH = join(
 );
 
 export const PROFILES = ['production', 'preview'];
+export const MODES = ['routine', 'historical'];
 const PREVIEW_BRANCH_PATTERN = /^codex\/cms-validation-[A-Za-z0-9._-]{1,64}$/;
 const PRODUCTION_REPO = 'miyukowo/blog';
 const PRODUCTION_BRANCH = 'main';
@@ -226,8 +241,10 @@ function collectPreviewViolations({ distDir, sourceDir, expectedOrigin, cmsBranc
   const headersPath = join(distDir, '_headers');
   if (!existsSync(headersPath)) {
     violations.push('preview: missing built _headers file');
-  } else if (!/X-Robots-Tag:\s*noindex/i.test(readFileSync(headersPath, 'utf8'))) {
-    violations.push('preview: _headers must set X-Robots-Tag: noindex');
+  } else if (!hasGlobalNoindex(readFileSync(headersPath, 'utf8'))) {
+    violations.push(
+      'preview: _headers must set an effective catch-all X-Robots-Tag: noindex on /*',
+    );
   }
 
   violations.push(...collectGiscusMountViolations(distDir));
@@ -293,11 +310,8 @@ function collectProductionViolations({ distDir, sourceDir }) {
   const violations = [];
 
   const headersPath = join(distDir, '_headers');
-  if (
-    existsSync(headersPath) &&
-    /X-Robots-Tag:\s*noindex/i.test(readFileSync(headersPath, 'utf8'))
-  ) {
-    violations.push('production: built _headers must not set X-Robots-Tag: noindex');
+  if (existsSync(headersPath) && hasGlobalNoindex(readFileSync(headersPath, 'utf8'))) {
+    violations.push('production: built _headers must not set a site-wide X-Robots-Tag: noindex');
   }
 
   const builtConfigPath = join(distDir, 'cms', 'config.yml');
@@ -342,17 +356,230 @@ function detectToolchain() {
   return { installedAstro };
 }
 
+/** Compare built routes and their metadata against current-source expectations. */
+function collectRoutineRouteViolations(contract, expectations) {
+  const violations = [];
+  const actualByPath = new Map();
+  for (const route of contract.htmlRoutes ?? []) {
+    if (!route || typeof route.path !== 'string') continue;
+    if (actualByPath.has(route.path)) {
+      violations.push(`htmlRoutes[${route.path}]: duplicate route in artifact`);
+      continue;
+    }
+    actualByPath.set(route.path, route);
+  }
+
+  for (const [path, expectedRoute] of expectations.routeByPath) {
+    const actual = actualByPath.get(path);
+    if (!actual) {
+      violations.push(`htmlRoutes[${path}]: missing route expected from current source`);
+      continue;
+    }
+    const expected = expectedRouteMetadata(expectations, expectedRoute);
+
+    for (const field of ['canonical', 'lang', 'robots']) {
+      if (actual[field] === expected[field]) continue;
+      violations.push(
+        `htmlRoutes[${path}].${field}: expected ${JSON.stringify(expected[field])}, got ${JSON.stringify(actual[field] ?? '')}`,
+      );
+    }
+
+    if (expected.ogImage !== undefined) {
+      if (actual.ogImage !== expected.ogImage) {
+        violations.push(
+          `htmlRoutes[${path}].ogImage: expected ${JSON.stringify(expected.ogImage)}, got ${JSON.stringify(actual.ogImage ?? '')}`,
+        );
+      }
+    } else if (!actual.ogImage) {
+      violations.push(`htmlRoutes[${path}].ogImage: expected a non-empty OG reference`);
+    }
+
+    const actualHreflangs = actual.hreflangs ?? {};
+    const keys = [
+      ...new Set([...Object.keys(expected.hreflangs), ...Object.keys(actualHreflangs)]),
+    ].sort();
+    for (const key of keys) {
+      const expectedValue = expected.hreflangs[key];
+      const actualValue = actualHreflangs[key];
+      if (expectedValue === actualValue) continue;
+      violations.push(
+        `htmlRoutes[${path}].hreflangs.${key}: expected ${JSON.stringify(expectedValue)}, got ${JSON.stringify(actualValue)}`,
+      );
+    }
+  }
+
+  for (const path of actualByPath.keys()) {
+    if (expectations.routeByPath.has(path)) continue;
+    violations.push(`htmlRoutes[${path}]: unexpected route not derivable from current source`);
+  }
+
+  return violations;
+}
+
+/** Compare RSS feeds (existence, language and ordered items) with current source. */
+function collectRoutineFeedViolations(contract, expectations) {
+  const violations = [];
+  const actualFeeds = contract.feeds ?? {};
+  for (const [path, expected] of Object.entries(expectations.feeds)) {
+    const actual = actualFeeds[path];
+    if (!actual) {
+      violations.push(`feeds[${path}]: missing feed expected from current source`);
+      continue;
+    }
+    if (actual.language !== expected.language) {
+      violations.push(
+        `feeds[${path}].language: expected ${JSON.stringify(expected.language)}, got ${JSON.stringify(actual.language ?? '')}`,
+      );
+    }
+    const actualItems = Array.isArray(actual.items) ? actual.items : [];
+    if (JSON.stringify(actualItems) !== JSON.stringify(expected.items)) {
+      violations.push(
+        `feeds[${path}].items: expected ${JSON.stringify(expected.items)}, got ${JSON.stringify(actualItems)}`,
+      );
+    }
+  }
+  for (const path of Object.keys(actualFeeds)) {
+    if (Object.hasOwn(expectations.feeds, path)) continue;
+    violations.push(`feeds[${path}]: unexpected feed not derivable from current source`);
+  }
+  return violations;
+}
+
+/** Compare sitemap identities against current-source routes. */
+function collectRoutineSitemapViolations(contract, expectations) {
+  const violations = [];
+  const expectedByPath = new Map(
+    expectations.sitemapUrls.map((url) => [normalizeSitemapPathname(url), url]),
+  );
+  const actualByPath = new Map(
+    (contract.sitemapUrls ?? []).map((url) => [normalizeSitemapPathname(url), url]),
+  );
+
+  for (const [pathname, url] of expectedByPath) {
+    if (!actualByPath.has(pathname)) {
+      violations.push(`sitemapUrls: missing URL expected from current source ${url}`);
+    }
+  }
+  for (const [pathname, url] of actualByPath) {
+    if (!expectedByPath.has(pathname)) {
+      violations.push(`sitemapUrls: unexpected URL not derivable from current source ${url}`);
+    }
+  }
+  return violations;
+}
+
+/** Compare generated OG identities (drafts absent, published unlisted included). */
+function collectRoutineOgViolations(contract, expectations) {
+  const violations = [];
+  const expected = new Set(expectations.generatedOgPaths);
+  const actual = new Set(contract.generatedOgPaths ?? []);
+  for (const path of expected) {
+    if (!actual.has(path)) {
+      violations.push(`generatedOgPaths: missing generated OG image ${path}`);
+    }
+  }
+  for (const path of actual) {
+    if (!expected.has(path)) {
+      violations.push(`generatedOgPaths: unexpected generated OG image ${path}`);
+    }
+  }
+  return violations;
+}
+
+/** Compare the Pagefind count/languages with current-source indexable pages. */
+function collectRoutineSearchViolations(contract, expectations) {
+  const violations = [];
+  const actual = contract.search;
+  if (!actual) {
+    violations.push('search: missing search evidence (Pagefind output)');
+    return violations;
+  }
+  if (actual.indexedPages !== expectations.search.indexedPages) {
+    violations.push(
+      `search.indexedPages: expected ${expectations.search.indexedPages}, got ${actual.indexedPages}`,
+    );
+  }
+  if (JSON.stringify(actual.languages) !== JSON.stringify(expectations.search.languages)) {
+    violations.push(
+      `search.languages: expected ${JSON.stringify(expectations.search.languages)}, got ${JSON.stringify(actual.languages)}`,
+    );
+  }
+  return violations;
+}
+
+function collectRoutineStaticViolations(distDir, expectations) {
+  const violations = [];
+  for (const relativePath of expectations.staticPublicHtml) {
+    if (!existsSync(join(distDir, ...relativePath.split('/')))) {
+      violations.push(`static: missing copied public HTML file ${relativePath}`);
+    }
+  }
+  return violations;
+}
+
+/** Validate the build manifest binding and reject a stale artifact. */
+function collectManifestViolations({ sourceDir, manifestPath }) {
+  const resolvedPath = manifestPath
+    ? isAbsolute(manifestPath)
+      ? manifestPath
+      : resolve(manifestPath)
+    : join(sourceDir, BUILD_MANIFEST_RELATIVE_PATH);
+
+  if (!existsSync(resolvedPath)) {
+    return {
+      violations: [
+        `routine: build manifest missing at ${resolvedPath}; rebuild the site before validating`,
+      ],
+      manifestPath: resolvedPath,
+      manifest: undefined,
+    };
+  }
+
+  let manifest;
+  try {
+    manifest = JSON.parse(readFileSync(resolvedPath, 'utf8'));
+  } catch (error) {
+    return {
+      violations: [`routine: build manifest is not valid JSON: ${error.message}`],
+      manifestPath: resolvedPath,
+      manifest: undefined,
+    };
+  }
+
+  const violations = [];
+  if (manifest?.schemaVersion !== 1) {
+    violations.push(`routine: unsupported build manifest schemaVersion ${manifest?.schemaVersion}`);
+  }
+
+  let currentFingerprint;
+  try {
+    currentFingerprint = computeSourceFingerprint(sourceDir).fingerprint;
+  } catch (error) {
+    violations.push(`routine: cannot fingerprint current source: ${error.message}`);
+  }
+  if (currentFingerprint && currentFingerprint !== manifest?.sourceFingerprint) {
+    violations.push(
+      'routine: source changed since the last build (stale artifact); rebuild before validating. ' +
+        'Expected source expectations are derived from current source, not from this output.',
+    );
+  }
+
+  return { violations, manifestPath: resolvedPath, manifest };
+}
+
 /**
  * Validate an already-built directory without rebuilding or writing.
  *
- * @returns {Promise<{ contract: object, profile: string, siteUrl: string, summary: string }>}
+ * @returns {Promise<{ contract: object, profile: string, mode: string, siteUrl: string, summary: string }>}
  */
 export async function validateBuiltSite({
   distDir = 'dist',
   profile = 'production',
+  mode,
   siteUrl,
   sourceDir = REPO_ROOT,
-  baselinePath = DEFAULT_BASELINE_PATH,
+  manifestPath,
+  baselinePath,
   allowedChanges = ALLOWED_CHANGES,
   cmsBranch,
   sourceRevision,
@@ -360,6 +587,12 @@ export async function validateBuiltSite({
   if (!PROFILES.includes(profile)) {
     throw new BuiltSiteValidationError([
       `unknown profile "${profile}"; expected ${PROFILES.join('|')}`,
+    ]);
+  }
+  const resolvedMode = mode ?? (baselinePath ? 'historical' : 'routine');
+  if (!MODES.includes(resolvedMode)) {
+    throw new BuiltSiteValidationError([
+      `unknown mode "${resolvedMode}"; expected ${MODES.join('|')}`,
     ]);
   }
   const resolvedDist = resolve(distDir);
@@ -370,17 +603,43 @@ export async function validateBuiltSite({
   if (!existsSync(resolvedSource)) {
     throw new BuiltSiteValidationError([`source directory does not exist: ${resolvedSource}`]);
   }
-  const resolvedBaselinePath = isAbsolute(baselinePath) ? baselinePath : resolve(baselinePath);
-  if (!existsSync(resolvedBaselinePath)) {
-    throw new BuiltSiteValidationError([`baseline does not exist: ${resolvedBaselinePath}`]);
+
+  if (resolvedMode === 'historical' && !baselinePath) {
+    throw new BuiltSiteValidationError(['historical mode requires --baseline <baseline.json>']);
   }
 
   const expectedOrigin = normalizeExpectedOrigin(siteUrl);
+  const violations = [];
+
   let baseline;
-  try {
-    baseline = JSON.parse(readFileSync(resolvedBaselinePath, 'utf8'));
-  } catch (error) {
-    throw new BuiltSiteValidationError([`baseline is not valid JSON: ${error.message}`]);
+  let resolvedBaselinePath;
+  if (resolvedMode === 'historical') {
+    resolvedBaselinePath = isAbsolute(baselinePath) ? baselinePath : resolve(baselinePath);
+    if (!existsSync(resolvedBaselinePath)) {
+      throw new BuiltSiteValidationError([`baseline does not exist: ${resolvedBaselinePath}`]);
+    }
+    try {
+      baseline = JSON.parse(readFileSync(resolvedBaselinePath, 'utf8'));
+    } catch (error) {
+      throw new BuiltSiteValidationError([`baseline is not valid JSON: ${error.message}`]);
+    }
+  }
+
+  let expectations;
+  let manifestInfo;
+  if (resolvedMode === 'routine') {
+    manifestInfo = collectManifestViolations({ sourceDir: resolvedSource, manifestPath });
+    violations.push(...manifestInfo.violations);
+    try {
+      expectations = buildSourceExpectations({
+        sourceDir: resolvedSource,
+        siteUrl: expectedOrigin,
+      });
+    } catch (error) {
+      throw new BuiltSiteValidationError([
+        `routine: cannot derive current-source expectations: ${error.message}`,
+      ]);
+    }
   }
 
   let contract;
@@ -389,31 +648,40 @@ export async function validateBuiltSite({
       distDir: resolvedDist,
       sourceDir: resolvedSource,
       sourceRevision:
-        sourceRevision ?? process.env.GITHUB_SHA ?? process.env.GITHUB_REF_NAME ?? 'artifact',
+        resolvedMode === 'routine'
+          ? (manifestInfo?.manifest?.sourceRevision ?? sourceRevision ?? 'artifact')
+          : (sourceRevision ?? process.env.GITHUB_SHA ?? process.env.GITHUB_REF_NAME ?? 'artifact'),
       baseline,
       sourceBranch: process.env.GITHUB_REF_NAME ?? 'artifact',
-      scope: `validate-built-site.mjs --profile ${profile}`,
+      scope: `validate-built-site.mjs --mode ${resolvedMode} --profile ${profile}`,
       toolchain: detectToolchain(),
     });
   } catch (error) {
     throw new BuiltSiteValidationError([`capture: ${error.message}`]);
   }
 
-  const violations = [];
+  if (resolvedMode === 'historical') {
+    const baselineOrigin = inferBaselineOrigin(baseline);
+    const comparisonBaseline =
+      profile === 'preview' ? rebaseOrigins(baseline, baselineOrigin, expectedOrigin) : baseline;
+    const comparisonAllowed =
+      profile === 'preview'
+        ? rebaseOrigins(allowedChanges, baselineOrigin, expectedOrigin)
+        : allowedChanges;
 
-  const baselineOrigin = inferBaselineOrigin(baseline);
-  const comparisonBaseline =
-    profile === 'preview' ? rebaseOrigins(baseline, baselineOrigin, expectedOrigin) : baseline;
-  const comparisonAllowed =
-    profile === 'preview'
-      ? rebaseOrigins(allowedChanges, baselineOrigin, expectedOrigin)
-      : allowedChanges;
-
-  try {
-    assertSiteContract(contract, comparisonBaseline, { allowedChanges: comparisonAllowed });
-  } catch (error) {
-    if (error instanceof SiteContractError) violations.push(...error.violations);
-    else violations.push(error.message);
+    try {
+      assertSiteContract(contract, comparisonBaseline, { allowedChanges: comparisonAllowed });
+    } catch (error) {
+      if (error instanceof SiteContractError) violations.push(...error.violations);
+      else violations.push(error.message);
+    }
+  } else {
+    violations.push(...collectRoutineRouteViolations(contract, expectations));
+    violations.push(...collectRoutineFeedViolations(contract, expectations));
+    violations.push(...collectRoutineSitemapViolations(contract, expectations));
+    violations.push(...collectRoutineOgViolations(contract, expectations));
+    violations.push(...collectRoutineSearchViolations(contract, expectations));
+    violations.push(...collectRoutineStaticViolations(resolvedDist, expectations));
   }
 
   violations.push(...collectOriginViolations(contract, expectedOrigin));
@@ -439,14 +707,16 @@ export async function validateBuiltSite({
   return {
     contract,
     profile,
+    mode: resolvedMode,
     siteUrl: expectedOrigin,
     baselinePath: resolvedBaselinePath,
+    manifestPath: manifestInfo?.manifestPath,
     summary: `${contract.htmlRoutes.length} routes, ${Object.keys(contract.feeds).length} feeds, ${contract.sitemapUrls.length} sitemap URLs, ${contract.generatedOgPaths.length} generated OG files, ${contract.search.indexedPages} Pagefind pages`,
   };
 }
 
 const USAGE =
-  'usage: node scripts/validate-built-site.mjs --dist <dir> --profile production|preview --site-url <origin> [--source <dir>] [--baseline <baseline.json>] [--allowed <allowed.json>] [--cms-branch <branch>]';
+  'usage: node scripts/validate-built-site.mjs --dist <dir> --profile production|preview --site-url <origin> [--source <dir>] [--mode routine|historical] [--manifest .astro/site-build-manifest.json] [--baseline <baseline.json>] [--allowed <allowed.json>] [--cms-branch <branch>]';
 
 function parseArguments(argv) {
   const options = {
@@ -454,7 +724,9 @@ function parseArguments(argv) {
     profile: 'production',
     siteUrl: undefined,
     source: REPO_ROOT,
-    baseline: DEFAULT_BASELINE_PATH,
+    mode: undefined,
+    manifest: undefined,
+    baseline: undefined,
     allowed: undefined,
     cmsBranch: undefined,
   };
@@ -471,12 +743,33 @@ function parseArguments(argv) {
     else if (argument === '--profile') options.profile = take();
     else if (argument === '--site-url') options.siteUrl = take();
     else if (argument === '--source') options.source = take();
+    else if (argument === '--mode') options.mode = take();
+    else if (argument === '--manifest') options.manifest = take();
     else if (argument === '--baseline') options.baseline = take();
     else if (argument === '--allowed') options.allowed = take();
     else if (argument === '--cms-branch') options.cmsBranch = take();
     else throw new BuiltSiteValidationError([`unknown argument "${argument}"`]);
   }
   if (!options.siteUrl) throw new BuiltSiteValidationError(['missing required option --site-url']);
+
+  const mode = options.mode ?? (options.baseline ? 'historical' : 'routine');
+  if (!MODES.includes(mode)) {
+    throw new BuiltSiteValidationError([`unknown mode "${mode}"; expected ${MODES.join('|')}`]);
+  }
+  if (mode === 'historical' && !options.baseline) {
+    throw new BuiltSiteValidationError(['historical mode requires --baseline <baseline.json>']);
+  }
+  if (mode === 'routine' && options.baseline) {
+    throw new BuiltSiteValidationError([
+      'routine mode derives expectations from current source; do not pass --baseline',
+    ]);
+  }
+  if (mode === 'routine' && options.allowed) {
+    throw new BuiltSiteValidationError([
+      'routine mode does not use --allowed; pass --mode historical for migration allowances',
+    ]);
+  }
+  options.mode = mode;
   return options;
 }
 
@@ -493,20 +786,28 @@ async function main() {
     const result = await validateBuiltSite({
       distDir: options.dist,
       profile: options.profile,
+      mode: options.mode,
       siteUrl: options.siteUrl,
       sourceDir: options.source,
+      manifestPath: options.manifest,
       baselinePath: options.baseline,
       allowedChanges,
       cmsBranch: options.cmsBranch,
     });
     console.log(
-      `validate-built-site: PASS profile=${result.profile} dist=${resolve(options.dist)} site=${result.siteUrl}`,
+      `validate-built-site: PASS mode=${result.mode} profile=${result.profile} dist=${resolve(options.dist)} site=${result.siteUrl}`,
     );
     console.log(`  contract: ${result.summary}`);
+    if (result.mode === 'routine') {
+      console.log(`  source manifest: ${result.manifestPath ?? 'n/a'}`);
+      console.log('  current-source expectations: OK');
+    }
     console.log('  origin consistency: OK');
     console.log('  generated OG existence: OK');
     if (result.profile === 'preview') {
-      console.log('  preview: noindex headers OK, isolated CMS config OK, comments disabled OK');
+      console.log(
+        '  preview: global noindex header OK, isolated CMS config OK, comments disabled OK',
+      );
     }
   } catch (error) {
     const violations =

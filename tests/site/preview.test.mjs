@@ -93,7 +93,7 @@ test('credential-free PR checks run on pull_request with read-only contents', ()
     'bun run test:site',
     'bun test src/utils/posts.test.ts',
     'bun run build',
-    'node scripts/validate-built-site.mjs',
+    'node scripts/validate-built-site.mjs --dist dist --mode routine',
   ]) {
     assert.ok(runs.includes(command), `PR checks must run: ${command}`);
   }
@@ -126,6 +126,7 @@ test('deployment validates the exact transformed dist before upload', () => {
 
   const validateRun = deploySteps[validatorIndex].run;
   assert.match(validateRun, /--dist dist/);
+  assert.match(validateRun, /--mode routine/);
   assert.match(validateRun, /--profile/);
   assert.match(validateRun, /--site-url/);
   assert.equal(
@@ -303,6 +304,35 @@ test('preview deployments are noindex while production remains indexable', () =>
     // Idempotent: a second run does not duplicate the rule.
     assert.equal(markPreviewNoindex({ distDir, branch: 'staging' }).changed, false);
     assert.equal(headers.match(/X-Robots-Tag/g).length, 1);
+  } finally {
+    rmSync(temp, { recursive: true, force: true });
+  }
+});
+
+test('a scoped CMS noindex rule does not suppress global preview injection', () => {
+  const temp = mkdtempSync(join(tmpdir(), 'preview-scoped-headers-'));
+  try {
+    const distDir = join(temp, 'dist');
+    mkdirSync(distDir, { recursive: true });
+    const scopedHeaders = [
+      '/_astro/*',
+      '  Cache-Control: public, max-age=31536000, immutable',
+      '',
+      '/cms/*',
+      '  X-Robots-Tag: noindex',
+      '',
+    ].join('\n');
+    writeFileSync(join(distDir, '_headers'), scopedHeaders, 'utf8');
+
+    const result = markPreviewNoindex({ distDir, branch: 'staging' });
+    assert.equal(result.changed, true, 'scoped noindex is not global protection');
+    const headers = readFileSync(join(distDir, '_headers'), 'utf8');
+    assert.match(headers, /\/\*\n\s+X-Robots-Tag: noindex, nofollow/);
+    // The existing scoped rule and cache rule are preserved.
+    assert.match(headers, /\/cms\/\*\n\s+X-Robots-Tag: noindex/);
+    assert.match(headers, /Cache-Control: public, max-age=31536000, immutable/);
+    // A second run is a no-op now that an effective catch-all rule exists.
+    assert.equal(markPreviewNoindex({ distDir, branch: 'staging' }).changed, false);
   } finally {
     rmSync(temp, { recursive: true, force: true });
   }

@@ -23,6 +23,15 @@
  * integrated.
  */
 export const ALLOWED_CHANGES = {
+  // Task 1 regression fixture: a permanently unlisted, mixed-case/space
+  // filename. It is additive only (direct route + generated OG image + source
+  // file); it never enters RSS, sitemap, listings or Pagefind, and it does not
+  // change any protected baseline value. Routine (current-source) validation
+  // does not need these entries; they keep the explicit historical
+  // migration-preflight mode passing without editing the baseline.
+  addedSourceContent: ['src/content/posts/en/Review Hidden.md'],
+  addedHtmlRoutes: ['/posts/review-hidden/'],
+  addedOgPaths: ['/og/review-hidden.png'],
   fieldChanges: [
     {
       path: '/vi/rss.xml',

@@ -61,7 +61,16 @@ The contract compares against the measured baseline in
 33 HTML routes, 12 tracked content files with SHA-256/body hashes, 2 feeds, 32 sitemap URLs,
 6 generated OG images, Pagefind 33 pages (EN/VI). Changes are only accepted through the documented
 exact `from → to` field allowances: the intentional VI RSS language correction and three corrected
-taxonomy hreflang values. Any other drift fails.
+taxonomy hreflang values. A permanent Task 1 regression fixture (`Review Hidden.md`, unlisted) is
+classified as an additive source/route/OG file; it does not change any protected baseline value.
+Any other drift fails. This snapshot mode is explicit (`--mode historical --baseline …`, or
+`verify-site.mjs`) and is not the routine deployment gate.
+
+Routine deployment validation (`scripts/validate-built-site.mjs`, default `--mode routine`) derives
+expected routes, feeds, sitemap identities, generated OG files, per-route metadata and the Pagefind
+count from the **current source**; it does not consult the November snapshot. A build manifest under
+`.astro/` binds the artifact to a hash of the source inputs, so an editorial change without a rebuild
+is rejected as stale rather than certified. Normal CMS publishing therefore needs no baseline edit.
 
 ## Update procedure
 
@@ -172,12 +181,21 @@ transitions, VI typography (Vietnamese `unicodeRange` subset added to the upstre
   (no `/staging` prefix, so comment path identity is preserved). Per-branch concurrency is kept.
 - Both branches build the full output set: the old staging `CI_SKIP_AUTO_OG_IMAGE` skip is removed;
   no `CI_SKIP_*` flag may disable content/OG/RSS/sitemap/search in deployment builds.
+  Published unlisted posts are still built directly and now receive a generated OG image too;
+  drafts never get a page or an OG image, and unlisted pages stay out of listings/RSS/sitemap/
+  Pagefind through the shared visibility helpers.
 - Non-production builds run `scripts/prepare-preview.mjs` (isolated CMS config) and
-  `scripts/mark-preview-noindex.mjs` (adds `X-Robots-Tag: noindex, nofollow`); production is never
-  marked noindex and the script refuses `main`.
-- Immediately before the wrangler upload, `scripts/validate-built-site.mjs` reads that exact
-  `dist/` (after the preview transformations, with no rebuild) and fails closed on contract,
-  origin, OG/feed/sitemap/Pagefind, noindex/CMS or comment-mount problems.
+  `scripts/mark-preview-noindex.mjs`. The marker injects `/*` → `X-Robots-Tag: noindex, nofollow`
+  only when no _effective site-wide_ rule exists (a scoped `/cms/*` rule or a comment does not
+  count); production is never marked noindex and the script refuses `main`.
+- Immediately before the wrangler upload, `scripts/validate-built-site.mjs --mode routine` reads
+  that exact `dist/` (after the preview transformations, with no rebuild) and fails closed on
+  current-source route/feed/sitemap/OG/Pagefind drift, stale source fingerprints, origin problems,
+  missing effective global preview noindex, preview CMS isolation or a production comment mount.
+  `scripts/header-policy.mjs` is shared by the marker and validator so header scope is interpreted
+  identically; production accepts a harmless CMS-only noindex rule and rejects a site-wide one.
+- The historical snapshot mode remains available explicitly for migration preflight
+  (`node scripts/verify-site.mjs --profile full`, or `--mode historical --baseline …`).
 - Non-main `PUBLIC_GISCUS_ENABLED` is forced to literal `false`; only `main` may use the
   production setting. Production repository/category/pathname bindings are unchanged.
 - `astro.config.mjs` sets `site` from `SITE_URL` so preview sitemap/feed origins match the
