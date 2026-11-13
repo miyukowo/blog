@@ -10,6 +10,7 @@
 
 import avatarImg from '../assets/images/site/avatar.png';
 import ogDefaultImg from '../assets/images/site/og-default.png';
+import { POSTS_PER_PAGE } from './publishing';
 
 /** Local branding images. One authoritative copy per consumer. */
 export const SITE_IMAGES = {
@@ -31,7 +32,7 @@ export const SITE_IDENTITY = {
     name: 'tvphus',
     bio: 'hi, im a tech noobie. feel free to look around my blog.',
   },
-  postsPerPage: 8,
+  postsPerPage: POSTS_PER_PAGE,
   isoDates: false,
   showFeaturedImages: true,
   boxedArticles: false,

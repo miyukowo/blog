@@ -11,6 +11,8 @@ import {
   normalizeSitemapPathname,
   sitemapPostPathname,
 } from '../../src/site/sitemap.ts';
+import { loaderEntryId } from '../../src/site/content-identity.ts';
+import { contentSlug } from '../../src/site/urls.ts';
 
 test('normalizeSitemapPathname strips origin, query/hash and trailing slashes', () => {
   assert.equal(
@@ -62,4 +64,22 @@ test('matcher excludes only complete path identities', () => {
   assert.equal(isUnlisted('https://blog.tvphus.dev/vi/posts/review-unlisted/'), false);
   assert.equal(isUnlisted('https://blog.tvphus.dev/blog/vi/posts/a/'), true);
   assert.equal(isUnlisted('https://blog.tvphus.dev/posts/review-unlisted/nested/'), false);
+});
+
+test('mixed-case/space filenames use the loader identity in the exclusion set', () => {
+  const id = loaderEntryId('en/Review Hidden.md');
+  const slug = contentSlug(id);
+  assert.equal(id, 'en/review-hidden');
+  assert.equal(slug, 'review-hidden');
+  const pathname = sitemapPostPathname({
+    locale: 'en',
+    defaultLocale: 'en',
+    slug,
+    base: '/',
+  });
+  assert.equal(pathname, '/posts/review-hidden');
+  assert.equal(
+    createUnlistedSitemapMatcher([pathname])('https://blog.tvphus.dev/posts/review-hidden/'),
+    true,
+  );
 });

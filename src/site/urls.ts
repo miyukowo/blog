@@ -19,6 +19,7 @@
  * so it can be unit-tested with plain `node --test tests/site/urls.test.mjs`.
  */
 
+import { stripTerminalIndex } from './content-identity.ts';
 import { siteLocales, type SiteLocale } from './locales.ts';
 
 /** Split a content ID into non-empty path segments. */
@@ -44,16 +45,20 @@ export function stripLocalePrefix(id: string, locales: readonly string[] = siteL
  * Normalize a content ID to this blog's post/translation identity.
  *
  *   en/foo/index.mdx        -> foo
- *   vi/foo/index.mdx        -> foo
  *   en/nested/index/index.md -> nested/index
  *   fr/foo.md               -> fr/foo        (unrecognized prefix preserved)
  *
- * Only a *terminal* `index` segment is removed; internal `index` segments
- * remain part of the identity.
+ * The function accepts both raw filesystem-style ids (with a `.md`/`.mdx`
+ * suffix) and Astro loader ids (already extensionless and loader-normalized).
+ * Only a *terminal* `index` segment of a raw filesystem id is removed: the
+ * configured glob loader already removed its own terminal `index`, so an
+ * extensionless id such as `en/nested/index` keeps that internal segment.
  */
 export function contentSlug(id: string, locales: readonly string[] = siteLocales): string {
-  const stripped = stripLocalePrefix(id, locales).replace(/\.(md|mdx)$/i, '');
-  return stripped.replace(/(^|\/)index$/i, '');
+  const stripped = stripLocalePrefix(id, locales);
+  const wasFilesystemId = /\.(md|mdx)$/i.test(stripped);
+  const withoutExtension = stripped.replace(/\.(md|mdx)$/i, '');
+  return wasFilesystemId ? stripTerminalIndex(withoutExtension) : withoutExtension;
 }
 
 /**

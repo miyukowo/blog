@@ -56,7 +56,7 @@
   "sharedExceptions": [
     {
       "path": "astro.config.mjs",
-      "reason": "Upstream Astro 7/Sätteri config plus site-owned CDN allowlist, Vietnamese font subsets, an exact config-time unlisted-sitemap scan, an MDX raw-HTML compatibility seam (src/site/mdx-html.ts, src/site/sitemap.ts) and a deployment-origin-aware site value so preview sitemap/feed origins match canonical metadata.",
+      "reason": "Upstream Astro 7/S\u00e4tteri config plus site-owned CDN allowlist, Vietnamese font subsets, an exact config-time unlisted-sitemap scan sharing the loader's content-entry identity policy, an MDX raw-HTML compatibility seam (src/site/mdx-html.ts, src/site/sitemap.ts), a build-manifest integration for routine artifact validation, and a deployment-origin-aware site value so preview sitemap/feed origins match canonical metadata.",
       "validation": "node scripts/verify-site.mjs --profile preview"
     },
     {
@@ -86,7 +86,7 @@
     },
     {
       "path": "src/content.config.ts",
-      "reason": "Upstream mermaid field plus local postSlug field required by the CMS publishing convention.",
+      "reason": "Upstream mermaid field plus local postSlug field required by the CMS publishing convention, and the shared glob-loader generateId (src/site/content-identity.ts) used by the sitemap scan and publishing expectations.",
       "validation": "node scripts/verify-site.mjs --profile offline"
     },
     {
@@ -131,7 +131,7 @@
     },
     {
       "path": "src/utils/posts.ts",
-      "reason": "Filesystem URL identity without /index, normalized translation fallback, CMS postSlug mismatch reporting, shared media policy, translated taxonomy moved out.",
+      "reason": "Filesystem URL identity without /index, normalized translation fallback, CMS postSlug mismatch reporting, and an OG-eligible published-post helper that includes unlisted pages but still excludes drafts.",
       "validation": "node scripts/verify-site.mjs --profile offline"
     },
     {
@@ -208,6 +208,16 @@
       "path": "eslint.config.js",
       "reason": "Maintained-code lint config with editor-cache and fixture exclusions; upstream rules kept.",
       "validation": "bun run lint"
+    },
+    {
+      "path": "src/pages/og/[...slug].png.ts",
+      "reason": "Generates OG images for every published post without a hero image, including directly reachable unlisted pages; drafts and discovery surfaces remain excluded.",
+      "validation": "node --test tests/site/seo.test.mjs"
+    },
+    {
+      "path": "src/pages/[...locale]/posts/[...slug].astro",
+      "reason": "Derives the render locale from normalized post data rather than the first id segment, so supported explicit frontmatter slugs render correctly.",
+      "validation": "node --test tests/site/seo.test.mjs"
     }
   ],
   "deferred": [

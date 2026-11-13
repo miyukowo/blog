@@ -381,6 +381,58 @@ translationKey: 'seo-unlisted'
 
 Nội dung ẩn.
 `,
+  // ---- loader identity fixtures (follow-up Task 1) ---------------------
+  // Nested folder with a terminal `index` segment: the route drops only the
+  // terminal index and keeps the nested path.
+  'en/nested/deep/index.mdx': `---
+title: 'Nested route fixture'
+description: 'Nested folder route with a terminal index segment.'
+pubDate: 2026-10-15
+---
+
+Nested body.
+`,
+  // Internal `index` segments are part of the identity, not stripped.
+  'en/nested/index/index.md': `---
+title: 'Nested internal index fixture'
+description: 'An internal index segment must remain part of the route identity.'
+pubDate: 2026-10-16
+---
+
+Nested index body.
+`,
+  // Non-ASCII directory name: the loader keeps Unicode letters, lowercases and
+  // converts the space to a hyphen. The sitemap stores the percent-encoded URL.
+  'en/Non-ASCII Ünïcode/index.mdx': `---
+title: 'Non-ASCII filename fixture'
+description: 'Unicode filename normalization fixture.'
+pubDate: 2026-10-17
+---
+
+Non-ASCII body.
+`,
+  // Explicit frontmatter `slug` wins over the folder name in the loader, the
+  // sitemap and the artifact expectations.
+  'en/slug-override/index.mdx': `---
+title: 'Explicit slug fixture'
+description: 'Explicit frontmatter slug replaces the folder identity.'
+pubDate: 2026-10-18
+slug: 'explicit-identity'
+---
+
+Explicit slug body.
+`,
+  // Explicit slug + unlisted: only the explicit identity is excluded.
+  'en/Unlisted Override/index.mdx': `---
+title: 'Unlisted explicit slug fixture'
+description: 'Explicit slug on an unlisted post.'
+pubDate: 2026-10-19
+slug: 'hidden-identity'
+unlisted: true
+---
+
+Hidden explicit slug body.
+`,
 };
 
 function buildFixtureProject() {
@@ -513,6 +565,82 @@ test('temporary fixture build satisfies SEO/visibility/navigation contracts', as
     true,
     'the same slug in another locale must stay in that locale sitemap',
   );
+
+  // ---- loader filename/slug identity fixtures (Task 1) -----------------
+  // A real mixed-case/space filename committed in `src/content/posts` must
+  // resolve to the loader-normalized route, stay directly reachable/noindex,
+  // and be excluded from discovery using that same identity.
+  const reviewHiddenFile = pageFile(distDir, '/posts/review-hidden/');
+  assert.ok(
+    existsSync(reviewHiddenFile),
+    'mixed-case/space filename must emit /posts/review-hidden/',
+  );
+  const reviewHiddenDoc = loadHtml(reviewHiddenFile);
+  assert.equal(metaContent(reviewHiddenDoc, 'robots'), 'noindex, nofollow');
+  assert.equal(
+    sitemapPathnames.has('/posts/review-hidden'),
+    false,
+    'normalized unlisted identity must be excluded from the sitemap',
+  );
+
+  // Nested terminal index -> /posts/nested/deep/ (index removed).
+  const nestedDeepFile = pageFile(distDir, '/posts/nested/deep/');
+  assert.ok(existsSync(nestedDeepFile), 'nested terminal index route must be emitted');
+  assert.equal(sitemapPathnames.has('/posts/nested/deep'), true);
+  // Internal index segment stays in the identity -> /posts/nested/index/.
+  const nestedIndexFile = pageFile(distDir, '/posts/nested/index/');
+  assert.ok(existsSync(nestedIndexFile), 'internal index segment must remain part of the route');
+  assert.equal(sitemapPathnames.has('/posts/nested/index'), true);
+
+  // Non-ASCII filename keeps Unicode letters, lowercases and hyphenates the
+  // space; the sitemap stores the percent-encoded URL and the normalized
+  // identity matches.
+  const nonAsciiFile = pageFile(distDir, '/posts/non-ascii-ünïcode/');
+  assert.ok(existsSync(nonAsciiFile), 'non-ASCII filename route must be emitted');
+  assert.equal(sitemapPathnames.has('/posts/non-ascii-ünïcode'), true);
+
+  // Explicit frontmatter slug wins in both the route and the sitemap.
+  const explicitFile = pageFile(distDir, '/posts/explicit-identity/');
+  assert.ok(existsSync(explicitFile), 'explicit slug route must be emitted');
+  assert.equal(sitemapPathnames.has('/posts/explicit-identity'), true);
+  assert.equal(
+    existsSync(pageFile(distDir, '/posts/slug-override/')),
+    false,
+    'folder name must not leak when an explicit slug is configured',
+  );
+
+  // Explicit slug + unlisted: only the explicit identity is excluded.
+  const hiddenOverrideFile = pageFile(distDir, '/posts/hidden-identity/');
+  assert.ok(existsSync(hiddenOverrideFile), 'unlisted explicit slug route must be emitted');
+  assert.equal(metaContent(loadHtml(hiddenOverrideFile), 'robots'), 'noindex, nofollow');
+  assert.equal(sitemapPathnames.has('/posts/hidden-identity'), false);
+  assert.equal(
+    existsSync(pageFile(distDir, '/posts/unlisted-override/')),
+    false,
+    'source folder identity must not leak for an unlisted explicit slug',
+  );
+
+  // ---- published unlisted posts have a real OG resource (Task 4) -------
+  const assertReferencedOgExists = (doc, label) => {
+    const value = metaContent(doc, 'og:image');
+    assert.ok(value, `${label} must emit og:image`);
+    assert.ok(value.startsWith(`${SITE_URL}/`), `${label} og:image must be site-local: ${value}`);
+    const localPath = value.slice(SITE_URL.length);
+    assert.ok(existsSync(join(distDir, localPath)), `${label} og:image must exist: ${localPath}`);
+  };
+  assertReferencedOgExists(reviewHiddenDoc, 'hero-less unlisted EN post');
+  assertReferencedOgExists(
+    loadHtml(pageFile(distDir, '/vi/posts/seo-unlisted-vi/')),
+    'hero-less unlisted VI post',
+  );
+  assertReferencedOgExists(loadHtml(hiddenOverrideFile), 'hero-less unlisted explicit-slug post');
+  assertReferencedOgExists(loadHtml(explicitFile), 'hero-less listed explicit-slug post');
+  assert.equal(
+    existsSync(join(distDir, 'og', 'seo-draft.png')),
+    false,
+    'drafts must not get an OG image',
+  );
+
   // Pagefind must not index unlisted pages.
   const pagefindEntry = JSON.parse(
     readFileSync(join(distDir, '_pagefind', 'pagefind-entry.json'), 'utf8'),
@@ -522,15 +650,16 @@ test('temporary fixture build satisfies SEO/visibility/navigation contracts', as
     0,
   );
   // 33 baseline routes (minus the unindexed 404, plus the static CMS shell),
-  // 4 original listed fixtures, 6 MDX raw-HTML fixtures, the 2 listed
-  // sitemap-identity fixtures and the extra `/page/2/` pagination route.
-  assert.equal(pagefindTotal, 46, 'Pagefind must index listed pages only');
+  // the original listed fixtures, the MDX raw-HTML fixtures, the listed
+  // sitemap-identity fixtures, the loader-identity fixtures and the pagination
+  // routes. Unlisted fixtures (including the real mixed-case one) stay out.
+  assert.equal(pagefindTotal, 51, 'Pagefind must index listed pages only');
   assert.deepEqual(
     Object.keys(pagefindEntry.languages).sort(),
     ['en-us', 'vi-vn'],
     'EN and VI must both be searchable',
   );
-  assert.equal(pagefindEntry.languages['en-us'].page_count, 28);
+  assert.equal(pagefindEntry.languages['en-us'].page_count, 33);
   assert.equal(pagefindEntry.languages['vi-vn'].page_count, 18);
 
   // Listings/navigation must not link to unlisted or drafts.

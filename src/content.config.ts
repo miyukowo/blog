@@ -16,6 +16,7 @@ import { defineCollection, type SchemaContext } from 'astro:content';
 import { z } from 'zod';
 
 import { SITE } from './config';
+import { contentEntryIdentity } from './site/content-identity';
 
 const localeEnum = z.enum(SITE.locales as unknown as [string, ...string[]]);
 
@@ -103,6 +104,13 @@ const posts = defineCollection({
   loader: glob({
     pattern: '**/*.{md,mdx}',
     base: './src/content/posts',
+    // Single loader/sitemap/validator identity policy: segment normalization
+    // plus explicit frontmatter `slug` support. See src/site/content-identity.ts.
+    generateId: ({ entry, data }) =>
+      contentEntryIdentity({
+        relativePath: entry,
+        slug: typeof data?.slug === 'string' ? data.slug : undefined,
+      }).id,
   }),
   schema: baseFrontmatter,
 });
@@ -111,6 +119,11 @@ const pages = defineCollection({
   loader: glob({
     pattern: '**/*.{md,mdx}',
     base: './src/content/pages',
+    generateId: ({ entry, data }) =>
+      contentEntryIdentity({
+        relativePath: entry,
+        slug: typeof data?.slug === 'string' ? data.slug : undefined,
+      }).id,
   }),
   schema: (ctx) =>
     baseFrontmatter(ctx)

@@ -10,7 +10,7 @@ import { readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { parse as parseYaml } from 'yaml';
 import process from 'node:process';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, URL } from 'node:url';
 import satteriExternalLinks from 'satteri-external-links';
 import { katex } from '@nullpinter/satteri-katex';
 import { siteMediaPlugin } from './src/site/markdown';
@@ -22,6 +22,8 @@ import { satteriAutolinkHeadings } from './src/plugins/satteri-autolink-headings
 import { satteriMermaid } from './src/plugins/satteri-mermaid.ts';
 
 import { SITE } from './src/config';
+import { writeBuildManifest } from './src/site/build-manifest';
+import { contentEntryIdentity } from './src/site/content-identity';
 import { contentSlug } from './src/site/urls';
 import { createUnlistedSitemapMatcher, sitemapPostPathname } from './src/site/sitemap';
 
@@ -38,8 +40,9 @@ const SKIP_RSS_SITEMAP = process.env.CI_SKIP_RSS_SITEMAP === 'true';
  * integration. Under Astro 7 that dynamic import fails ("Vite module runner
  * has been closed"), and the failure was swallowed — so unlisted posts leaked
  * into the sitemap. Scanning the content directory at config time is
- * deterministic, has no build-lifecycle dependency, and uses the same
- * filesystem URL identity as the pages (`contentSlug`).
+ * deterministic, has no build-lifecycle dependency, and uses the SAME
+ * id policy the configured glob loader applies (`contentEntryIdentity`),
+ * including filename segment normalization and explicit frontmatter `slug`.
  *
  * Matching is by complete normalized pathname (including the configured
  * base), never by substring: an unlisted `/posts/review-unlisted/` must not
@@ -69,12 +72,21 @@ function collectUnlistedPathSegments() {
         continue;
       }
       if (!data || data.unlisted !== true) continue;
-      const id = relative(postsRoot, full).split(/[\\/]/).join('/');
+      const rawRelativePath = relative(postsRoot, full).split(/[\\/]/).join('/');
+      // The loader's identity, not the raw filename: mixed-case/space and
+      // non-ASCII filenames are normalized exactly as the route generator does.
+      const id = contentEntryIdentity({
+        relativePath: rawRelativePath,
+        slug: typeof data.slug === 'string' ? data.slug : undefined,
+      }).id;
       const segs = id.split('/');
+      const explicitLocale = typeof data.lang === 'string' ? data.lang : undefined;
       const locale =
-        segs[0] && /** @type {readonly string[]} */ (SITE.locales).includes(segs[0])
-          ? segs[0]
-          : SITE.defaultLocale;
+        explicitLocale && /** @type {readonly string[]} */ (SITE.locales).includes(explicitLocale)
+          ? explicitLocale
+          : segs[0] && /** @type {readonly string[]} */ (SITE.locales).includes(segs[0])
+            ? segs[0]
+            : SITE.defaultLocale;
       const slug = contentSlug(id, SITE.locales);
       unlistedSitemapPaths.add(
         sitemapPostPathname({
@@ -98,6 +110,23 @@ collectUnlistedPathSegments();
 // Exactly the collected identities are excluded. `sitemap()` passes absolute
 // page URLs; the helper normalizes origin/base/trailing slash/encoding.
 const isUnlistedSitemapPage = createUnlistedSitemapMatcher(unlistedSitemapPaths);
+
+/**
+ * Record the source fingerprint of this build in `.astro/` (never in `dist/`).
+ * Routine artifact validation uses it to reject a stale directory when the
+ * source changed without a rebuild, while still deriving expected content
+ * from the current source rather than the historical snapshot.
+ */
+function recordBuildManifest() {
+  return {
+    name: 'chirpy:record-build-manifest',
+    hooks: {
+      'astro:build:done': () => {
+        writeBuildManifest({ sourceDir: fileURLToPath(new URL('.', import.meta.url)) });
+      },
+    },
+  };
+}
 
 /**
  * Tiny inline integration: after `@astrojs/sitemap` runs, rewrite the
@@ -246,6 +275,7 @@ export default defineConfig({
       // icons actually referenced make it into the build.
       iconDir: 'src/icons',
     }),
+    recordBuildManifest(),
     // Expressive Code provides syntax highlighting (Shiki under the hood)
     // plus extra features: code-block frames + titles, copy button, line
     // markers, diffs, word wrap, collapsible sections.

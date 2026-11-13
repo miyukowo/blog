@@ -137,6 +137,22 @@ export async function getUnlistedPosts(locale: Locale): Promise<Post[]> {
   return sortPosts(all.map(normalize));
 }
 
+/**
+ * Posts that may need a generated OG image: every published post, listed or
+ * unlisted. Unlisted pages are still directly reachable and reference the
+ * generated image, so their OG resource must exist; drafts never reach the
+ * built output and are excluded. Discovery surfaces keep using `getPosts`.
+ */
+export async function getPostsForOg(locale: Locale): Promise<Post[]> {
+  if (skipPostCollections) return [];
+  const all = await getCollection('posts', (entry) => {
+    if (isProd && entry.data.draft) return false;
+    const lang = entry.data.lang ?? localeFromId(entry.id);
+    return lang === locale;
+  });
+  return sortPosts(all.map(normalize));
+}
+
 /** Find a single post by locale + slug (path-relative). */
 export async function getPostBySlug(locale: Locale, slug: string): Promise<Post | undefined> {
   const posts = await getPosts(locale);
