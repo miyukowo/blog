@@ -15,6 +15,8 @@ import { appendFileSync, existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import process from 'node:process';
 
+import { hasGlobalNoindex } from './header-policy.mjs';
+
 const PRODUCTION_BRANCHES = new Set(['main']);
 
 /** Inject `X-Robots-Tag: noindex` into the built headers file. */
@@ -28,7 +30,9 @@ export function markPreviewNoindex({ distDir, branch }) {
   if (!existsSync(headersPath)) throw new Error(`mark-preview-noindex: missing ${headersPath}`);
 
   const current = readFileSync(headersPath, 'utf8');
-  if (current.includes('X-Robots-Tag: noindex')) {
+  // Scope-aware: a `/cms/*` noindex rule is not global preview protection.
+  // Only an effective catch-all `/*` rule keeps a repeated run idempotent.
+  if (hasGlobalNoindex(current)) {
     return { changed: false, headersPath };
   }
 
