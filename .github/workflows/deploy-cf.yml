@@ -90,7 +90,10 @@ jobs:
           PUBLIC_GITHUB_REPO: ${{ vars.PUBLIC_GITHUB_REPO || 'blog' }}
           PUBLIC_TWITTER_HANDLE: ${{ vars.PUBLIC_TWITTER_HANDLE }}
           PUBLIC_CONTACT_EMAIL: ${{ vars.PUBLIC_CONTACT_EMAIL }}
-          PUBLIC_GISCUS_ENABLED: ${{ vars.PUBLIC_GISCUS_ENABLED }}
+          # Production comments are a main-only setting. Every non-main
+          # build (staging included) receives literal false so preview
+          # deployments can never mount the production discussions.
+          PUBLIC_GISCUS_ENABLED: ${{ github.ref_name == 'main' && vars.PUBLIC_GISCUS_ENABLED || 'false' }}
           PUBLIC_GISCUS_REPO: ${{ vars.PUBLIC_GISCUS_REPO }}
           PUBLIC_GISCUS_REPO_ID: ${{ vars.PUBLIC_GISCUS_REPO_ID }}
           PUBLIC_GISCUS_CATEGORY: ${{ vars.PUBLIC_GISCUS_CATEGORY }}

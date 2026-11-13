@@ -53,6 +53,36 @@ test('Cloudflare workflow keeps production=main and staging=preview branch ident
   assert.equal(buildStep.env.BASE_PATH, '', 'preview must serve at the root path');
 });
 
+test('non-main Cloudflare builds force production comments off', () => {
+  const buildStep = allSteps(cf).find((step) => step.run === 'bun run build');
+  assert.ok(buildStep, 'deploy workflow must build the site');
+  const expression = String(buildStep.env.PUBLIC_GISCUS_ENABLED ?? '');
+  // main may use the repository variable; every other ref must resolve to the
+  // literal false so staging never mounts the production discussions.
+  assert.match(
+    expression,
+    /github\.ref_name\s*==\s*['"]main['"]/,
+    'comments enablement must be selected by the deployment branch',
+  );
+  assert.match(
+    expression,
+    /['"]false['"]/,
+    'non-main builds must fall back to the literal false setting',
+  );
+  assert.match(expression, /vars\.PUBLIC_GISCUS_ENABLED/, 'main keeps the production setting');
+  // Production repository/category/pathname bindings stay available unchanged.
+  for (const key of [
+    'PUBLIC_GISCUS_REPO',
+    'PUBLIC_GISCUS_REPO_ID',
+    'PUBLIC_GISCUS_CATEGORY',
+    'PUBLIC_GISCUS_CATEGORY_ID',
+  ]) {
+    assert.ok(buildStep.env[key], `${key} must remain configured for main`);
+  }
+  // The deployment workflow must never be reachable from pull_request code.
+  assert.equal('pull_request' in (cf.on ?? {}), false);
+});
+
 test('per-branch concurrency and deployment branch identity are preserved', () => {
   assert.equal(cf.concurrency['cancel-in-progress'], false);
   assert.match(cf.concurrency.group, /github\.ref_name/);

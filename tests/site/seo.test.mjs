@@ -776,4 +776,53 @@ test('temporary fixture build satisfies SEO/visibility/navigation contracts', as
     .map((file) => readFileSync(join(cssDir, file), 'utf8'))
     .join('\n');
   assert.ok(css.includes('prefers-reduced-motion'), 'reduced-motion behavior must be preserved');
+
+  // ---- non-main build: valid production identifiers, comments forced off ----
+  // This is the rendered equivalent of a staging deployment where the
+  // workflow supplies PUBLIC_GISCUS_ENABLED=false while the repository
+  // variable still holds production values.
+  const nonMainBuild = spawnSync(process.execPath, [ASTRO_BIN, 'build'], {
+    cwd: tempRoot,
+    env: {
+      ...process.env,
+      SITE_URL,
+      BASE_PATH: '/',
+      PUBLIC_GISCUS_ENABLED: 'false',
+      PUBLIC_GISCUS_REPO: 'miyukowo/blog',
+      PUBLIC_GISCUS_REPO_ID: 'R_kgDOtest',
+      PUBLIC_GISCUS_CATEGORY: 'Announcements',
+      PUBLIC_GISCUS_CATEGORY_ID: 'DIC_kwDOtest',
+    },
+    encoding: 'utf8',
+    timeout: 300_000,
+  });
+  assert.equal(
+    nonMainBuild.status,
+    0,
+    `non-main fixture build failed:\n${nonMainBuild.stdout}\n${nonMainBuild.stderr}`,
+  );
+
+  for (const route of ['/posts/seo-listed/', '/vi/posts/seo-listed-vi/']) {
+    const nonMainDoc = loadHtml(pageFile(distDir, route));
+    const nonMainHtml = readFileSync(pageFile(distDir, route), 'utf8');
+    assert.equal(
+      allElements(nonMainDoc, 'div').some(
+        (element) => attr(element, 'data-giscus-mount') !== undefined,
+      ),
+      false,
+      `${route} must not mount production comments on a non-main build`,
+    );
+    for (const productionIdentifier of [
+      'data-giscus-mount',
+      'miyukowo/blog',
+      'R_kgDOtest',
+      'DIC_kwDOtest',
+    ]) {
+      assert.equal(
+        nonMainHtml.includes(productionIdentifier),
+        false,
+        `${route} must not contain ${productionIdentifier} when comments are disabled`,
+      );
+    }
+  }
 });
