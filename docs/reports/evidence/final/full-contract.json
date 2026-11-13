@@ -531,10 +531,7 @@
   ],
   "search": {
     "indexedPages": 33,
-    "languages": [
-      "en-us",
-      "vi-vn"
-    ],
+    "languages": ["en-us", "vi-vn"],
     "engine": "Pagefind 1.5.2"
   }
 }
