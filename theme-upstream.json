@@ -125,6 +125,11 @@
       "validation": "node scripts/verify-site.mjs --profile offline"
     },
     {
+      "path": "src/plugins/satteri-base-links.ts",
+      "reason": "Idempotent, segment-aware base prefixing: already-based paths (/blog/...) are preserved, /blogger/... is still prefixed, and query/hash suffixes survive for links and images.",
+      "validation": "node --test tests/site/markdown.test.mjs"
+    },
+    {
       "path": "src/utils/posts.ts",
       "reason": "Filesystem URL identity without /index, normalized translation fallback, CMS postSlug mismatch reporting, shared media policy, translated taxonomy moved out.",
       "validation": "node scripts/verify-site.mjs --profile offline"
