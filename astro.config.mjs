@@ -23,6 +23,7 @@ import { satteriMermaid } from './src/plugins/satteri-mermaid.ts';
 
 import { SITE } from './src/config';
 import { contentSlug } from './src/site/urls';
+import { createUnlistedSitemapMatcher, sitemapPostPathname } from './src/site/sitemap';
 
 const rawBase = (process.env.BASE_PATH ?? '/').replace(/\/$/, '');
 const BASE = rawBase.startsWith('/') ? rawBase : `/${rawBase}`;
@@ -30,7 +31,7 @@ const SITEMAP_XSL_HREF = `${BASE}/sitemap/styles.xsl`;
 const SKIP_RSS_SITEMAP = process.env.CI_SKIP_RSS_SITEMAP === 'true';
 
 /**
- * Set of URL path segments that belong to unlisted posts/pages, used by the
+ * Exact, locale-qualified sitemap pathnames for unlisted posts, used by the
  * sitemap filter below.
  *
  * Upstream populated this from `astro:content` inside an `astro:build:start`
@@ -39,8 +40,13 @@ const SKIP_RSS_SITEMAP = process.env.CI_SKIP_RSS_SITEMAP === 'true';
  * into the sitemap. Scanning the content directory at config time is
  * deterministic, has no build-lifecycle dependency, and uses the same
  * filesystem URL identity as the pages (`contentSlug`).
+ *
+ * Matching is by complete normalized pathname (including the configured
+ * base), never by substring: an unlisted `/posts/review-unlisted/` must not
+ * hide a listed `/posts/review-unlisted-extra/` or
+ * `/vi/posts/review-unlisted/`.
  */
-const unlistedPathSegments = new Set();
+const unlistedSitemapPaths = new Set();
 
 function collectUnlistedPathSegments() {
   const postsRoot = join(process.cwd(), 'src', 'content', 'posts');
@@ -70,11 +76,14 @@ function collectUnlistedPathSegments() {
           ? segs[0]
           : SITE.defaultLocale;
       const slug = contentSlug(id, SITE.locales);
-      if (locale === SITE.defaultLocale) {
-        unlistedPathSegments.add(`posts/${slug}`);
-      } else {
-        unlistedPathSegments.add(`${locale}/posts/${slug}`);
-      }
+      unlistedSitemapPaths.add(
+        sitemapPostPathname({
+          locale,
+          defaultLocale: SITE.defaultLocale,
+          slug,
+          base: BASE,
+        }),
+      );
     }
   };
   try {
@@ -85,6 +94,10 @@ function collectUnlistedPathSegments() {
 }
 
 collectUnlistedPathSegments();
+
+// Exactly the collected identities are excluded. `sitemap()` passes absolute
+// page URLs; the helper normalizes origin/base/trailing slash/encoding.
+const isUnlistedSitemapPage = createUnlistedSitemapMatcher(unlistedSitemapPaths);
 
 /**
  * Tiny inline integration: after `@astrojs/sitemap` runs, rewrite the
@@ -276,10 +289,8 @@ export default defineConfig({
             xslURL: SITEMAP_XSL_HREF,
             filter: (page) => {
               if (page.includes('/draft/') || page.endsWith('/404/')) return false;
-              // Exclude unlisted posts from the sitemap.
-              for (const seg of unlistedPathSegments) {
-                if (page.includes(String(seg))) return false;
-              }
+              // Exclude only complete unlisted route identities.
+              if (isUnlistedSitemapPage(page)) return false;
               return true;
             },
           }),

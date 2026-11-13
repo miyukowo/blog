@@ -38,6 +38,7 @@ import { parse as parseHtml } from 'parse5';
 
 import { localePresentation } from '../../src/site/locales.ts';
 import { giscusScriptAttributes, giscusThemeName, planGiscusMount } from '../../src/site/giscus.ts';
+import { normalizeSitemapPathname } from '../../src/site/sitemap.ts';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(HERE, '..', '..');
@@ -342,6 +343,34 @@ translationKey: 'seo-unlisted'
 
 Unlisted body.
 `,
+  // Exact sitemap identity fixtures: the unlisted slug is a prefix of a listed
+  // slug and is reused by a listed post in the other locale. Only the first
+  // route may be omitted from the sitemap.
+  'en/review-unlisted/index.mdx': `---
+title: 'Sitemap unlisted prefix fixture'
+description: 'Unlisted route whose slug prefixes a listed route.'
+pubDate: 2026-10-12
+unlisted: true
+---
+
+Unlisted prefix body.
+`,
+  'en/review-unlisted-extra/index.mdx': `---
+title: 'Sitemap listed prefix fixture'
+description: 'Listed route whose slug starts with the unlisted slug.'
+pubDate: 2026-10-13
+---
+
+Listed prefix body.
+`,
+  'vi/review-unlisted/index.mdx': `---
+title: 'Sitemap listed VI fixture'
+description: 'Listed VI route reusing the unlisted EN slug.'
+pubDate: 2026-10-14
+---
+
+Nội dung tiếng Việt trùng slug với bài ẩn.
+`,
   'vi/seo-unlisted-vi/index.mdx': `---
 title: 'SEO unlisted VI fixture'
 description: 'Trang ẩn nhưng vẫn truy cập trực tiếp được.'
@@ -460,6 +489,30 @@ test('temporary fixture build satisfies SEO/visibility/navigation contracts', as
     false,
     'unlisted must not be in the sitemap',
   );
+
+  // ---- exact unlisted identity, not substring matching ----------------
+  const unlistedPrefixFile = pageFile(distDir, '/posts/review-unlisted/');
+  const listedPrefixFile = pageFile(distDir, '/posts/review-unlisted-extra/');
+  const listedViFile = pageFile(distDir, '/vi/posts/review-unlisted/');
+  for (const file of [unlistedPrefixFile, listedPrefixFile, listedViFile]) {
+    assert.ok(existsSync(file), `fixture page must be emitted: ${file}`);
+  }
+  const sitemapPathnames = new Set(sitemapUrls.map((url) => normalizeSitemapPathname(url)));
+  assert.equal(
+    sitemapPathnames.has('/posts/review-unlisted'),
+    false,
+    'the unlisted route must be absent from the sitemap',
+  );
+  assert.equal(
+    sitemapPathnames.has('/posts/review-unlisted-extra'),
+    true,
+    'a listed route sharing the unlisted prefix must stay in the sitemap',
+  );
+  assert.equal(
+    sitemapPathnames.has('/vi/posts/review-unlisted'),
+    true,
+    'the same slug in another locale must stay in that locale sitemap',
+  );
   // Pagefind must not index unlisted pages.
   const pagefindEntry = JSON.parse(
     readFileSync(join(distDir, '_pagefind', 'pagefind-entry.json'), 'utf8'),
@@ -469,16 +522,16 @@ test('temporary fixture build satisfies SEO/visibility/navigation contracts', as
     0,
   );
   // 33 baseline routes (minus the unindexed 404, plus the static CMS shell),
-  // 4 original listed fixtures, 6 MDX raw-HTML fixtures and the extra
-  // `/page/2/` pagination route created by the added EN posts.
-  assert.equal(pagefindTotal, 44, 'Pagefind must index listed pages only');
+  // 4 original listed fixtures, 6 MDX raw-HTML fixtures, the 2 listed
+  // sitemap-identity fixtures and the extra `/page/2/` pagination route.
+  assert.equal(pagefindTotal, 46, 'Pagefind must index listed pages only');
   assert.deepEqual(
     Object.keys(pagefindEntry.languages).sort(),
     ['en-us', 'vi-vn'],
     'EN and VI must both be searchable',
   );
-  assert.equal(pagefindEntry.languages['en-us'].page_count, 27);
-  assert.equal(pagefindEntry.languages['vi-vn'].page_count, 17);
+  assert.equal(pagefindEntry.languages['en-us'].page_count, 28);
+  assert.equal(pagefindEntry.languages['vi-vn'].page_count, 18);
 
   // Listings/navigation must not link to unlisted or drafts.
   for (const listing of ['index.html', 'archives/index.html', 'page/1/index.html']) {
