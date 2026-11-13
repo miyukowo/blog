@@ -145,21 +145,29 @@ Both rehearsals ran in disposable clones; the real branch refs were untouched.
 
 See `theme-upstream.json → deferred` for the machine-readable list. In short:
 
-| Feature                        | Why deferred                                                                                       | Restoration seam                                                                | Acceptance                                                                        |
-| ------------------------------ | -------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
-| KaTeX math in `.mdx` posts     | Sätteri/MDX cannot carry inline raw HTML; KaTeX output escapes. Upstream's own math demo is `.md`. | Author math in `.md` posts, or add a site Math MDX component under `src/site/`. | Rendered KaTeX markup in `tests/site/seo.test.mjs` (current coverage uses `.md`). |
-| Mermaid fences in `.mdx` posts | Same raw-HTML limitation; upstream mermaid demo is `.md`.                                          | Author in `.md`, or wrap with a site Mermaid MDX component.                     | Wrapper + island assertions in `tests/site/seo.test.mjs`.                         |
-| Page-scoped KaTeX stylesheet   | Upstream Astro 7 dynamic layout links the extracted MathStyles CSS on every post page.             | Revisit with the upstream font/style import strategy.                           | Non-math pages omit the chunk (not achievable now).                               |
-| Fancy direct-video controls    | Native playable video accepted; existing Plyr wrapper retained and working.                        | `src/components/VideoEmbed.astro`                                               | Authored `<VideoEmbed src=…/>` renders a playable element.                        |
+| Feature                      | Why deferred                                                                           | Restoration seam                                      | Acceptance                                                 |
+| ---------------------------- | -------------------------------------------------------------------------------------- | ----------------------------------------------------- | ---------------------------------------------------------- |
+| Page-scoped KaTeX stylesheet | Upstream Astro 7 dynamic layout links the extracted MathStyles CSS on every post page. | Revisit with the upstream font/style import strategy. | Non-math pages omit the chunk (not achievable now).        |
+| Fancy direct-video controls  | Native playable video accepted; existing Plyr wrapper retained and working.            | `src/components/VideoEmbed.astro`                     | Authored `<VideoEmbed src=…/>` renders a playable element. |
+
+Resolved in the 2026-11-13 review repair pass: MDX math, Mermaid, alert and `ashtml` fences
+now render as real elements through the site-owned seam `src/site/mdx-html.ts` (the MDAST `html`
+nodes become `<Fragment set:html>` for MDX only). `docs/reports/2026-11-13-upstream-review-repairs.md`
+records the fixtures and rendered-tree assertions; the two former MDX deferrals were removed from
+`theme-upstream.json`.
 
 Local presentation kept (not deferred): post author avatar, reading progress, back-to-top, theme
 transitions, VI typography (Vietnamese `unicodeRange` subset added to the upstream font config).
 
 ## Deployment and preview contract (Task 7)
 
-- `.github/workflows/deploy-cf.yml` runs a `checks` job first (frozen install, typecheck, lint,
-  scoped formatting, site tests, upstream slug tests) and only then a `deploy` job.
-- Runtimes are pinned: Node from `.node-version` (26.12.1), Bun 1.3.14.
+- `.github/workflows/checks.yml` runs credential-free checks on `pull_request` (and manual
+  dispatch) with `contents: read`: frozen install, typecheck, lint, scoped formatting, site tests,
+  upstream slug tests, a deterministic full build and `scripts/validate-built-site.mjs`. It never
+  receives Cloudflare/Pages secrets.
+- `.github/workflows/deploy-cf.yml` still runs its own `checks` job first (frozen install,
+  typecheck, lint, scoped formatting, site tests, upstream slug tests) and only then a `deploy`
+  job. Runtimes are pinned: Node from `.node-version` (26.12.1), Bun 1.3.14.
 - `main` deploys to production; `staging` deploys to `staging-blog.tvphus.dev` at the root base path
   (no `/staging` prefix, so comment path identity is preserved). Per-branch concurrency is kept.
 - Both branches build the full output set: the old staging `CI_SKIP_AUTO_OG_IMAGE` skip is removed;
@@ -167,7 +175,15 @@ transitions, VI typography (Vietnamese `unicodeRange` subset added to the upstre
 - Non-production builds run `scripts/prepare-preview.mjs` (isolated CMS config) and
   `scripts/mark-preview-noindex.mjs` (adds `X-Robots-Tag: noindex, nofollow`); production is never
   marked noindex and the script refuses `main`.
-- Deployment credentials are only present in the deploy job; the workflows do not run on
+- Immediately before the wrangler upload, `scripts/validate-built-site.mjs` reads that exact
+  `dist/` (after the preview transformations, with no rebuild) and fails closed on contract,
+  origin, OG/feed/sitemap/Pagefind, noindex/CMS or comment-mount problems.
+- Non-main `PUBLIC_GISCUS_ENABLED` is forced to literal `false`; only `main` may use the
+  production setting. Production repository/category/pathname bindings are unchanged.
+- `astro.config.mjs` sets `site` from `SITE_URL` so preview sitemap/feed origins match the
+  canonical/OG/HTML origin; preview validation rebases the recorded baseline origin explicitly and
+  requires every actual URL origin to match it.
+- Deployment credentials are only present in the deploy job; neither deployment workflow runs on
   `pull_request`/`pull_request_target`, so untrusted code cannot read them.
 - The GitHub Pages workflow (`deploy.yml`) is preserved with its own subpath base for separate
   usage assessment; it was observed `disabled_manually` but a Pages API 404 alone is not evidence it
@@ -176,7 +192,8 @@ transitions, VI typography (Vietnamese `unicodeRange` subset added to the upstre
 ## Remaining external gates (unverified here)
 
 These require credentials/account access and were **not** performed; do not treat this runbook as
-evidence that they passed:
+evidence that they passed. The 2026-11-13 review repair pass re-checked them and still had no
+Cloudflare/Sveltia/Cloudinary credentials, so none was attempted:
 
 1. Authenticated Sveltia/Cloudinary create/edit/upload/save/reload/delete round-trip on a
    `codex/cms-validation-<run>` branch (see the CMS section below for exact steps).
@@ -200,6 +217,9 @@ evidence that they passed:
 - Origin/main was re-fetched before final validation on 2026-11-02 and was unchanged at
   `b278874e33b121a0629de06e9f94bdba7a45bdd0` (already an ancestor of the implementation branch); no
   intervening published content needed reconciliation.
+- Re-fetched again on 2026-11-13 before the repair handback: `origin/main` was still
+  `b278874e33b121a0629de06e9f94bdba7a45bdd0` (ancestor of HEAD) and `origin/staging` was
+  `ec2f2541b907a2717fccabff55fc55ebfecae453`; no new published content needed reconciliation.
 - The controller attempt (`task-20261102153518-196db98a`) changed nothing; controller
   troubleshooting is out of scope per the manual handoff.
 
@@ -273,6 +293,26 @@ The tracked `public/cms/config.yml` is never touched, so `node --test tests/site
 asserts it stays byte-identical and that the next production build recreates a `main` config.
 `--site-url` must be the verified preview origin; replace the example above with that verified
 origin once the staging custom-domain mapping is confirmed.
+
+**Validation-branch lifecycle (checked 2026-11-13).** The workflow names
+`codex/cms-validation-${run_id}` but does not create the Git ref. No
+`codex/cms-validation-*` refs existed on `origin` when checked with `git ls-remote` during this
+pass. The pinned `@sveltia/cms@0.256.1` bundle's normal save path commits with GitHub's
+`createCommitOnBranch` mutation against the configured branch; its `createRef` helper is used for
+workflow/PR branches, not for a missing `backend.branch`. Treat auto-creation as unproven, not as a
+confirmed defect: before authenticated testing, create the short-lived ref from the chosen base,
+verify it, and delete it afterwards:
+
+```bash
+git push origin <base-sha>:refs/heads/codex/cms-validation-<run>
+git ls-remote origin refs/heads/codex/cms-validation-<run>
+# ... authenticated create/edit/save/reload/delete round-trip ...
+git push origin --delete codex/cms-validation-<run>
+```
+
+Do not broaden the deploy workflow to `contents: write` merely to pre-create this ref; the person
+performing the credential-bearing test owns the create/delete step. The remote ref must be verified
+before the test, and no production content may change.
 
 ### Remaining authenticated round-trip gate (unverified)
 

@@ -1,0 +1,23 @@
+✔ normalizeSitemapPathname strips origin, query/hash and trailing slashes (0.806731ms)
+✔ normalizeSitemapPathname decodes percent-encoded non-ASCII slugs (0.189165ms)
+✔ sitemapPostPathname includes the configured base and locale identity (0.216826ms)
+✔ matcher excludes only complete path identities (0.201999ms)
+✔ contentSlug strips a terminal /index from folder-based EN/VI posts (0.773129ms)
+✔ contentSlug keeps nested identity and internal index segments (0.129122ms)
+✔ contentSlug only strips recognized locale prefixes (0.090119ms)
+✔ stripLocalePrefix reports the normalized relative id (0.567112ms)
+✔ legacyTaxonomySlug preserves the published ASCII taxonomy URLs (0.234369ms)
+✔ resolvePostIdentity: filesystem identity wins over a mismatched saved postSlug (0.113212ms)
+✔ resolvePostIdentity: a matching saved postSlug is not reported (0.088406ms)
+✔ resolvePostIdentity preserves an explicit translationKey (0.071113ms)
+✔ different EN/VI file slugs still pair via translationKey (0.134201ms)
+✔ localeFromContentId recognizes only configured locales (0.169537ms)
+ℹ tests 14
+ℹ suites 0
+ℹ pass 14
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 81.92248
+exit=0

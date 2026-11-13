@@ -1,0 +1,5 @@
+$ node scripts/format-site-check.mjs --check
+format-site-check (--check): scripts, tests/site, docs, src/site, public/cms, src/components/VideoEmbed.astro, src/utils/og-image.ts, package.json, eslint.config.js, .prettierrc.json
+Checking formatting...
+All matched files use Prettier code style!
+exit=0

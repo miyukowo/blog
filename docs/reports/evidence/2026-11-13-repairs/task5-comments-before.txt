@@ -1,0 +1,39 @@
+✔ Cloudflare workflow keeps production=main and staging=preview branch identity (0.99219ms)
+✖ non-main Cloudflare builds force production comments off (0.510908ms)
+✔ per-branch concurrency and deployment branch identity are preserved (0.185097ms)
+✔ required checks run before deployment and use tested runtimes (0.217096ms)
+✔ deployment builds cannot silently skip required output (0.160561ms)
+✔ deployment credentials are not exposed to untrusted PR code (0.15438ms)
+✔ preview CMS config writes built output only and rejects production branches (32.281831ms)
+✔ preview deployments are noindex while production remains indexable (0.513112ms)
+✔ GitHub Pages workflow/support is preserved for separate assessment (0.269124ms)
+✔ full-output contract fixture exists for the production-shaped build (0.281628ms)
+ℹ tests 10
+ℹ suites 0
+ℹ pass 9
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 165.061412
+
+✖ failing tests:
+
+test at tests/site/preview.test.mjs:56:1
+✖ non-main Cloudflare builds force production comments off (0.510908ms)
+  AssertionError [ERR_ASSERTION]: comments enablement must be selected by the deployment branch
+      at TestContext.<anonymous> (file:///home/tvp/.codex/worktrees/upstream-preflight/blog/tests/site/preview.test.mjs:62:10)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: '${{ vars.PUBLIC_GISCUS_ENABLED }}',
+    expected: /github\.ref_name\s*==\s*['"]main['"]/,
+    operator: 'match',
+    diff: 'simple'
+  }
+exit=1

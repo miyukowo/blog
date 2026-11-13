@@ -1,0 +1,9 @@
+upstream drift report (read-only)
+  adopted starter:   821bc6171f2ed0f74d920cc5ab70794c3f779971 (source 4585c2d78f1c429e5c3092ed79e68cc839413964)
+  candidate starter: 821bc6171f2ed0f74d920cc5ab70794c3f779971 (source 4585c2d78f1c429e5c3092ed79e68cc839413964)
+  manifest adopted:  821bc6171f2ed0f74d920cc5ab70794c3f779971
+  ancestry:          candidate descends from adopted
+  changes:           +0 ~0 -0 renamed 0
+  package/lock:      manifest=false lock=false coherent=true
+RESULT: OK (no blocking drift found)
+drift_exit=0
