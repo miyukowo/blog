@@ -31,6 +31,7 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(HERE, '..', '..');
 const CF_WORKFLOW = join(REPO_ROOT, '.github', 'workflows', 'deploy-cf.yml');
 const PAGES_WORKFLOW = join(REPO_ROOT, '.github', 'workflows', 'deploy.yml');
+const CHECKS_WORKFLOW = join(REPO_ROOT, '.github', 'workflows', 'checks.yml');
 
 const cf = parseYaml(readFileSync(CF_WORKFLOW, 'utf8'));
 const pages = parseYaml(readFileSync(PAGES_WORKFLOW, 'utf8'));
@@ -51,6 +52,87 @@ test('Cloudflare workflow keeps production=main and staging=preview branch ident
   assert.match(siteUrl, /blog\.tvphus\.dev/, 'production origin fallback preserved');
   // Root base path: no /staging prefix that would alter comment path identity.
   assert.equal(buildStep.env.BASE_PATH, '', 'preview must serve at the root path');
+});
+
+test('credential-free PR checks run on pull_request with read-only contents', () => {
+  assert.ok(existsSync(CHECKS_WORKFLOW), 'a dedicated PR checks workflow must exist');
+  const checks = parseYaml(readFileSync(CHECKS_WORKFLOW, 'utf8'));
+  const triggers = checks.on ?? {};
+  assert.ok('pull_request' in triggers, 'PR checks must run on pull_request');
+  assert.equal('pull_request_target' in triggers, false);
+  assert.equal(checks.permissions?.contents, 'read', 'PR checks must be read-only');
+  assert.equal('deployments' in (checks.permissions ?? {}), false);
+  assert.equal('pages' in (checks.permissions ?? {}), false);
+
+  const credentialSurface = allSteps(checks)
+    .flatMap((step) => [
+      String(step.uses ?? ''),
+      String(step.run ?? ''),
+      JSON.stringify(step.env ?? {}),
+    ])
+    .join('\n');
+  assert.equal(
+    /CLOUDFLARE|secrets\./i.test(credentialSurface),
+    false,
+    'PR checks must not use deployment secrets',
+  );
+  assert.equal(
+    /secrets\./.test(readFileSync(CHECKS_WORKFLOW, 'utf8')),
+    false,
+    'PR checks workflow must not reference repository secrets',
+  );
+
+  const runs = allSteps(checks)
+    .map((step) => step.run ?? '')
+    .join('\n');
+  for (const command of [
+    'bun install --frozen-lockfile',
+    'bun run typecheck',
+    'bun run lint',
+    'bun run format:site:check',
+    'bun run test:site',
+    'bun test src/utils/posts.test.ts',
+    'bun run build',
+    'node scripts/validate-built-site.mjs',
+  ]) {
+    assert.ok(runs.includes(command), `PR checks must run: ${command}`);
+  }
+
+  // Deployment credentials stay confined to the push-only deployment workflow.
+  assert.match(cfText, /CLOUDFLARE_API_TOKEN/);
+  assert.equal('pull_request' in (cf.on ?? {}), false);
+});
+
+test('deployment validates the exact transformed dist before upload', () => {
+  const deploySteps = cf.jobs.deploy.steps;
+  const validatorIndex = deploySteps.findIndex((step) =>
+    /validate-built-site\.mjs/.test(step.run ?? ''),
+  );
+  assert.ok(validatorIndex >= 0, 'deploy must validate the actual artifact');
+
+  const prepareIndex = deploySteps.findIndex((step) => /prepare-preview\.mjs/.test(step.run ?? ''));
+  const noindexIndex = deploySteps.findIndex((step) =>
+    /mark-preview-noindex\.mjs/.test(step.run ?? ''),
+  );
+  const uploadIndex = deploySteps.findIndex((step) =>
+    String(step.uses ?? '').startsWith('cloudflare/wrangler-action'),
+  );
+  assert.ok(uploadIndex >= 0, 'wrangler upload step must exist');
+  assert.ok(
+    validatorIndex > prepareIndex && validatorIndex > noindexIndex,
+    'validation must run after preview CMS/noindex transformations',
+  );
+  assert.ok(validatorIndex < uploadIndex, 'validation must run immediately before upload');
+
+  const validateRun = deploySteps[validatorIndex].run;
+  assert.match(validateRun, /--dist dist/);
+  assert.match(validateRun, /--profile/);
+  assert.match(validateRun, /--site-url/);
+  assert.equal(
+    /bun run build|astro build|pagefind/.test(validateRun),
+    false,
+    'validation must inspect the existing artifact, never rebuild it',
+  );
 });
 
 test('non-main Cloudflare builds force production comments off', () => {

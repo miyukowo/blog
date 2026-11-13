@@ -7,7 +7,12 @@ on:
 
 # WARNING: this workflow holds deployment credentials. It intentionally does
 # NOT run on pull_request events, so untrusted PR code never sees the
-# Cloudflare token. Keep it that way when editing.
+# Cloudflare token. Keep it that way when editing. Credential-free PR checks
+# live in .github/workflows/checks.yml.
+#
+# The upload step is preceded by scripts/validate-built-site.mjs, which reads
+# the exact dist/ directory after the preview transformations and fails closed
+# before wrangler runs.
 permissions:
   contents: read
   deployments: write
@@ -113,6 +118,19 @@ jobs:
       - name: Mark preview deployments noindex
         if: github.ref_name != 'main'
         run: node scripts/mark-preview-noindex.mjs --dist dist --branch "${{ github.ref_name }}"
+
+      # Validate the exact directory that will be uploaded, after the preview
+      # CMS/noindex transformations. This is read-only: it never rebuilds, so
+      # a broken deployment directory cannot be hidden by a fresh build.
+      - name: Validate built artifact before upload
+        env:
+          VALIDATE_SITE_URL: ${{ github.ref_name == 'staging' && 'https://staging-blog.tvphus.dev' || vars.SITE_URL || 'https://blog.tvphus.dev' }}
+        run: |
+          node scripts/validate-built-site.mjs \
+            --dist dist \
+            --profile "${{ github.ref_name == 'main' && 'production' || 'preview' }}" \
+            --site-url "$VALIDATE_SITE_URL" \
+            ${{ github.ref_name != 'main' && format('--cms-branch codex/cms-validation-{0}', github.run_id) || '' }}
 
       - name: Deploy to Cloudflare Pages
         uses: cloudflare/wrangler-action@v3

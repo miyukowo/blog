@@ -22,16 +22,15 @@
  *   documented staging check (see docs/maintenance/upstream.md, later task).
  * - `preview`: preview-shaped build with `SITE_URL` set to
  *   `https://preview.blog.tvphus.dev` (override with `--site-url`) and root
- *   `BASE_PATH=/`. URL origins are normalized before comparison (Astro page
- *   metadata follows `SITE_URL`, while `@astrojs/sitemap`/`@astrojs/rss` use
- *   the `site` value evaluated in `astro.config.mjs` before Vite env is
- *   available), so the protected route paths, metadata shape, feed/sitemap
- *   paths, OG paths and Pagefind evidence are still checked. It also reports
- *   the CMS preview assets that require the manual/authenticated Task 6
- *   checks. It never deploys anything.
+ *   `BASE_PATH=/`. The recorded baseline origin is explicitly rebased onto the
+ *   requested preview origin, and every actual HTML/feed/sitemap URL origin is
+ *   then required to equal that origin, so a cross-origin mistake fails
+ *   instead of being normalized away. It also reports the CMS preview assets
+ *   that require the manual/authenticated Task 6 checks. It never deploys
+ *   anything.
  *
- * The only accepted contract deviations are the entries in
- * `ALLOWED_CHANGES` below. They are deliberately narrow, exact
+ * The only accepted contract deviations are the shared entries in
+ * `scripts/site-allowed-changes.mjs`. They are deliberately narrow, exact
  * `from` -> `to` classifications with a reason:
  *
  * 1. `/vi/rss.xml` language `en-us` -> `vi-vn`: the known baseline defect
@@ -66,6 +65,12 @@ import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
 
 import { assertSiteContract, captureSite, SiteContractError } from './site-contract.mjs';
+import { ALLOWED_CHANGES } from './site-allowed-changes.mjs';
+import {
+  collectOriginViolations,
+  inferBaselineOrigin,
+  rebaseOrigins,
+} from './validate-built-site.mjs';
 
 const execFileAsync = promisify(execFile);
 
@@ -89,42 +94,6 @@ const DISABLING_ENV_FLAGS = [
   'CI_SKIP_SITEMAP',
   'CI_SKIP_RSS',
 ];
-
-const ALLOWED_CHANGES = {
-  fieldChanges: [
-    {
-      path: '/vi/rss.xml',
-      field: 'language',
-      from: 'en-us',
-      to: 'vi-vn',
-      reason: 'Known baseline defect: the VI feed must report the VI language.',
-    },
-    {
-      path: '/categories/guide/',
-      field: 'hreflangs.vi',
-      from: 'https://blog.tvphus.dev/vi/categories/guide/',
-      to: 'https://blog.tvphus.dev/vi/categories/huong-dan/',
-      reason:
-        'Baseline recorded a non-existent VI taxonomy destination; the real translated route is /vi/categories/huong-dan/.',
-    },
-    {
-      path: '/vi/categories/huong-dan/',
-      field: 'hreflangs.en',
-      from: 'https://blog.tvphus.dev/categories/huong-dan/',
-      to: 'https://blog.tvphus.dev/categories/guide/',
-      reason:
-        'Baseline recorded a non-existent EN taxonomy destination; the real EN counterpart is /categories/guide/.',
-    },
-    {
-      path: '/vi/categories/huong-dan/',
-      field: 'hreflangs.x-default',
-      from: 'https://blog.tvphus.dev/categories/huong-dan/',
-      to: 'https://blog.tvphus.dev/categories/guide/',
-      reason:
-        'x-default follows the default-locale sibling, so it records the same non-existent EN taxonomy destination as hreflangs.en.',
-    },
-  ],
-};
 
 const PROFILES = ['offline', 'full', 'preview'];
 
@@ -252,36 +221,6 @@ async function detectToolchain() {
   return { bun, installedAstro, gitHead };
 }
 
-const NORMALIZED_PREVIEW_ORIGIN = 'https://preview-origin.invalid';
-
-/**
- * Replace every URL origin with one placeholder so the preview profile can
- * compare paths, canonical paths and metadata without pinning the build to
- * the production origin.
- *
- * Why this is needed: page modules read `import.meta.env.SITE_URL` during the
- * Vite build (so canonical/hreflang/OG follow the preview origin), but
- * `astro.config.mjs` evaluates `SITE.url` before Vite env is available, so
- * `@astrojs/sitemap` and `@astrojs/rss` (which receive `context.site`) still
- * emit the config-load default origin. Origin normalization keeps the
- * preview check focused on the contract (routes, paths, metadata shape,
- * counts) and documents that preview origin consistency is a deployment
- * concern. Offline/full profiles never normalize origins and therefore keep
- * the exact production canonical URLs protected.
- */
-function normalizeContractOrigins(value) {
-  if (typeof value === 'string') {
-    return value.replace(/^https?:\/\/[^/]+/i, NORMALIZED_PREVIEW_ORIGIN);
-  }
-  if (Array.isArray(value)) return value.map((item) => normalizeContractOrigins(item));
-  if (value !== null && typeof value === 'object') {
-    return Object.fromEntries(
-      Object.entries(value).map(([key, item]) => [key, normalizeContractOrigins(item)]),
-    );
-  }
-  return value;
-}
-
 function contractSummary(contract) {
   return `${contract.htmlRoutes.length} routes, ${Object.keys(contract.feeds).length} feeds, ${contract.sitemapUrls.length} sitemap URLs, ${contract.generatedOgPaths.length} OG paths, ${contract.search.indexedPages} Pagefind pages (${contract.search.languages.join(', ')})`;
 }
@@ -352,10 +291,19 @@ async function main() {
   }
 
   const measuredBaseline = JSON.parse(await readFile(BASELINE_PATH, 'utf8'));
+  // Preview expectations are explicit: rebase only the recorded baseline
+  // origin onto the requested preview origin. Every actual URL origin is then
+  // checked against that origin below; origins are never normalized into a
+  // placeholder that could hide a cross-origin mistake.
+  const baselineOrigin = inferBaselineOrigin(measuredBaseline);
   const comparisonBaseline =
-    profile === 'preview' ? normalizeContractOrigins(measuredBaseline) : measuredBaseline;
+    profile === 'preview'
+      ? rebaseOrigins(measuredBaseline, baselineOrigin, siteUrl)
+      : measuredBaseline;
   const allowedChanges =
-    profile === 'preview' ? normalizeContractOrigins(ALLOWED_CHANGES) : ALLOWED_CHANGES;
+    profile === 'preview'
+      ? rebaseOrigins(ALLOWED_CHANGES, baselineOrigin, siteUrl)
+      : ALLOWED_CHANGES;
 
   let contract;
   try {
@@ -380,10 +328,14 @@ async function main() {
 
   await writeFile(outputPath, `${JSON.stringify(contract, null, 2)}\n`);
 
-  const comparisonContract = profile === 'preview' ? normalizeContractOrigins(contract) : contract;
-
   try {
-    assertSiteContract(comparisonContract, comparisonBaseline, { allowedChanges });
+    assertSiteContract(contract, comparisonBaseline, { allowedChanges });
+    if (profile === 'preview') {
+      const originViolations = collectOriginViolations(contract, new URL(siteUrl).origin);
+      if (originViolations.length > 0) {
+        throw new Error(`preview origin mismatch:\n  ${originViolations.join('\n  ')}`);
+      }
+    }
   } catch (error) {
     console.error(`site verify: FAIL - contract mismatch`);
     if (error instanceof SiteContractError) {

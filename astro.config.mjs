@@ -136,7 +136,11 @@ function rewriteSitemapXslToRelative() {
 
 // https://astro.build/config
 export default defineConfig({
-  site: SITE.url,
+  // Follow the deployment origin at config time. `import.meta.env.SITE_URL`
+  // (used by page modules) is not reliably populated while the config module
+  // is evaluated, so sitemap/RSS would otherwise keep the production origin
+  // in a preview build and disagree with canonical/OG metadata.
+  site: process.env.SITE_URL || SITE.url,
   // GitHub Pages serves the project at https://<user>.github.io/<repo>/,
   // so production builds need `base` to match that subpath — every
   // generated asset URL (CSS, JS, images, favicons) is prefixed with it.

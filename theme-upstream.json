@@ -56,8 +56,8 @@
   "sharedExceptions": [
     {
       "path": "astro.config.mjs",
-      "reason": "Upstream Astro 7/Sätteri config plus site-owned CDN allowlist, Vietnamese font subsets, an exact config-time unlisted-sitemap scan and an MDX raw-HTML compatibility seam (src/site/mdx-html.ts, src/site/sitemap.ts).",
-      "validation": "node scripts/verify-site.mjs --profile offline"
+      "reason": "Upstream Astro 7/Sätteri config plus site-owned CDN allowlist, Vietnamese font subsets, an exact config-time unlisted-sitemap scan, an MDX raw-HTML compatibility seam (src/site/mdx-html.ts, src/site/sitemap.ts) and a deployment-origin-aware site value so preview sitemap/feed origins match canonical metadata.",
+      "validation": "node scripts/verify-site.mjs --profile preview"
     },
     {
       "path": "package.json",
