@@ -78,6 +78,52 @@ function loadHtml(file) {
   return parseHtml(readFileSync(file, 'utf8'));
 }
 
+function hasClass(element, className) {
+  return (attr(element, 'class') ?? '').split(/\s+/).includes(className);
+}
+
+/** Text content of a parsed tree (text nodes only, no markup). */
+function textOf(node) {
+  let text = '';
+  const walk = (current) => {
+    if (!current) return;
+    if (current.nodeName === '#text') {
+      text += current.value;
+      return;
+    }
+    for (const child of current.childNodes ?? []) walk(child);
+    if (current.content) walk(current.content);
+  };
+  walk(node);
+  return text;
+}
+
+/**
+ * True when `needle` appears inside an actual text node. This is the
+ * regression detector for MDX: generated HTML that MDX escapes into a string
+ * child becomes a text node rather than an element.
+ */
+function hasTextContaining(node, needle) {
+  if (!node) return false;
+  if (node.nodeName === '#text' && String(node.value).includes(needle)) return true;
+  for (const child of node.childNodes ?? []) {
+    if (hasTextContaining(child, needle)) return true;
+  }
+  if (node.content && hasTextContaining(node.content, needle)) return true;
+  return false;
+}
+
+/**
+ * True when the document loads the Mermaid client island. Astro emits the
+ * component's processed script as a page-scoped module chunk; the frontmatter
+ * `mermaid` flag is what conditionally renders `Mermaid.astro`.
+ */
+function hasMermaidIsland(doc) {
+  return allElements(doc, 'script').some((script) =>
+    /Mermaid\.astro[^/]*\.js$/.test(attr(script, 'src') ?? ''),
+  );
+}
+
 function headLinks(doc) {
   const head = allElements(doc, 'head')[0];
   return allElements(head, 'link');
@@ -179,9 +225,8 @@ translationKey: 'seo-listed'
 
 Nội dung tiếng Việt.
 `,
-  // Upstream renders KaTeX math in `.md` posts (its own latex-math demo is a
-  // `.md` file); MDX cannot carry inline raw HTML, so math-in-MDX remains a
-  // documented limitation.
+  // Keep the upstream `.md` math path covered alongside the MDX fixtures
+  // below; the MDX compatibility seam must not change Markdown behavior.
   'en/seo-math.md': `---
 title: 'SEO math fixture'
 description: 'Math opt-in fixture with inline math.'
@@ -191,8 +236,7 @@ math: true
 
 Inline math: $x^2 + y^2 = z^2$.
 `,
-  // Upstream's mermaid demo is a `.md` post: fenced code is replaced by a raw
-  // HTML wrapper, which MDX cannot carry (same raw-HTML limitation as math).
+  // Keep the upstream `.md` Mermaid path covered alongside the MDX fixtures.
   'en/seo-mermaid.md': `---
 title: 'SEO mermaid fixture'
 description: 'Mermaid opt-in fixture.'
@@ -204,6 +248,80 @@ mermaid: true
 graph TD
   A[Start] --> B[End]
 \`\`\`
+`,
+  // MDX is the CMS authoring format: math, Mermaid, alert/raw-HTML fences and
+  // authored JSX must all render as elements, not escaped text children.
+  'en/seo-math-mdx/index.mdx': `---
+title: 'SEO MDX math fixture'
+description: 'Inline and display math authored in MDX.'
+pubDate: 2026-10-06
+math: true
+---
+
+Inline math: $x^2 + y^2 = z^2$.
+
+Display math:
+
+$$
+\\int_0^1 x\\,dx = \\frac{1}{2}
+$$
+`,
+  'en/seo-mermaid-mdx/index.mdx': `---
+title: 'SEO MDX mermaid fixture'
+description: 'Mermaid diagram authored in MDX.'
+pubDate: 2026-10-07
+mermaid: true
+---
+
+\`\`\`mermaid
+graph TD
+  A[Start] --> B[End]
+\`\`\`
+`,
+  // Mermaid markup renders without the island when the frontmatter opt-in is
+  // absent, matching upstream behavior.
+  'en/seo-mermaid-off/index.mdx': `---
+title: 'SEO MDX mermaid opt-out fixture'
+description: 'Mermaid fence without the mermaid frontmatter opt-in.'
+pubDate: 2026-10-08
+---
+
+\`\`\`mermaid
+graph LR
+  X --> Y
+\`\`\`
+`,
+  'en/seo-alert-mdx/index.mdx': `---
+title: 'SEO MDX alert fixture'
+description: 'Alert fence authored in MDX.'
+pubDate: 2026-10-09
+---
+
+\`\`\`alert
+type: info
+title: MDX alert title
+description: MDX alert description.
+\`\`\`
+`,
+  'en/seo-ashtml-mdx/index.mdx': `---
+title: 'SEO MDX ashtml fixture'
+description: 'Raw HTML fence authored in MDX.'
+pubDate: 2026-10-10
+---
+
+\`\`\`ashtml
+<section id="authored-html" data-kind="raw"><p>Authored <em>HTML</em></p></section>
+\`\`\`
+`,
+  'en/seo-jsx-mdx/index.mdx': `---
+title: 'SEO MDX JSX fixture'
+description: 'Ordinary authored JSX in MDX.'
+pubDate: 2026-10-11
+---
+
+<div id="authored-jsx" data-kind="component">
+  Authored <strong>JSX</strong>
+</div>
 `,
   'en/seo-draft/index.mdx': `---
 title: 'SEO draft fixture'
@@ -350,14 +468,16 @@ test('temporary fixture build satisfies SEO/visibility/navigation contracts', as
     (sum, lang) => sum + lang.page_count,
     0,
   );
-  // 33 baseline pages + seo-listed, seo-listed-vi, seo-math, seo-mermaid.
-  assert.equal(pagefindTotal, 37, 'Pagefind must index listed pages only');
+  // 33 baseline routes (minus the unindexed 404, plus the static CMS shell),
+  // 4 original listed fixtures, 6 MDX raw-HTML fixtures and the extra
+  // `/page/2/` pagination route created by the added EN posts.
+  assert.equal(pagefindTotal, 44, 'Pagefind must index listed pages only');
   assert.deepEqual(
     Object.keys(pagefindEntry.languages).sort(),
     ['en-us', 'vi-vn'],
     'EN and VI must both be searchable',
   );
-  assert.equal(pagefindEntry.languages['en-us'].page_count, 20);
+  assert.equal(pagefindEntry.languages['en-us'].page_count, 27);
   assert.equal(pagefindEntry.languages['vi-vn'].page_count, 17);
 
   // Listings/navigation must not link to unlisted or drafts.
@@ -464,12 +584,16 @@ test('temporary fixture build satisfies SEO/visibility/navigation contracts', as
   assert.ok(listedHtml.includes('expressive-code'), 'Expressive Code markup present');
   assert.ok(/copy/i.test(listedHtml), 'code copy control present');
 
-  // ---- math / mermaid opt-in ------------------------------------------
-  const mathHtml = readFileSync(pageFile(distDir, '/posts/seo-math/'), 'utf8');
-  assert.ok(mathHtml.includes('class="katex"'), 'math page must render KaTeX markup');
-  assert.match(
-    mathHtml,
-    /<link[^>]+href="\/_astro\/MathStyles\.[^"]+\.css"/,
+  // ---- math / mermaid opt-in (Markdown baseline) ----------------------
+  const mathDoc = loadHtml(pageFile(distDir, '/posts/seo-math/'));
+  assert.ok(
+    allElements(mathDoc, 'span').some((element) => hasClass(element, 'katex')),
+    'math page must render a real KaTeX element',
+  );
+  assert.ok(
+    headLinks(mathDoc).some((link) =>
+      /\/_astro\/MathStyles\.[^/]+\.css$/.test(attr(link, 'href') ?? ''),
+    ),
     'math page must load the page-scoped KaTeX stylesheet',
   );
   // NOTE (upstream behavior): with the Astro 7 dynamic-import layout the
@@ -478,24 +602,113 @@ test('temporary fixture build satisfies SEO/visibility/navigation contracts', as
   // upstream implementation. Recorded as a minor known limitation, not a
   // local regression; the KaTeX *markup* remains opt-in via `math: true`.
 
-  const mermaidHtml = readFileSync(pageFile(distDir, '/posts/seo-mermaid/'), 'utf8');
-  assert.ok(
-    /class="chirpy-mermaid-wrapper"/.test(mermaidHtml),
-    'mermaid block must be wrapped for client rendering',
+  const mermaidDoc = loadHtml(pageFile(distDir, '/posts/seo-mermaid/'));
+  const mermaidWrapper = allElements(mermaidDoc, 'div').find((element) =>
+    hasClass(element, 'chirpy-mermaid-wrapper'),
   );
+  assert.ok(mermaidWrapper, 'mermaid block must be a real wrapper element');
   assert.ok(
-    /data-mermaid-src="/.test(mermaidHtml),
+    (attr(mermaidWrapper, 'data-mermaid-src') ?? '').includes('graph TD'),
     'mermaid source must be preserved for the island',
-  );
-  assert.ok(
-    mermaidHtml.includes('graph TD') || mermaidHtml.includes('graph td'),
-    'mermaid source preserved',
   );
   assert.equal(
     listedHtml.includes('chirpy-mermaid'),
     false,
     'non-mermaid page must not include Mermaid markup',
   );
+
+  // ---- MDX raw-HTML boundary: math, Mermaid, alert, ashtml, JSX --------
+  // MDX must render generated HTML as elements. Before the compatibility
+  // seam, KaTeX/Mermaid/Alert/ashtml markup ended up inside text nodes.
+  const mdxMathDoc = loadHtml(pageFile(distDir, '/posts/seo-math-mdx/'));
+  const katexElements = allElements(mdxMathDoc, 'span').filter((element) =>
+    hasClass(element, 'katex'),
+  );
+  assert.ok(
+    katexElements.length >= 2,
+    'MDX inline and display math must render as .katex elements',
+  );
+  assert.ok(
+    allElements(mdxMathDoc, 'math').length >= 2,
+    'MDX math must include real MathML elements',
+  );
+  assert.ok(
+    allElements(mdxMathDoc, 'span').some((element) => hasClass(element, 'katex-display')),
+    'MDX display math must render a .katex-display wrapper',
+  );
+  assert.equal(
+    hasTextContaining(mdxMathDoc, '<span class="katex"'),
+    false,
+    'MDX math markup must not remain escaped text',
+  );
+
+  const mdxMermaidDoc = loadHtml(pageFile(distDir, '/posts/seo-mermaid-mdx/'));
+  const mdxMermaidWrapper = allElements(mdxMermaidDoc, 'div').find((element) =>
+    hasClass(element, 'chirpy-mermaid-wrapper'),
+  );
+  assert.ok(mdxMermaidWrapper, 'MDX mermaid block must be a real wrapper element');
+  assert.ok(
+    (attr(mdxMermaidWrapper, 'data-mermaid-src') ?? '').includes('graph TD'),
+    'MDX mermaid source must be preserved in the data attribute',
+  );
+  assert.equal(
+    hasTextContaining(mdxMermaidDoc, 'chirpy-mermaid-wrapper'),
+    false,
+    'MDX mermaid markup must not remain escaped text',
+  );
+  assert.ok(hasMermaidIsland(mdxMermaidDoc), 'mermaid:true MDX page must load the Mermaid island');
+
+  const mdxMermaidOffDoc = loadHtml(pageFile(distDir, '/posts/seo-mermaid-off/'));
+  assert.ok(
+    allElements(mdxMermaidOffDoc, 'div').some((element) =>
+      hasClass(element, 'chirpy-mermaid-wrapper'),
+    ),
+    'mermaid fence without opt-in still renders the upstream wrapper markup',
+  );
+  assert.equal(
+    hasMermaidIsland(mdxMermaidOffDoc),
+    false,
+    'mermaid:false MDX page must not load the Mermaid island',
+  );
+
+  const mdxAlertDoc = loadHtml(pageFile(distDir, '/posts/seo-alert-mdx/'));
+  const alertElement = allElements(mdxAlertDoc, 'div').find(
+    (element) => attr(element, 'role') === 'alert',
+  );
+  assert.ok(alertElement, 'MDX alert fence must render a real alert element');
+  assert.ok(hasClass(alertElement, 'alert-info'), 'alert type class must be applied');
+  assert.ok(
+    textOf(alertElement).includes('MDX alert description.'),
+    'alert content must be rendered as text content, not markup',
+  );
+  assert.equal(
+    hasTextContaining(mdxAlertDoc, 'role="alert"'),
+    false,
+    'MDX alert markup must not remain escaped text',
+  );
+
+  const mdxAsHtmlDoc = loadHtml(pageFile(distDir, '/posts/seo-ashtml-mdx/'));
+  const authoredHtml = allElements(mdxAsHtmlDoc, 'section').find(
+    (element) => attr(element, 'id') === 'authored-html',
+  );
+  assert.ok(authoredHtml, 'ashtml fence must render the authored element');
+  assert.equal(attr(authoredHtml, 'data-kind'), 'raw');
+  assert.ok(textOf(authoredHtml).includes('Authored HTML'));
+  assert.equal(
+    hasTextContaining(mdxAsHtmlDoc, 'authored-html'),
+    false,
+    'MDX raw HTML must not remain escaped text',
+  );
+
+  const mdxJsxDoc = loadHtml(pageFile(distDir, '/posts/seo-jsx-mdx/'));
+  const authoredJsx = allElements(mdxJsxDoc, 'div').find(
+    (element) => attr(element, 'id') === 'authored-jsx',
+  );
+  assert.ok(authoredJsx, 'authored JSX must render unchanged');
+  assert.equal(attr(authoredJsx, 'data-kind'), 'component');
+  const authoredStrong = allElements(authoredJsx, 'strong')[0];
+  assert.ok(authoredStrong, 'authored JSX children render');
+  assert.equal(textOf(authoredStrong), 'JSX');
 
   // ---- mobile/keyboard accessibility affordances -----------------------
   assert.ok(listedHtml.includes('href="#main"'), 'skip-to-content link present');

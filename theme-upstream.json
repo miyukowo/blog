@@ -33,7 +33,9 @@
     "manifest": "package.json",
     "lock": "bun.lock"
   },
-  "protectedContent": ["src/content/"],
+  "protectedContent": [
+    "src/content/"
+  ],
   "localOwned": [
     "src/site/",
     "scripts/",
@@ -54,7 +56,7 @@
   "sharedExceptions": [
     {
       "path": "astro.config.mjs",
-      "reason": "Upstream Astro 7/S\u00e4tteri config plus site-owned CDN allowlist, Vietnamese font subsets and a config-time unlisted-sitemap scan.",
+      "reason": "Upstream Astro 7/Sätteri config plus site-owned CDN allowlist, Vietnamese font subsets, a config-time unlisted-sitemap scan and an MDX raw-HTML compatibility seam (src/site/mdx-html.ts).",
       "validation": "node scripts/verify-site.mjs --profile offline"
     },
     {
@@ -204,18 +206,6 @@
     }
   ],
   "deferred": [
-    {
-      "feature": "KaTeX math on .mdx posts",
-      "reason": "S\u00e4tteri/MDX cannot carry inline raw HTML, so KaTeX output escapes in MDX. Upstream's own math demo post is a .md file.",
-      "restoration": "Author math posts as .md (upstream convention), or add a site Math/Mermaid MDX component wrapper in src/site/ later.",
-      "acceptance": "tests/site/seo.test.mjs math assertions for a .md post plus rendered KaTeX markup."
-    },
-    {
-      "feature": "Mermaid fences on .mdx posts",
-      "reason": "Same S\u00e4tteri/MDX raw-HTML limitation; upstream mermaid demo is a .md post.",
-      "restoration": "Author mermaid diagrams in .md posts or wrap with an MDX component in src/site/.",
-      "acceptance": "tests/site/seo.test.mjs mermaid wrapper/island assertions for a .md post."
-    },
     {
       "feature": "Page-scoped KaTeX stylesheet",
       "reason": "With the upstream Astro 7 dynamic-import layout, the extracted MathStyles CSS chunk is linked from every post page, so the intended page-only KaTeX CSS is not fully honored by the upstream implementation.",
