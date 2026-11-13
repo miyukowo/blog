@@ -1,0 +1,6 @@
+validate-built-site: PASS mode=routine profile=production dist=/home/tvp/.codex/worktrees/upstream-preflight/blog/dist site=https://blog.tvphus.dev
+  contract: 34 routes, 2 feeds, 32 sitemap URLs, 7 generated OG files, 33 Pagefind pages
+  source manifest: /home/tvp/.codex/worktrees/upstream-preflight/blog/.astro/site-build-manifest.json
+  current-source expectations: OK
+  origin consistency: OK
+  generated OG existence: OK

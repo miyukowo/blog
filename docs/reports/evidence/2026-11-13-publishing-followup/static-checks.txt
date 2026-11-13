@@ -1,0 +1,51 @@
+HEAD: 2194c0da22ad6f379b51d358ed9d3905d58c3fc3
+== typecheck ==
+$ astro check
+16:54:17 [content] Syncing content
+16:54:17 [content] Astro config changed
+16:54:17 [content] Clearing content store
+16:54:17 [content] Synced content
+16:54:17 [types] Generated 301ms
+16:54:17 [check] Getting diagnostics for Astro files in /home/tvp/.codex/worktrees/upstream-preflight/blog...
+[96mscripts/site-contract.mjs[0m:[93m201[0m:[93m10[0m - [93mwarning[0m[90m ts(80006): [0mThis may be converted to an async function.
+
+[7m201[0m function readFileForCapture(filePath, label) {
+[7m   [0m [93m         ~~~~~~~~~~~~~~~~~~[0m
+
+Result (102 files): 
+- 0 errors
+- 0 warnings
+- 1 hint
+
+typecheck_exit:0
+== lint ==
+$ eslint . --max-warnings=0
+lint_exit:0
+== scoped format ==
+$ node scripts/format-site-check.mjs --check
+format-site-check (--check): scripts, tests/site, docs, src/site, public/cms, src/components/VideoEmbed.astro, src/utils/og-image.ts, package.json, eslint.config.js, .prettierrc.json
+Checking formatting...
+[warn] docs/reports/evidence/2026-11-13-publishing-followup/historical-full-contract.json
+[warn] Code style issues found in the above file. Run Prettier with --write to fix.
+error: script "format:site:check" exited with code 1
+format_exit:1
+== upstream slug tests ==
+bun test v1.3.14 (0d9b296a)
+
+src/utils/posts.test.ts:
+(pass) slugify > Latin tags remain unchanged [4.70ms]
+(pass) slugify > Japanese tags work [0.54ms]
+(pass) slugify > Malayalam tags work [0.04ms]
+(pass) slugify > Mixed strings work [0.02ms]
+(pass) slugify > Multiple spaces become single hyphen [0.01ms]
+(pass) slugify > Special characters are removed [0.02ms]
+(pass) slugify > Leading and trailing hyphens are trimmed [0.01ms]
+(pass) slugify > Mixed Latin and Unicode [0.02ms]
+(pass) slugify > Accented characters are preserved [0.02ms]
+(pass) slugify > Empty string after processing returns empty [0.01ms]
+
+ 10 pass
+ 0 fail
+ 10 expect() calls
+Ran 10 tests across 1 file. [106.00ms]
+upstream_exit:0
