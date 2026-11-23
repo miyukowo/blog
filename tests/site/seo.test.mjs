@@ -324,6 +324,22 @@ pubDate: 2026-10-11
   Authored <strong>JSX</strong>
 </div>
 `,
+  'en/seo-multi-alert-mdx/index.mdx': `---
+title: 'SEO MDX multi-alert fixture'
+description: 'Multiple Alert components without inline imports in MDX.'
+pubDate: 2026-10-11
+---
+
+<Alert type="info" style="soft" direction="horizontal" icon="lucide:info" title="First Alert">
+First injected alert body.
+</Alert>
+
+Paragraph between alerts.
+
+<Alert type="warning" style="outline" direction="horizontal" icon="lucide:alert-triangle" title="Second Alert">
+Second injected alert body.
+</Alert>
+`,
   'en/seo-draft/index.mdx': `---
 title: 'SEO draft fixture'
 description: 'Must never reach public output.'
@@ -664,16 +680,16 @@ test('temporary fixture build satisfies SEO/visibility/navigation contracts', as
     0,
   );
   // 33 baseline routes (minus the unindexed 404, plus the static CMS shell),
-  // the original listed fixtures, the MDX raw-HTML fixtures, the listed
+  // the original listed fixtures, the MDX raw-HTML/multi-alert fixtures, the listed
   // sitemap-identity fixtures, the loader-identity fixtures and the pagination
-  // routes. Unlisted fixtures (including the real mixed-case one) stay out.
-  assert.equal(pagefindTotal, 51, 'Pagefind must index listed pages only');
+  // routes. Unlisted fixtures stay out.
+  assert.equal(pagefindTotal, 52, 'Pagefind must index listed pages only');
   assert.deepEqual(
     Object.keys(pagefindEntry.languages).sort(),
     ['en-us', 'vi-vn'],
     'EN and VI must both be searchable',
   );
-  assert.equal(pagefindEntry.languages['en-us'].page_count, 33);
+  assert.equal(pagefindEntry.languages['en-us'].page_count, 34);
   assert.equal(pagefindEntry.languages['vi-vn'].page_count, 18);
 
   // Listings/navigation must not link to unlisted or drafts.
@@ -905,6 +921,24 @@ test('temporary fixture build satisfies SEO/visibility/navigation contracts', as
   const authoredStrong = allElements(authoredJsx, 'strong')[0];
   assert.ok(authoredStrong, 'authored JSX children render');
   assert.equal(textOf(authoredStrong), 'JSX');
+
+  const multiAlertDoc = loadHtml(pageFile(distDir, '/posts/seo-multi-alert-mdx/'));
+  const multiAlerts = allElements(multiAlertDoc, 'div').filter(
+    (element) => attr(element, 'role') === 'alert',
+  );
+  assert.equal(multiAlerts.length, 2, 'both injected Alert components must render');
+  assert.ok(textOf(multiAlerts[0]).includes('First Alert'));
+  assert.ok(textOf(multiAlerts[0]).includes('First injected alert body.'));
+  assert.ok(textOf(multiAlerts[1]).includes('Second Alert'));
+  assert.ok(textOf(multiAlerts[1]).includes('Second injected alert body.'));
+
+  const legacyAlertDoc = loadHtml(
+    pageFile(distDir, '/posts/how-i-installed-arch-linux-on-my-laptop/'),
+  );
+  assert.ok(
+    allElements(legacyAlertDoc, 'div').some((element) => attr(element, 'role') === 'alert'),
+    'existing authored post with legacy explicit import Alert must still render',
+  );
 
   // ---- mobile/keyboard accessibility affordances -----------------------
   assert.ok(listedHtml.includes('href="#main"'), 'skip-to-content link present');

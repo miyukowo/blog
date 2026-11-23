@@ -33,13 +33,13 @@
       /**
        * Alert / Callout editor component.
        *
-       * Content uses `<Alert ...>...</Alert>` (src/components/Alert.astro), so
-       * the generated block includes the matching import. Without it, inserted
-       * MDX would not compile ("`Alert` is not defined"). The pattern also
-       * consumes an existing import in front of the block, so editing a saved
-       * post replaces that import instead of adding a duplicate one.
+       * Post pages provide `Alert` to MDX globally via
+       * `<Content components={{ Alert }} />` in `posts/[...slug].astro`, so
+       * `toBlock` emits `<Alert ...>` without an inline `import` statement and
+       * multiple Alert blocks in one post compile cleanly. `pattern` still
+       * accepts an optional legacy import line so existing posts round-trip and
+       * normalize cleanly when edited.
        */
-      const ALERT_IMPORT = "import Alert from '/src/components/Alert.astro';";
 
       /** Escape a value so it is safe inside a double-quoted JSX attribute. */
       const escapeAttribute = (value) =>
@@ -108,7 +108,7 @@
           },
         ],
         pattern:
-          /^(?:import Alert from '\/src\/components\/Alert\.astro';[ \t]*\r?\n+)?[ \t]*<Alert([^>]*)>([\s\S]*?)<\/Alert>/m,
+          /^(?:import Alert from '\/src\/components\/Alert\.astro';(?:[ \t]*\r?\n)+)?[ \t]*<Alert([^>]*)>([\s\S]*?)<\/Alert>/m,
         fromBlock: (match) => {
           const attributes = match[1] ?? '';
           return {
@@ -136,7 +136,7 @@
             `icon="${escapeAttribute(icon)}"`,
             `title="${escapeAttribute(title)}"`,
           ].join(' ');
-          return `${ALERT_IMPORT}\n\n<Alert ${attributes}>\n${body}\n</Alert>`;
+          return `<Alert ${attributes}>\n${body}\n</Alert>`;
         },
         toPreview: ({ type = 'info', title = '', body = '' } = {}) => {
           const colors = {

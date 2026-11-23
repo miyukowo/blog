@@ -31,6 +31,8 @@ const rawBase = (process.env.BASE_PATH ?? '/').replace(/\/$/, '');
 const BASE = rawBase.startsWith('/') ? rawBase : `/${rawBase}`;
 const SITEMAP_XSL_HREF = `${BASE}/sitemap/styles.xsl`;
 const SKIP_RSS_SITEMAP = process.env.CI_SKIP_RSS_SITEMAP === 'true';
+const PROJECT_ROOT = fileURLToPath(new URL('.', import.meta.url));
+const IGNORED_EDITOR_ENTRIES = new Set(['.obsidian', '.idea']);
 
 /**
  * Exact, locale-qualified sitemap pathnames for unlisted posts, used by the
@@ -52,10 +54,11 @@ const SKIP_RSS_SITEMAP = process.env.CI_SKIP_RSS_SITEMAP === 'true';
 const unlistedSitemapPaths = new Set();
 
 function collectUnlistedPathSegments() {
-  const postsRoot = join(process.cwd(), 'src', 'content', 'posts');
+  const postsRoot = join(PROJECT_ROOT, 'src', 'content', 'posts');
   /** @param {string} dir */
   const walk = (dir) => {
     for (const entry of readdirSync(dir)) {
+      if (IGNORED_EDITOR_ENTRIES.has(entry)) continue;
       const full = join(dir, entry);
       if (statSync(full).isDirectory()) {
         walk(full);
@@ -122,7 +125,7 @@ function recordBuildManifest() {
     name: 'chirpy:record-build-manifest',
     hooks: {
       'astro:build:done': () => {
-        writeBuildManifest({ sourceDir: fileURLToPath(new URL('.', import.meta.url)) });
+        writeBuildManifest({ sourceDir: PROJECT_ROOT });
       },
     },
   };

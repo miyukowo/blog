@@ -216,7 +216,7 @@
     },
     {
       "path": "src/pages/[...locale]/posts/[...slug].astro",
-      "reason": "Derives the render locale from normalized post data rather than the first id segment, so supported explicit frontmatter slugs render correctly.",
+      "reason": "Derives the render locale from normalized post data rather than the first id segment, so supported explicit frontmatter slugs render correctly, and injects Alert globally via <Content components={{ Alert }} /> so multi-Alert CMS posts compile without duplicate imports.",
       "validation": "node --test tests/site/seo.test.mjs"
     }
   ],

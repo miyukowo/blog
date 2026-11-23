@@ -269,11 +269,11 @@ gate.
   `node --test tests/site/cms.test.mjs`. Never use `@latest` or a floating range.
 - `/cms/index.html` loads its own directory config via
   `<link href="./config.yml" type="application/yaml" rel="cms-config-url" />`. It never fetches a
-  config from another path or origin. The Alert editor component emits the
-  `/src/components/Alert.astro` import together with the JSX so its output compiles as MDX.
-  Limitation: multiple CMS-inserted Alert blocks in one body each emit their own import, which MDX
-  rejects as a duplicate binding; current authored content has at most one Alert per post. A
-  follow-up can move to a single per-post import or a global MDX component map.
+  config from another path or origin. Post MDX rendering injects `Alert` globally via
+  `<Content components={{ Alert }} />` (`src/pages/[...locale]/posts/[...slug].astro`), so the
+  Alert editor component emits `<Alert ...>` without a per-block import and multiple Alerts in one
+  post compile without duplicate bindings. Its pattern still strips optional legacy
+  `import Alert from '/src/components/Alert.astro';` lines when editing older posts.
 
 ### Preview writes: isolated branch rule
 

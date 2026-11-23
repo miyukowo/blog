@@ -405,29 +405,47 @@ test('CMS admin page loads only its local config file', () => {
 // Alert editor component output
 // ---------------------------------------------------------------------------
 
-test('Alert editor output compiles as self-contained MDX', () => {
+test('Alert editor output omits duplicate imports and compiles cleanly across multiple blocks', () => {
   const [alert] = loadEditorComponents();
   assert.equal(alert.id, 'alert');
   assert.equal(typeof alert.pattern?.test, 'function', 'pattern must be a RegExp');
   assert.equal(typeof alert.pattern.source, 'string');
 
-  const block = alert.toBlock({
+  const values = {
     type: 'warning',
     style: 'outline',
     direction: 'vertical',
     icon: 'lucide:alert-triangle',
     title: 'Quote " and & and <tag>',
     body: 'Body with **bold** text.',
+  };
+  const block = alert.toBlock(values);
+  const secondBlock = alert.toBlock({
+    type: 'success',
+    style: 'soft',
+    direction: 'horizontal',
+    icon: 'lucide:check-circle',
+    title: 'Second alert',
+    body: 'Second callout body.',
   });
 
-  assert.match(block, /^import Alert from '\/src\/components\/Alert\.astro';/m);
-  assert.doesNotThrow(() => mdxToJs(block), 'generated Alert block must compile as MDX');
-
-  const importPath = /import Alert from '([^']+)';/.exec(block)[1];
+  assert.doesNotMatch(block, /import\s+Alert\b/, 'toBlock must not emit a per-block Alert import');
   assert.ok(
-    existsSync(join(REPO_ROOT, importPath.replace(/^\//, ''))),
-    `imported component must resolve: ${importPath}`,
+    existsSync(join(REPO_ROOT, 'src', 'components', 'Alert.astro')),
+    'globally provided Alert component must exist',
   );
+  assert.doesNotThrow(() => mdxToJs(block), 'generated Alert block must compile as MDX');
+  assert.doesNotThrow(
+    () => mdxToJs(`${block}\n\nParagraph between alerts.\n\n${secondBlock}`),
+    'multiple CMS Alert blocks in one MDX body must compile without duplicate imports',
+  );
+
+  // Legacy saved blocks with an inline import still parse and normalize cleanly.
+  const legacyBlock = `import Alert from '/src/components/Alert.astro';\n\n${block}`;
+  const legacyMatch = legacyBlock.match(alert.pattern);
+  assert.ok(legacyMatch, 'legacy import-prefixed Alert block must still match editor pattern');
+  assert.deepEqual({ ...alert.fromBlock(legacyMatch) }, values);
+  assert.equal(alert.toBlock(alert.fromBlock(legacyMatch)), block);
 
   // The component is initialized with an empty object before any edits, so
   // that call must also produce valid MDX rather than "undefined" attributes.
@@ -456,7 +474,14 @@ test('Alert editor round-trips saved MDX without losing or duplicating values', 
   assert.equal(alert.toBlock(roundTripped), block, 'saving again must be byte-idempotent');
 });
 
-test('existing authored Alert posts still import the component they use', () => {
+test('post route injects Alert globally and existing MDX posts compile cleanly', () => {
+  const postRouteSource = readFileSync(
+    join(REPO_ROOT, 'src', 'pages', '[...locale]', 'posts', '[...slug].astro'),
+    'utf8',
+  );
+  assert.match(postRouteSource, /import Alert from ['"]~\/components\/Alert\.astro['"];/);
+  assert.match(postRouteSource, /<Content\s+components=\{\{\s*Alert\s*\}\}\s*\/>/);
+
   const contentRoot = join(REPO_ROOT, 'src', 'content', 'posts');
 
   const findMdx = (dir) =>
@@ -466,13 +491,10 @@ test('existing authored Alert posts still import the component they use', () => 
 
   for (const file of dirs) {
     const source = readFileSync(file, 'utf8');
-    if (/^<Alert\b/m.test(source)) {
-      assert.match(
-        source,
-        /import Alert from '\/src\/components\/Alert\.astro';/,
-        `${relative(REPO_ROOT, file)} must keep its Alert import`,
-      );
-    }
+    assert.doesNotThrow(
+      () => mdxToJs(source),
+      `${relative(REPO_ROOT, file)} must compile cleanly as MDX`,
+    );
   }
 });
 
@@ -763,7 +785,15 @@ test('simulated CMS save/reload produces schema-valid, renderable translated pos
       title: 'Saved from Sveltia CMS',
       body: 'This callout was inserted by the CMS editor component.',
     });
-    const source = `---\n${stringify(frontmatter, { lineWidth: 0 })}---\n\n${alertBlock}\n\n${body}\n`;
+    const secondAlertBlock = alert.toBlock({
+      type: 'warning',
+      style: 'outline',
+      direction: 'horizontal',
+      icon: 'lucide:alert-triangle',
+      title: 'Second CMS alert',
+      body: 'Second callout in the same post.',
+    });
+    const source = `---\n${stringify(frontmatter, { lineWidth: 0 })}---\n\n${alertBlock}\n\n${body}\n\n${secondAlertBlock}\n`;
 
     // Write through the path convention derived from the tracked CMS config.
     const relativeEntry = relative(REPO_ROOT, cmsEntryPath('posts', locale, payload.postSlug));
@@ -794,10 +824,10 @@ test('simulated CMS save/reload produces schema-valid, renderable translated pos
       'https://cdn.tvphus.dev/image/optimized/blog/cms-validation/hero.jpg',
     );
 
-    // The whole saved file (frontmatter + Alert import + JSX) must compile.
+    // The whole saved file (frontmatter + multiple Alert JSX blocks) must compile.
     const compiled = mdxToJs(reloadedSource);
     assert.ok(compiled.code.length > 0);
-    assert.match(reloadedSource, /import Alert from '\/src\/components\/Alert\.astro';/);
+    assert.doesNotMatch(reloadedSource, /import\s+Alert\b/);
 
     // The path follows `<postSlug>/index.mdx` under the locale folder.
     assert.equal(
