@@ -38,8 +38,10 @@ unlisted: true
 | `toc`                   |    Không | Hiện/ẩn TOC bên phải                                               | Mặc định là `true`                                     |
 | `pinned`                |    Không | Ghim bài lên đầu danh sách                                         | Mặc định là `false`                                    |
 | `math`                  |    Không | Bật render KaTeX                                                   | Mặc định là `false`                                    |
+| `mermaid`               |    Không | Bật render sơ đồ Mermaid                                           | Mặc định là `false`                                    |
 | `lang`                  |    Không | Ghi đè ngôn ngữ                                                    | Thường được suy ra từ đường dẫn                        |
 | `translationKey`        |    Không | Ghép các bản dịch của cùng một bài                                 | Dùng cùng một key giữa các locale                      |
+| `postSlug`              |    Không | Slug thư mục dùng trong CMS                                        | Khớp với `<postSlug>/index.mdx`                        |
 
 ## 2) Frontmatter cho trang
 
@@ -75,8 +77,9 @@ toc: true
 - Mở rộng GFM: task list, footnote, definition list.
 - Chỉ có trong MDX: import Astro component, dùng biểu thức JSX, truyền slot/children.
 - Công thức toán: dùng `$...$` cho inline và `$$...$$` cho khối hiển thị, kèm `math: true`.
+- Sơ đồ Mermaid: dùng fenced block `mermaid` kèm `mermaid: true`.
 - Callout: `<Callout type="info|success|warning|error" title="...">`.
-- Component Alert: `<Alert type="info|success|warning|error" style="soft|outline|dash" direction="vertical|horizontal|responsive" icon="..." title="...">`.
+- Component Alert: `<Alert type="info|success|warning|error" style="soft|outline|dash" direction="vertical|horizontal|responsive" icon="..." title="...">` (được inject sẵn trong MDX bài viết — không cần `import Alert`).
 - Video: `<VideoEmbed platform="youtube" id="..." title="..." />` hoặc `src="..."`.
 - Ảnh: nên ưu tiên import từ `astro:assets` để ảnh local được tối ưu.
 
@@ -126,7 +129,8 @@ export function greet(name: string) {
 ## 8) Tham chiếu nhanh
 
 - `toc: false` cho những bài không cần mục lục.
-- `math: true` để chỉ tải KaTeX ở những bài có công thức.
+- `math: true` để bật render KaTeX ở những bài có công thức.
+- `mermaid: true` để chỉ tải thư viện Mermaid khi cần vẽ sơ đồ.
 - `comments: false` để tắt bình luận cho một bài cụ thể.
 - `unlisted: true` để ẩn bài khỏi danh sách nhưng vẫn giữ URL sống.
 - `draft: true` để giữ bài ngoài production.

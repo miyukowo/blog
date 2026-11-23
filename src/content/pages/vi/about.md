@@ -1,21 +1,23 @@
 ---
-title: About
-description: Welcome to my blog!
+title: Giới thiệu
+description: Chào mừng bạn đến với blog của mình!
 translationKey: about
 ---
 
 ## [blog.tvphus.dev](https://blog.tvphus.dev)
 
-My personal blog where I write about web development, networking, and things I find interesting.
+Blog cá nhân nơi mình chia sẻ về lập trình web, mạng máy tính và những chủ đề thú vị mình tìm hiểu được.
 
-Built with [Astro](https://astro.build) and based on the [Chirping Astro](https://github.com/kannansuresh/chirping-astro) theme. Deployed on [Cloudflare Pages](https://pages.cloudflare.com).
+Trang được xây dựng bằng [Astro](https://astro.build), phát triển từ giao diện [Chirping Astro](https://github.com/kannansuresh/chirping-astro) và triển khai trên [Cloudflare Pages](https://pages.cloudflare.com).
 
-You can deploy it yourself over at the [Chirping Astro](https://github.com/kannansuresh/chirping-astro) repo by [kannansuresh](https://github.com/kannansuresh/)
+Bạn có thể tự triển khai giao diện này từ repo [Chirping Astro](https://github.com/kannansuresh/chirping-astro) của [kannansuresh](https://github.com/kannansuresh/).
 
-## Stack
+## Công nghệ sử dụng
 
-- [Astro v6](https://astro.build) — static site generator
-- [Tailwind CSS v4](https://tailwindcss.com) + [daisyUI v5](https://daisyui.com) — styling
-- [Pagefind](https://pagefind.app) — search
-- [Giscus](https://giscus.app) — comments via GitHub Discussions
+- [Astro v7](https://astro.build) — trình tạo trang tĩnh
+- [Tailwind CSS v4](https://tailwindcss.com) + [daisyUI v5](https://daisyui.com) — giao diện & styling
+- [Sätteri](https://www.npmjs.com/package/satteri) + MDX — xử lý Markdown/MDX
+- [Pagefind](https://pagefind.app) — tìm kiếm toàn trang
+- [Giscus](https://giscus.app) — bình luận qua GitHub Discussions
+- [Sveltia CMS](https://sveltia.com) + Cloudinary — soạn thảo & lưu trữ media
 - [Cloudflare Pages](https://pages.cloudflare.com) — hosting

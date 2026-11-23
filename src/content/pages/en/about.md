@@ -10,12 +10,14 @@ My personal blog where I write about web development, networking, and things I f
 
 Built with [Astro](https://astro.build) and based on the [Chirping Astro](https://github.com/kannansuresh/chirping-astro) theme. Deployed on [Cloudflare Pages](https://pages.cloudflare.com).
 
-You can deploy it yourself over at the [Chirping Astro](https://github.com/kannansuresh/chirping-astro) repo by [kannansuresh](https://github.com/kannansuresh/)
+You can deploy it yourself over at the [Chirping Astro](https://github.com/kannansuresh/chirping-astro) repo by [kannansuresh](https://github.com/kannansuresh/).
 
 ## Stack
 
-- [Astro v6](https://astro.build) — static site generator
+- [Astro v7](https://astro.build) — static site generator
 - [Tailwind CSS v4](https://tailwindcss.com) + [daisyUI v5](https://daisyui.com) — styling
+- [Sätteri](https://www.npmjs.com/package/satteri) + MDX — Markdown/MDX pipeline
 - [Pagefind](https://pagefind.app) — search
 - [Giscus](https://giscus.app) — comments via GitHub Discussions
+- [Sveltia CMS](https://sveltia.com) + Cloudinary — publishing & media
 - [Cloudflare Pages](https://pages.cloudflare.com) — hosting

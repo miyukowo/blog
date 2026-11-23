@@ -38,8 +38,10 @@ unlisted: true
 | `toc`                   |       No | Show/hide right-hand TOC                         | Defaults to `true`                       |
 | `pinned`                |       No | Pin post to top of listings                      | Defaults to `false`                      |
 | `math`                  |       No | Enable KaTeX rendering                           | Defaults to `false`                      |
+| `mermaid`               |       No | Enable Mermaid diagram rendering                 | Defaults to `false`                      |
 | `lang`                  |       No | Override locale                                  | Usually inferred from path               |
 | `translationKey`        |       No | Pair translated posts                            | Same key across locales                  |
+| `postSlug`              |       No | CMS folder slug identifier                       | Matches `<postSlug>/index.mdx`           |
 
 ## 2) Frontmatter for pages
 
@@ -75,8 +77,9 @@ toc: true
 - GFM extras: task lists, footnotes, definition lists.
 - MDX only: import Astro components, use JSX-style expressions, pass slots/children.
 - Math: use `$...$` for inline and `$$...$$` for display math, with `math: true`.
+- Mermaid: use a `mermaid` fenced block with `mermaid: true`.
 - Callouts: `<Callout type="info|success|warning|error" title="...">`.
-- Alert component: `<Alert type="info|success|warning|error" style="soft|outline|dash" direction="vertical|horizontal|responsive" icon="..." title="...">`.
+- Alert component: `<Alert type="info|success|warning|error" style="soft|outline|dash" direction="vertical|horizontal|responsive" icon="..." title="...">` (injected globally in post MDX — no `import Alert` needed).
 - Video: `<VideoEmbed platform="youtube" id="..." title="..." />` or `src="..."`.
 - Images: prefer `astro:assets` imports for optimized local images.
 
@@ -127,7 +130,8 @@ export function greet(name: string) {
 ## 8) Quick references
 
 - `toc: false` for posts that do not need a table of contents.
-- `math: true` to load KaTeX only on math pages.
+- `math: true` to load KaTeX rendering on math pages.
+- `mermaid: true` to load the Mermaid diagram island only where needed.
 - `comments: false` to silence comments on one post.
 - `unlisted: true` to hide a post from listings but keep the URL live.
 - `draft: true` to keep a post out of production entirely.
