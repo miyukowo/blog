@@ -1,24 +1,40 @@
-# yaml-language-server: $schema=https://unpkg.com/@sveltia/cms/schema/sveltia-cms.json
+# yaml-language-server: $schema=https://unpkg.com/@sveltia/cms@0.256.1/schema/sveltia-cms.json
+#
+# Production CMS configuration, served at /cms/config.yml.
+#
+# - `backend.branch: main` is deliberate: the production CMS publishes content to
+#   `main`, which is the deployed branch.
+# - Preview writes never edit this file. `scripts/prepare-preview.mjs` copies it
+#   into the built `dist/cms/` output and only then switches the branch to a
+#   short-lived `codex/cms-validation-<run>` branch.
+# - `backend.skip_ci: false` keeps automatic deployments enabled, so a CMS save
+#   triggers the Cloudflare Pages build. Do not add skip markers to commit
+#   messages.
 
 backend:
   name: github
   repo: miyukowo/blog
   branch: main
-  skip_ci: true
+  skip_ci: false
 
 media_folder: blog
 public_folder: blog
 
+# `output_filename_only: false` stores the FULL Cloudinary URL (not a bare
+# public id) so `src/site/media.ts` can map it to the optimized CDN path. If a
+# field overrides `media_libraries`, that override must repeat this full-URL
+# setting because field options replace the matching global options.
 media_libraries:
   cloudinary:
     config:
       cloud_name: tvphus
-      api_key: "963199547532212"
+      # Cloudinary Media Library client key: public, not a secret.
+      api_key: '963199547532212'
       default_transformations:
         - - quality: auto
             fetch_format: auto
     output_filename_only: false
-    use_transformations: true  # false vì tự ghép transform trong cdnUrl
+    use_transformations: true
 
 output:
   omit_empty_optional_fields: true
@@ -39,8 +55,10 @@ collections:
     folder: /src/content/posts
     i18n: true
     create: true
-    slug: "{{fields.postSlug}}"
-    path: "{{fields.postSlug}}/index"
+    # `<postSlug>/index.mdx` inside the locale folder, matching the Astro
+    # content collection (`src/content/posts/<locale>/<postSlug>/index.mdx`).
+    slug: '{{fields.postSlug}}'
+    path: '{{fields.postSlug}}/index'
     extension: mdx
     format: frontmatter
     sortable_fields:
@@ -62,27 +80,27 @@ collections:
         name: title
         widget: string
         i18n: true
-        hint: "Tiêu đề bài viết, tối đa 140 ký tự."
+        hint: 'Tiêu đề bài viết, tối đa 140 ký tự.'
 
       - label: Description
         name: description
         widget: text
         i18n: true
-        hint: "Mô tả ngắn, tối đa 280 ký tự."
+        hint: 'Mô tả ngắn, tối đa 280 ký tự.'
 
       - label: Slug
         name: postSlug
         widget: string
         required: true
         i18n: duplicate
-        hint: "Dùng gạch nối, làm slug URL. Ví dụ: arch-linux-install"
+        hint: 'Dùng gạch nối, làm slug URL. Ví dụ: arch-linux-install'
 
       - label: Translation Key
         name: translationKey
         widget: string
         required: true
         i18n: true
-        hint: "Điền giống nhau ở cả EN và VI để link bài viết"
+        hint: 'Điền giống nhau ở cả EN và VI để link bài viết'
 
       - label: Publish Date
         name: pubDate
@@ -104,13 +122,12 @@ collections:
         widget: image
         required: false
         i18n: duplicate
+        # Field-level media options override the global `media_libraries`
+        # options (the config object is merged, scalars are replaced), so the
+        # full-URL output must be restated here for every image-bearing field.
         media_libraries:
-        cloudinary:             
-          config:
-            default_transformations:
-              - - quality: auto
-                  fetch_format: auto
-          output_filename_only: true
+          cloudinary:
+            output_filename_only: false
 
       - label: Hero Image Alt
         name: heroImageAlt
@@ -136,21 +153,21 @@ collections:
         default: true
         required: false
         i18n: duplicate
-        hint: "Mặc định bật. Chỉ cần set khi muốn tắt."
+        hint: 'Mặc định bật. Chỉ cần set khi muốn tắt.'
 
       - label: Pinned
         name: pinned
         widget: boolean
         required: false
         i18n: duplicate
-        hint: "Ghim bài lên đầu trang."
+        hint: 'Ghim bài lên đầu trang.'
 
       - label: Draft
         name: draft
         widget: boolean
         required: false
         i18n: duplicate
-        hint: "Bài sẽ không hiển thị khi bật."
+        hint: 'Bài sẽ không hiển thị khi bật.'
 
       - label: Comments
         name: comments
@@ -158,21 +175,21 @@ collections:
         default: true
         required: false
         i18n: duplicate
-        hint: "Mặc định bật. Chỉ cần set khi muốn tắt."
+        hint: 'Mặc định bật. Chỉ cần set khi muốn tắt.'
 
       - label: Math (KaTeX)
         name: math
         widget: boolean
         required: false
         i18n: duplicate
-        hint: "Bật khi bài có công thức toán học."
+        hint: 'Bật khi bài có công thức toán học.'
 
       - label: Unlisted
         name: unlisted
         widget: boolean
         required: false
         i18n: duplicate
-        hint: "Ẩn khỏi listing nhưng vẫn truy cập được qua link trực tiếp."
+        hint: 'Ẩn khỏi listing nhưng vẫn truy cập được qua link trực tiếp.'
 
       - label: Body
         name: body
@@ -185,7 +202,7 @@ collections:
     folder: /src/content/pages
     i18n: true
     create: true
-    slug: "{{slug}}"
+    slug: '{{slug}}'
     extension: md
     format: frontmatter
     fields:
@@ -198,6 +215,13 @@ collections:
         name: description
         widget: text
         i18n: true
+
+      - label: Translation Key
+        name: translationKey
+        widget: string
+        required: false
+        i18n: true
+        hint: 'Điền giống nhau ở cả EN và VI để link trang'
 
       - label: Publish Date
         name: pubDate
@@ -220,13 +244,11 @@ collections:
         widget: image
         required: false
         i18n: duplicate
+        # Required because field-level media options replace the global ones:
+        # without it, a page hero image would be saved as a bare filename.
         media_libraries:
           cloudinary:
-            config:
-              default_transformations:
-                - - quality: auto
-                    fetch_format: auto
-            output_filename_only: true
+            output_filename_only: false
 
       - label: Hero Image Alt
         name: heroImageAlt

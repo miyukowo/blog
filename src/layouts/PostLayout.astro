@@ -5,7 +5,6 @@ import SmartImage from '../components/SmartImage.astro';
 import TableOfContents from '../components/islands/TableOfContents.astro';
 import ReadingProgress from '../components/islands/ReadingProgress.astro';
 import Giscus from '../components/islands/Giscus.astro';
-import MathStyles from '../components/MathStyles.astro';
 import { Icon } from 'astro-icon/components';
 import { Image } from 'astro:assets';
 import type { ImageMetadata } from 'astro';
@@ -88,6 +87,7 @@ const seo = buildSeo({
   modifiedTime: post.data.updatedDate,
   tags: post.data.tags,
   availableLocales,
+  translations: translationLinks,
   // An unlisted post hides from SEO by default unless the author
   // explicitly sets `unlistedHideFromSeo: false`.
   noindex: post.data.unlisted && (post.data.unlistedHideFromSeo ?? true),
@@ -97,6 +97,16 @@ const crumbs = [
   { label: t('nav.posts'), href: localizedPath('/', locale) },
   { label: post.data.title },
 ];
+
+let MathStylesComponent;
+if (post.data.math) {
+  MathStylesComponent = (await import('../components/MathStyles.astro')).default;
+}
+
+let MermaidComponent;
+if (post.data.mermaid) {
+  MermaidComponent = (await import('../components/islands/Mermaid.astro')).default;
+}
 ---
 
 <BaseLayout
@@ -110,8 +120,10 @@ const crumbs = [
   seo={seo}
   availableLocales={availableLocales}
   translations={translationLinks}
+  pagefindIgnore={post.data.unlisted}
 >
-  {post.data.math && <MathStyles />}
+  {post.data.math && MathStylesComponent && <MathStylesComponent />}
+  {post.data.mermaid && MermaidComponent && <MermaidComponent />}
   {
     post.data.toc && headings.length > 0 && (
       <TableOfContents slot="aside-bottom" headings={headings} locale={locale} />

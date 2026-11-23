@@ -1,5 +1,6 @@
 ---
 import { render } from 'astro:content';
+import Alert from '~/components/Alert.astro';
 import PostLayout from '~/layouts/PostLayout.astro';
 import { getPosts, getUnlistedPosts, postSlug, sortPostsByDate, type Post } from '~/utils/posts';
 
@@ -61,7 +62,7 @@ const body = post.body ?? '';
   body={body}
   prev={prev}
   next={next}
-  locale={post.id.split('/')[0] as any}
+  locale={post.data.lang}
 >
-  <Content />
+  <Content components={{ Alert }} />
 </PostLayout>

@@ -1,0 +1,44 @@
+✔ Cloudflare workflow keeps production=main and staging=preview branch identity (0.87498ms)
+✖ credential-free PR checks run on pull_request with read-only contents (4.385761ms)
+✔ deployment validates the exact transformed dist before upload (0.270858ms)
+✔ non-main Cloudflare builds force production comments off (0.171171ms)
+✔ per-branch concurrency and deployment branch identity are preserved (0.173596ms)
+✔ required checks run before deployment and use tested runtimes (0.142236ms)
+✔ deployment builds cannot silently skip required output (0.07504ms)
+✔ deployment credentials are not exposed to untrusted PR code (0.083787ms)
+✔ preview CMS config writes built output only and rejects production branches (30.479832ms)
+✔ preview deployments are noindex while production remains indexable (0.703259ms)
+✔ GitHub Pages workflow/support is preserved for separate assessment (0.242023ms)
+✔ full-output contract fixture exists for the production-shaped build (0.196989ms)
+ℹ tests 12
+ℹ suites 0
+ℹ pass 11
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 136.258003
+
+✖ failing tests:
+
+test at tests/site/preview.test.mjs:57:1
+✖ credential-free PR checks run on pull_request with read-only contents (4.385761ms)
+  AssertionError [ERR_ASSERTION]: PR checks must not use deployment secrets
+  
+  true !== false
+  
+      at TestContext.<anonymous> (file:///home/tvp/.codex/worktrees/upstream-preflight/blog/tests/site/preview.test.mjs:68:10)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: true,
+    expected: false,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+exit=1

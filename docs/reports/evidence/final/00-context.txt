@@ -1,0 +1,5 @@
+=== FINAL CLEAN-ROOM VALIDATION ===
+HEAD: 1a8ace97100c71bb0a207f354a97dd3411e9f9f1
+branch: codex/upstream-refactor
+date: 2026-11-02T23:29:02+07:00
+clean archive from committed tree

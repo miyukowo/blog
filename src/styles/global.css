@@ -8,9 +8,6 @@
  */
 
 @import 'tailwindcss';
-@import '@fontsource-variable/inter/index.css';
-@import '@fontsource-variable/inter/wght-italic.css';
-@import '@fontsource/jetbrains-mono/latin-400.css';
 
 @plugin 'daisyui' {
   themes: false; /* we provide our own themes below */
@@ -138,9 +135,9 @@
   /* Reading column max width on post pages */
   --width-prose: 50rem;
 
-  /* Fonts — configured via Fontsource @import */
-  --font-sans: 'Inter Variable', system-ui, sans-serif;
-  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+  /* Fonts — configured via Astro Fonts API (astro.config.mjs) */
+  --font-sans: var(--font-source-sans-3, system-ui, sans-serif);
+  --font-mono: var(--font-jetbrains-mono, ui-monospace, monospace);
 }
 
 :root {
@@ -188,6 +185,13 @@
      We override the default slide animation with a soft fade combined
      with a tiny upward translation so navigations feel smooth but clearly
      animated. */
+  html {
+    view-transition-name: none !important;
+  }
+  html[data-theme-anim] {
+    view-transition-name: root !important;
+  }
+
   @keyframes chirpy-fade-in {
     from {
       opacity: 0;
@@ -853,4 +857,26 @@
 [data-search-input]::-webkit-search-decoration {
   -webkit-appearance: none;
   appearance: none;
+}
+
+/* ---------- Vietnamese archives timeline offset ---------- */
+/*
+ * Vietnamese short month labels ("Tháng 1"–"Tháng 12") are wider than English
+ * abbreviations ("May") and collide with the upstream timeline axis at x=77px.
+ * Shift the timeline coordinates right on VI pages without modifying upstream
+ * `src/pages/[...locale]/archives.astro`.
+ */
+html[lang^='vi'] #archives .year,
+html[lang^='vi'] #archives ul li {
+  padding-left: 9rem !important;
+}
+html[lang^='vi'] #archives .year::before,
+html[lang^='vi'] #archives ul li::before {
+  left: 117px !important;
+}
+html[lang^='vi'] #archives .year::after {
+  left: 113px !important;
+}
+html[lang^='vi'] #archives ul li > a::before {
+  left: 115px !important;
 }

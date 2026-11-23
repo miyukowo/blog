@@ -1,13 +1,69 @@
-<!DOCTYPE html>
-<html>
+<!doctype html>
+<html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="robots" content="noindex" />
     <title>Sveltia CMS</title>
+    <!--
+      T6: the CMS bundle is pinned to an exact, published version so the editing
+      behavior is reproducible. 0.256.1 was verified against
+      https://registry.npmjs.org/@sveltia/cms and the current Sveltia docs:
+      config discovery defaults to `config.yml` next to this page, the
+      `rel="cms-config-url"` link below makes the local file explicit, and
+      `media_libraries.cloudinary.output_filename_only: false` stores full URLs.
+      When bumping the version, update the integrity hash and the schema
+      reference in config.yml together, then re-run tests/site/cms.test.mjs.
+    -->
+    <!--
+      Preview isolation: this page always loads the config from its own
+      directory (`./config.yml`), i.e. the deployed `/cms/config.yml`. It never
+      reads a config from another path or origin. `scripts/prepare-preview.mjs`
+      rewrites only the generated `dist/cms/config.yml` and never the tracked
+      `public/cms/config.yml`.
+    -->
+    <link href="./config.yml" type="application/yaml" rel="cms-config-url" />
   </head>
   <body>
-    <script src="https://unpkg.com/@sveltia/cms/dist/sveltia-cms.js"></script>
+    <script
+      src="https://unpkg.com/@sveltia/cms@0.256.1/dist/sveltia-cms.js"
+      integrity="sha384-LPT86oZkLhmoF84O1jKZBSaFJOVvKv8sjXDKap1SOaSwzbC8F6HH7rTJWekmAzG9"
+      crossorigin="anonymous"
+    ></script>
     <script>
+      /**
+       * Alert / Callout editor component.
+       *
+       * Post pages provide `Alert` to MDX globally via
+       * `<Content components={{ Alert }} />` in `posts/[...slug].astro`, so
+       * `toBlock` emits `<Alert ...>` without an inline `import` statement and
+       * multiple Alert blocks in one post compile cleanly. `pattern` still
+       * accepts an optional legacy import line so existing posts round-trip and
+       * normalize cleanly when edited.
+       */
+
+      /** Escape a value so it is safe inside a double-quoted JSX attribute. */
+      const escapeAttribute = (value) =>
+        String(value ?? '')
+          .replace(/&/g, '&amp;')
+          .replace(/"/g, '&quot;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/\r?\n/g, ' ');
+
+      /** Reverse escapeAttribute so a saved block round-trips unchanged. */
+      const unescapeAttribute = (value) =>
+        String(value ?? '')
+          .replace(/&lt;/g, '<')
+          .replace(/&gt;/g, '>')
+          .replace(/&quot;/g, '"')
+          .replace(/&amp;/g, '&');
+
+      /** Read one double-quoted attribute out of an MDX JSX tag. */
+      const getAttribute = (attributes, name) => {
+        const match = attributes.match(new RegExp(`(?:^|\\s)${name}="([^"]*)"`));
+        return match ? unescapeAttribute(match[1]) : '';
+      };
+
       CMS.registerEditorComponent({
         id: 'alert',
         label: 'Alert / Callout',
@@ -51,25 +107,38 @@
             widget: 'text',
           },
         ],
-        pattern: /^<Alert([^>]*)>([\s\S]*?)<\/Alert>/m,
+        pattern:
+          /^(?:import Alert from '\/src\/components\/Alert\.astro';(?:[ \t]*\r?\n)+)?[ \t]*<Alert([^>]*)>([\s\S]*?)<\/Alert>/m,
         fromBlock: (match) => {
-          const attrs = match[1];
-          const get = (key) => {
-            const m = attrs.match(new RegExp(`${key}="([^"]*)"`));
-            return m ? m[1] : '';
-          };
+          const attributes = match[1] ?? '';
           return {
-            type: get('type'),
-            style: get('style'),
-            direction: get('direction'),
-            icon: get('icon'),
-            title: get('title'),
-            body: match[2].trim(),
+            type: getAttribute(attributes, 'type') || 'info',
+            style: getAttribute(attributes, 'style') || 'soft',
+            direction: getAttribute(attributes, 'direction') || 'horizontal',
+            icon: getAttribute(attributes, 'icon') || 'lucide:info',
+            title: getAttribute(attributes, 'title'),
+            body: (match[2] ?? '').trim(),
           };
         },
-        toBlock: ({ type, style, direction, icon, title, body }) =>
-          `<Alert type="${type}" style="${style}" direction="${direction}" icon="${icon}" title="${title}">\n${body}\n</Alert>`,
-        toPreview: ({ type, title, body }) => {
+        toBlock: (props = {}) => {
+          const {
+            type = 'info',
+            style = 'soft',
+            direction = 'horizontal',
+            icon = 'lucide:info',
+            title = '',
+            body = '',
+          } = props;
+          const attributes = [
+            `type="${escapeAttribute(type)}"`,
+            `style="${escapeAttribute(style)}"`,
+            `direction="${escapeAttribute(direction)}"`,
+            `icon="${escapeAttribute(icon)}"`,
+            `title="${escapeAttribute(title)}"`,
+          ].join(' ');
+          return `<Alert ${attributes}>\n${body}\n</Alert>`;
+        },
+        toPreview: ({ type = 'info', title = '', body = '' } = {}) => {
           const colors = {
             info: '#3b82f6',
             warning: '#f59e0b',

@@ -12,7 +12,7 @@
 /* global Response */
 import type { GetStaticPaths } from 'astro';
 import { generateOgImage } from '../../utils/og-image';
-import { getPosts, postSlug, type Post } from '../../utils/posts';
+import { getPostsForOg, postSlug, type Post } from '../../utils/posts';
 import { SITE, type Locale } from '../../config';
 import { formatDate } from '../../i18n/utils';
 
@@ -23,10 +23,13 @@ export const getStaticPaths: GetStaticPaths = async () => {
   const paths: Array<{ params: { slug: string }; props: { post: Post; locale: Locale } }> = [];
 
   for (const locale of SITE.locales) {
-    const posts = await getPosts(locale);
+    // Published unlisted posts are directly reachable and reference their
+    // generated OG image, so they need one too. Drafts stay absent.
+    const posts = await getPostsForOg(locale);
     for (const post of posts) {
-      // Generate OG images for ALL posts (even those with heroImage)
-      // so we always have a consistent, optimized fallback.
+      // Skip posts that already have a custom heroImage to save build time.
+      if (post.data.heroImage) continue;
+
       const slug = postSlug(post);
       const prefix = locale === SITE.defaultLocale ? '' : `${locale}/`;
       paths.push({

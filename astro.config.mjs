@@ -1,74 +1,131 @@
 // @ts-check
-import { defineConfig, svgoOptimizer } from 'astro/config';
-import process from 'node:process';
-import { readFileSync, writeFileSync, readdirSync } from 'node:fs';
-import { join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { satteri, satteriHeadingIdsPlugin } from '@astrojs/markdown-satteri';
 import mdx from '@astrojs/mdx';
 import sitemap from '@astrojs/sitemap';
-import icon from 'astro-icon';
-import expressiveCode from 'astro-expressive-code';
 import tailwindcss from '@tailwindcss/vite';
-import rehypeSlug from 'rehype-slug';
-import rehypeAutolinkHeadings from 'rehype-autolink-headings';
-import rehypeExternalLinks from 'rehype-external-links';
-import rehypeKatex from 'rehype-katex';
-import remarkGfm from 'remark-gfm';
-import remarkMath from 'remark-math';
-import { remarkAsHtml } from './src/plugins/remark-ashtml.ts';
-import { remarkAlert } from './src/plugins/remark-alert.ts';
-import { remarkCdnImages } from './src/plugins/remark-cdn-images.mjs';
+import expressiveCode from 'astro-expressive-code';
+import icon from 'astro-icon';
+import { defineConfig, fontProviders, svgoOptimizer } from 'astro/config';
+import { readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
+import { join, relative } from 'node:path';
+import { parse as parseYaml } from 'yaml';
+import process from 'node:process';
+import { fileURLToPath, URL } from 'node:url';
+import satteriExternalLinks from 'satteri-external-links';
+import { katex } from '@nullpinter/satteri-katex';
+import { siteMediaPlugin } from './src/site/markdown';
+import { satteriMdxHtmlElements } from './src/site/mdx-html';
+import { satteriAlert } from './src/plugins/satteri-alert';
+import { satteriAsHTML } from './src/plugins/satteri-ashtml';
+import { satteriBaseLinks } from './src/plugins/satteri-base-links';
+import { satteriAutolinkHeadings } from './src/plugins/satteri-autolink-headings.ts';
+import { satteriMermaid } from './src/plugins/satteri-mermaid.ts';
 
 import { SITE } from './src/config';
+import { writeBuildManifest } from './src/site/build-manifest';
+import { contentEntryIdentity } from './src/site/content-identity';
+import { contentSlug } from './src/site/urls';
+import { createUnlistedSitemapMatcher, sitemapPostPathname } from './src/site/sitemap';
 
 const rawBase = (process.env.BASE_PATH ?? '/').replace(/\/$/, '');
 const BASE = rawBase.startsWith('/') ? rawBase : `/${rawBase}`;
 const SITEMAP_XSL_HREF = `${BASE}/sitemap/styles.xsl`;
 const SKIP_RSS_SITEMAP = process.env.CI_SKIP_RSS_SITEMAP === 'true';
+const PROJECT_ROOT = fileURLToPath(new URL('.', import.meta.url));
+const IGNORED_EDITOR_ENTRIES = new Set(['.obsidian', '.idea']);
 
 /**
- * Set of URL path segments that belong to unlisted posts/pages.
- * Populated by `collectUnlistedUrls()` integration before the sitemap
- * integration runs, so the sitemap `filter` can exclude them.
+ * Exact, locale-qualified sitemap pathnames for unlisted posts, used by the
+ * sitemap filter below.
  *
- * We use path segments (e.g. "posts/my-slug") rather than full URLs so
- * the check works regardless of `SITE_URL` or `BASE_PATH` values.
+ * Upstream populated this from `astro:content` inside an `astro:build:start`
+ * integration. Under Astro 7 that dynamic import fails ("Vite module runner
+ * has been closed"), and the failure was swallowed — so unlisted posts leaked
+ * into the sitemap. Scanning the content directory at config time is
+ * deterministic, has no build-lifecycle dependency, and uses the SAME
+ * id policy the configured glob loader applies (`contentEntryIdentity`),
+ * including filename segment normalization and explicit frontmatter `slug`.
+ *
+ * Matching is by complete normalized pathname (including the configured
+ * base), never by substring: an unlisted `/posts/review-unlisted/` must not
+ * hide a listed `/posts/review-unlisted-extra/` or
+ * `/vi/posts/review-unlisted/`.
  */
-const unlistedPathSegments = new Set();
+const unlistedSitemapPaths = new Set();
+
+function collectUnlistedPathSegments() {
+  const postsRoot = join(PROJECT_ROOT, 'src', 'content', 'posts');
+  /** @param {string} dir */
+  const walk = (dir) => {
+    for (const entry of readdirSync(dir)) {
+      if (IGNORED_EDITOR_ENTRIES.has(entry)) continue;
+      const full = join(dir, entry);
+      if (statSync(full).isDirectory()) {
+        walk(full);
+        continue;
+      }
+      if (!/\.(md|mdx)$/i.test(entry)) continue;
+      const source = readFileSync(full, 'utf8');
+      const match = /^---\r?\n([\s\S]*?)\r?\n---/.exec(source);
+      if (!match) continue;
+      let data;
+      try {
+        data = parseYaml(match[1]);
+      } catch {
+        continue;
+      }
+      if (!data || data.unlisted !== true) continue;
+      const rawRelativePath = relative(postsRoot, full).split(/[\\/]/).join('/');
+      // The loader's identity, not the raw filename: mixed-case/space and
+      // non-ASCII filenames are normalized exactly as the route generator does.
+      const id = contentEntryIdentity({
+        relativePath: rawRelativePath,
+        slug: typeof data.slug === 'string' ? data.slug : undefined,
+      }).id;
+      const segs = id.split('/');
+      const explicitLocale = typeof data.lang === 'string' ? data.lang : undefined;
+      const locale =
+        explicitLocale && /** @type {readonly string[]} */ (SITE.locales).includes(explicitLocale)
+          ? explicitLocale
+          : segs[0] && /** @type {readonly string[]} */ (SITE.locales).includes(segs[0])
+            ? segs[0]
+            : SITE.defaultLocale;
+      const slug = contentSlug(id, SITE.locales);
+      unlistedSitemapPaths.add(
+        sitemapPostPathname({
+          locale,
+          defaultLocale: SITE.defaultLocale,
+          slug,
+          base: BASE,
+        }),
+      );
+    }
+  };
+  try {
+    walk(postsRoot);
+  } catch {
+    // No content directory (e.g. a tooling-only checkout): nothing to filter.
+  }
+}
+
+collectUnlistedPathSegments();
+
+// Exactly the collected identities are excluded. `sitemap()` passes absolute
+// page URLs; the helper normalizes origin/base/trailing slash/encoding.
+const isUnlistedSitemapPage = createUnlistedSitemapMatcher(unlistedSitemapPaths);
 
 /**
- * Integration that reads the content collection at build time and
- * populates `unlistedPathSegments` with the URL path segments of every
- * unlisted post. Must be listed BEFORE `@astrojs/sitemap` in the
- * integrations array.
+ * Record the source fingerprint of this build in `.astro/` (never in `dist/`).
+ * Routine artifact validation uses it to reject a stale directory when the
+ * source changed without a rebuild, while still deriving expected content
+ * from the current source rather than the historical snapshot.
  */
-function collectUnlistedUrls() {
+function recordBuildManifest() {
   return {
-    name: 'chirpy:collect-unlisted-urls',
+    name: 'chirpy:record-build-manifest',
     hooks: {
-      'astro:build:start': async () => {
-        try {
-          // Dynamically import so this only runs during builds (not in
-          // the config evaluation phase where astro:content isn't ready).
-          const { getCollection } = await import('astro:content');
-          const entries = await getCollection('posts');
-          for (const entry of entries) {
-            if (!entry.data.unlisted) continue;
-            // Derive locale and slug from the entry id (e.g. "en/my-post.md").
-            const segs = entry.id.split(/[\\/]/);
-            const locale = segs[0] && /** @type {readonly string[]} */ (SITE.locales).includes(segs[0]) ? segs[0] : SITE.defaultLocale;
-            const slug = segs.slice(1).join('/').replace(/\.(md|mdx)$/i, '');
-            if (locale === SITE.defaultLocale) {
-              unlistedPathSegments.add(`posts/${slug}`);
-            } else {
-              unlistedPathSegments.add(`${locale}/posts/${slug}`);
-            }
-          }
-        } catch {
-          // Content collections aren't available in all build contexts
-          // (e.g. CI fast mode). Silently skip — the sitemap will include
-          // unlisted posts in that case, which is acceptable for CI.
-        }
+      'astro:build:done': () => {
+        writeBuildManifest({ sourceDir: PROJECT_ROOT });
       },
     },
   };
@@ -111,7 +168,11 @@ function rewriteSitemapXslToRelative() {
 
 // https://astro.build/config
 export default defineConfig({
-  site: SITE.url,
+  // Follow the deployment origin at config time. `import.meta.env.SITE_URL`
+  // (used by page modules) is not reliably populated while the config module
+  // is evaluated, so sitemap/RSS would otherwise keep the production origin
+  // in a preview build and disagree with canonical/OG metadata.
+  site: process.env.SITE_URL || SITE.url,
   // GitHub Pages serves the project at https://<user>.github.io/<repo>/,
   // so production builds need `base` to match that subpath — every
   // generated asset URL (CSS, JS, images, favicons) is prefixed with it.
@@ -130,6 +191,7 @@ export default defineConfig({
   build: {
     format: 'directory',
   },
+  prefetch: true,
 
   // Image optimization (https://docs.astro.build/en/guides/images/).
   //
@@ -154,6 +216,8 @@ export default defineConfig({
       { protocol: 'https', hostname: 'cdn.jsdelivr.net' },
       { protocol: 'https', hostname: 'res.cloudinary.com' },
       { protocol: 'https', hostname: 'imagedelivery.net' },
+      // Site-owned optimized media CDN (Cloudinary uploads are published
+      // through this host by src/site/media.ts).
       { protocol: 'https', hostname: 'cdn.tvphus.dev' },
     ],
   },
@@ -180,30 +244,32 @@ export default defineConfig({
     // loaded ONLY on pages that opt in via `math: true` in frontmatter,
     // through `<MathStyles />` in the post / page layouts. This keeps the
     // CSS (~25kB gzipped) off pages that don't need it.
-    remarkPlugins: [remarkAlert, remarkAsHtml, remarkGfm, remarkMath, remarkCdnImages],
-    rehypePlugins: [
-      rehypeKatex,
-      rehypeSlug,
-      [
-        rehypeAutolinkHeadings,
-        {
-          behavior: 'wrap',
-          properties: {
-            className: ['heading-anchor'],
-            ariaHidden: 'true',
-            tabIndex: -1,
-          },
-        },
+    processor: satteri({
+      features: { math: true },
+      // The site media visitor runs before Astro's image collection so both
+      // Markdown and MDX image URLs use the shared CDN policy.
+      //
+      // `satteriMdxHtmlElements()` MUST stay last: it converts the `html`
+      // nodes emitted by the plugins above into MDX-renderable JSX fragments.
+      // Plain Markdown is untouched, so `.md` rendering is unchanged.
+      mdastPlugins: [
+        siteMediaPlugin(),
+        satteriAlert(),
+        satteriAsHTML(),
+        katex(),
+        satteriMermaid(),
+        satteriMdxHtmlElements(),
       ],
-      [
-        rehypeExternalLinks,
-        {
+      hastPlugins: [
+        satteriHeadingIdsPlugin(),
+        satteriAutolinkHeadings(),
+        satteriExternalLinks({
           target: '_blank',
           rel: ['nofollow', 'noopener', 'noreferrer'],
-        },
+        }),
+        satteriBaseLinks({ base: BASE }),
       ],
-    ],
-    gfm: true,
+    }),
   },
 
   integrations: [
@@ -212,6 +278,7 @@ export default defineConfig({
       // icons actually referenced make it into the build.
       iconDir: 'src/icons',
     }),
+    recordBuildManifest(),
     // Expressive Code provides syntax highlighting (Shiki under the hood)
     // plus extra features: code-block frames + titles, copy button, line
     // markers, diffs, word wrap, collapsible sections.
@@ -245,7 +312,6 @@ export default defineConfig({
     ...(SKIP_RSS_SITEMAP
       ? []
       : [
-          collectUnlistedUrls(),
           sitemap({
             i18n: {
               defaultLocale: SITE.defaultLocale,
@@ -260,10 +326,8 @@ export default defineConfig({
             xslURL: SITEMAP_XSL_HREF,
             filter: (page) => {
               if (page.includes('/draft/') || page.endsWith('/404/')) return false;
-              // Exclude unlisted posts from the sitemap.
-              for (const seg of unlistedPathSegments) {
-                if (page.includes(String(seg))) return false;
-              }
+              // Exclude only complete unlisted route identities.
+              if (isUnlistedSitemapPage(page)) return false;
               return true;
             },
           }),
@@ -277,7 +341,7 @@ export default defineConfig({
 
   experimental: {
     contentIntellisense: true,
-    // Astro 6.2.x still exposes SVG optimization as an experimental flag.
+    // Astro 7.x still exposes SVG optimization as an experimental flag.
     // The 6.2 change renamed the old `experimental.svgo` flag to the new
     // `experimental.svgOptimizer` API; it is not a stable top-level config yet.
     svgOptimizer: svgoOptimizer({
@@ -285,4 +349,136 @@ export default defineConfig({
     }),
   },
 
+  fonts: [
+    // Source Sans 3 — main UI font from @fontsource/source-sans-3 npm package
+    {
+      name: 'Source Sans 3',
+      cssVariable: '--font-source-sans-3',
+      provider: fontProviders.local(),
+      options: {
+        variants: [
+          {
+            weight: '400',
+            style: 'normal',
+            src: [
+              './node_modules/@fontsource/source-sans-3/files/source-sans-3-latin-400-normal.woff2',
+            ],
+          },
+          {
+            weight: '400',
+            style: 'normal',
+            src: [
+              './node_modules/@fontsource/source-sans-3/files/source-sans-3-vietnamese-400-normal.woff2',
+            ],
+            // Site-owned Vietnamese subset: upstream ships latin files only, which
+            // would push VI diacritics to a fallback font.
+            unicodeRange: [
+              'U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB',
+            ],
+          },
+          {
+            weight: '600',
+            style: 'normal',
+            src: [
+              './node_modules/@fontsource/source-sans-3/files/source-sans-3-latin-600-normal.woff2',
+            ],
+          },
+          {
+            weight: '600',
+            style: 'normal',
+            src: [
+              './node_modules/@fontsource/source-sans-3/files/source-sans-3-vietnamese-600-normal.woff2',
+            ],
+            // Site-owned Vietnamese subset: upstream ships latin files only, which
+            // would push VI diacritics to a fallback font.
+            unicodeRange: [
+              'U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB',
+            ],
+          },
+          {
+            weight: '700',
+            style: 'normal',
+            src: [
+              './node_modules/@fontsource/source-sans-3/files/source-sans-3-latin-700-normal.woff2',
+            ],
+          },
+          {
+            weight: '700',
+            style: 'normal',
+            src: [
+              './node_modules/@fontsource/source-sans-3/files/source-sans-3-vietnamese-700-normal.woff2',
+            ],
+            // Site-owned Vietnamese subset: upstream ships latin files only, which
+            // would push VI diacritics to a fallback font.
+            unicodeRange: [
+              'U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB',
+            ],
+          },
+          {
+            weight: '900',
+            style: 'normal',
+            src: [
+              './node_modules/@fontsource/source-sans-3/files/source-sans-3-latin-900-normal.woff2',
+            ],
+          },
+          {
+            weight: '900',
+            style: 'normal',
+            src: [
+              './node_modules/@fontsource/source-sans-3/files/source-sans-3-vietnamese-900-normal.woff2',
+            ],
+            // Site-owned Vietnamese subset: upstream ships latin files only, which
+            // would push VI diacritics to a fallback font.
+            unicodeRange: [
+              'U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB',
+            ],
+          },
+        ],
+      },
+    },
+    // Lato — secondary font from @fontsource/lato npm package
+    {
+      name: 'Lato',
+      cssVariable: '--font-lato',
+      provider: fontProviders.local(),
+      options: {
+        variants: [
+          {
+            weight: '300',
+            style: 'normal',
+            src: ['./node_modules/@fontsource/lato/files/lato-latin-300-normal.woff2'],
+          },
+          {
+            weight: '400',
+            style: 'normal',
+            src: ['./node_modules/@fontsource/lato/files/lato-latin-400-normal.woff2'],
+          },
+        ],
+      },
+    },
+    // JetBrains Mono — monospace font from @fontsource/jetbrains-mono npm package
+    {
+      name: 'JetBrains Mono',
+      cssVariable: '--font-jetbrains-mono',
+      provider: fontProviders.local(),
+      options: {
+        variants: [
+          {
+            weight: '400',
+            style: 'normal',
+            src: [
+              './node_modules/@fontsource/jetbrains-mono/files/jetbrains-mono-latin-400-normal.woff2',
+            ],
+          },
+          {
+            weight: '600',
+            style: 'normal',
+            src: [
+              './node_modules/@fontsource/jetbrains-mono/files/jetbrains-mono-latin-600-normal.woff2',
+            ],
+          },
+        ],
+      },
+    },
+  ],
 });

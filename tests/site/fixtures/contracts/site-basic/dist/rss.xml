@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0"><channel>
+  <title>Fixture blog</title>
+  <link>https://fixture.example.dev/</link>
+  <language>en-us</language>
+  <item><title>Hello</title><link>https://fixture.example.dev/posts/hello/</link><guid isPermaLink="true">https://fixture.example.dev/posts/hello/</guid></item>
+</channel></rss>

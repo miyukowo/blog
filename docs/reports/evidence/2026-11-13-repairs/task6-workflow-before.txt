@@ -1,0 +1,59 @@
+✔ Cloudflare workflow keeps production=main and staging=preview branch identity (0.963476ms)
+✖ credential-free PR checks run on pull_request with read-only contents (0.553498ms)
+✖ deployment validates the exact transformed dist before upload (0.154991ms)
+✔ non-main Cloudflare builds force production comments off (0.191008ms)
+✔ per-branch concurrency and deployment branch identity are preserved (0.155201ms)
+✔ required checks run before deployment and use tested runtimes (0.19169ms)
+✔ deployment builds cannot silently skip required output (0.135154ms)
+✔ deployment credentials are not exposed to untrusted PR code (0.131897ms)
+✔ preview CMS config writes built output only and rejects production branches (33.027007ms)
+✔ preview deployments are noindex while production remains indexable (0.520485ms)
+✔ GitHub Pages workflow/support is preserved for separate assessment (0.143018ms)
+✔ full-output contract fixture exists for the production-shaped build (0.130014ms)
+ℹ tests 12
+ℹ suites 0
+ℹ pass 10
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 138.481543
+
+✖ failing tests:
+
+test at tests/site/preview.test.mjs:57:1
+✖ credential-free PR checks run on pull_request with read-only contents (0.553498ms)
+  AssertionError [ERR_ASSERTION]: a dedicated PR checks workflow must exist
+      at TestContext.<anonymous> (file:///home/tvp/.codex/worktrees/upstream-preflight/blog/tests/site/preview.test.mjs:58:10)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at tests/site/preview.test.mjs:106:1
+✖ deployment validates the exact transformed dist before upload (0.154991ms)
+  AssertionError [ERR_ASSERTION]: deploy must validate the actual artifact
+      at TestContext.<anonymous> (file:///home/tvp/.codex/worktrees/upstream-preflight/blog/tests/site/preview.test.mjs:111:10)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+exit=1

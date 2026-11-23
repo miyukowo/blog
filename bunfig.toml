@@ -6,10 +6,14 @@
 exact = false
 # Save peer dependencies
 peer = true
+# Prevent supply chain attacks
+minimumReleaseAge = 86400
 
 [install.cache]
 disable = false
 
 [run]
-bun = true
+# Astro must execute under Node (Bun execution stalls the Astro 6 build).
+# Bun remains the package manager for install/lockfile operations.
+bun = false
 silent = false

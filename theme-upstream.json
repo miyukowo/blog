@@ -1,0 +1,237 @@
+{
+  "$schema": "./theme-upstream.schema.md",
+  "schemaVersion": 1,
+  "updateStream": {
+    "starterRepo": "https://github.com/kannansuresh/chirping-astro-starter",
+    "sourceRepo": "https://github.com/kannansuresh/chirping-astro",
+    "policy": "Track the generated starter for Git updates; use the canonical source for release rationale/provenance. Verify the source/starter correspondence on every update. Never run the upstream starter cleaner against this repository.",
+    "checkCommand": "node scripts/check-upstream.mjs --adopted <starter-sha> --candidate <starter-sha>"
+  },
+  "adopted": {
+    "starter": "821bc6171f2ed0f74d920cc5ab70794c3f779971",
+    "source": "4585c2d78f1c429e5c3092ed79e68cc839413964",
+    "starterMain": "821bc6171f2ed0f74d920cc5ab70794c3f779971",
+    "sourceMain": "4585c2d78f1c429e5c3092ed79e68cc839413964",
+    "note": "Starter HEAD commit message records sync from chirping-astro@4585c2d; both main heads unchanged on 2026-11-02."
+  },
+  "historicalImport": {
+    "starter": "5e8552f3922b623c04b5d0ffae4d7a9e255ccb20",
+    "source": "551ffe811906f6fe2813da4ea271c2d5f638b721",
+    "bridgeCommit": "af8034605b6c04873f9a51cdc2433a15255aa1dc",
+    "note": "One-time synthetic 'ours' merge records the imported near-copy as ancestry (85/87 blobs matched). The bridge is not a claim that the original import was a Git merge; it must only ever target the historical starter, never a newer tip."
+  },
+  "testedRuntimes": {
+    "node": "26.12.1",
+    "bun": "1.3.14",
+    "astro": "7.1.6",
+    "mdx": "7.0.5",
+    "markdownSatteri": "0.3.5",
+    "satteri": "0.9.5",
+    "pagefind": "1.5.2"
+  },
+  "packageFiles": {
+    "manifest": "package.json",
+    "lock": "bun.lock"
+  },
+  "protectedContent": [
+    "src/content/"
+  ],
+  "localOwned": [
+    "src/site/",
+    "scripts/",
+    "tests/",
+    "docs/",
+    "theme-upstream.json",
+    "public/cms/",
+    "public/_headers",
+    "public/avatar.png",
+    "public/favicon.ico",
+    "public/og-default.png",
+    "src/assets/images/site/",
+    ".github/workflows/deploy-cf.yml",
+    "src/components/Alert.astro",
+    "src/components/islands/ReadingProgress.astro",
+    "src/utils/og-image.ts"
+  ],
+  "sharedExceptions": [
+    {
+      "path": "astro.config.mjs",
+      "reason": "Upstream Astro 7/S\u00e4tteri config plus site-owned CDN allowlist, Vietnamese font subsets, an exact config-time unlisted-sitemap scan sharing the loader's content-entry identity policy, an MDX raw-HTML compatibility seam (src/site/mdx-html.ts, src/site/sitemap.ts), a build-manifest integration for routine artifact validation, and a deployment-origin-aware site value so preview sitemap/feed origins match canonical metadata.",
+      "validation": "node scripts/verify-site.mjs --profile preview"
+    },
+    {
+      "path": "package.json",
+      "reason": "Reviewed upstream Astro 7 manifest plus local direct dependencies still required (WASM OG renderer, contract-harness parsers).",
+      "validation": "bun install --frozen-lockfile"
+    },
+    {
+      "path": "bun.lock",
+      "reason": "Paired with package.json (regenerated under Bun 1.3.14 from the upstream lock pair).",
+      "validation": "bun install --frozen-lockfile"
+    },
+    {
+      "path": "bunfig.toml",
+      "reason": "Upstream bun install policy plus [run] bun=false so Astro commands execute under Node.",
+      "validation": "node scripts/verify-site.mjs --profile offline"
+    },
+    {
+      "path": ".node-version",
+      "reason": "Pins the tested Node 26.12.1 runtime for CI and local parity.",
+      "validation": "bun run typecheck"
+    },
+    {
+      "path": "src/config.ts",
+      "reason": "Site identity/locale/Giscus policy wired from src/site/* instead of duplicated inline.",
+      "validation": "bun run typecheck"
+    },
+    {
+      "path": "src/content.config.ts",
+      "reason": "Upstream mermaid field plus local postSlug field required by the CMS publishing convention, and the shared glob-loader generateId (src/site/content-identity.ts) used by the sitemap scan and publishing expectations.",
+      "validation": "node scripts/verify-site.mjs --profile offline"
+    },
+    {
+      "path": "src/i18n/ui.ts",
+      "reason": "Upstream dictionaries plus the site-owned VI dictionary from src/site/vi.ts (coverage enforced at compile time).",
+      "validation": "bun run typecheck"
+    },
+    {
+      "path": "src/i18n/utils.ts",
+      "reason": "Locale presentation values (date/html/OG/RSS/Giscus) come from src/site/locales.ts.",
+      "validation": "node --test tests/site/locales.test.mjs"
+    },
+    {
+      "path": "src/layouts/BaseLayout.astro",
+      "reason": "Upstream Astro Fonts API components plus local translations/Pagefind unlisted exclusion and VI feed metadata.",
+      "validation": "node --test tests/site/seo.test.mjs"
+    },
+    {
+      "path": "src/layouts/PostLayout.astro",
+      "reason": "Upstream math/mermaid opt-in plus local translation links, ReadingProgress/Giscus and unlisted search exclusion.",
+      "validation": "node --test tests/site/seo.test.mjs"
+    },
+    {
+      "path": "src/pages/[...locale]/rss.xml.ts",
+      "reason": "Per-locale RSS language (VI corrected to vi-vn).",
+      "validation": "node --test tests/site/seo.test.mjs"
+    },
+    {
+      "path": "src/pages/[...locale]/categories/[category].astro",
+      "reason": "Translated taxonomy destinations use the site-owned resolver and legacy published slugs.",
+      "validation": "node scripts/verify-site.mjs --profile offline"
+    },
+    {
+      "path": "src/pages/[...locale]/tags/[tag].astro",
+      "reason": "Translated taxonomy destinations use the site-owned resolver and legacy published slugs.",
+      "validation": "node scripts/verify-site.mjs --profile offline"
+    },
+    {
+      "path": "src/plugins/satteri-base-links.ts",
+      "reason": "Idempotent, segment-aware base prefixing: already-based paths (/blog/...) are preserved, /blogger/... is still prefixed, and query/hash suffixes survive for links and images.",
+      "validation": "node --test tests/site/markdown.test.mjs"
+    },
+    {
+      "path": "src/utils/posts.ts",
+      "reason": "Filesystem URL identity without /index, normalized translation fallback, CMS postSlug mismatch reporting, and an OG-eligible published-post helper that includes unlisted pages but still excludes drafts.",
+      "validation": "node scripts/verify-site.mjs --profile offline"
+    },
+    {
+      "path": "src/utils/seo.ts",
+      "reason": "Hreflang uses actual translated sibling URLs when different EN/VI slugs exist.",
+      "validation": "node --test tests/site/seo.test.mjs"
+    },
+    {
+      "path": "src/components/SEO.astro",
+      "reason": "OG locale/RSS metadata come from the locale presentation module.",
+      "validation": "node --test tests/site/seo.test.mjs"
+    },
+    {
+      "path": "src/components/SmartImage.astro",
+      "reason": "Component boundary applies the shared media URL policy for JSX/hero inputs.",
+      "validation": "node --test tests/site/media.test.mjs"
+    },
+    {
+      "path": "src/components/islands/Giscus.astro",
+      "reason": "VI locale, pathname mapping and a safe remount/cleanup for client navigation and theme changes.",
+      "validation": "node --test tests/site/seo.test.mjs"
+    },
+    {
+      "path": "src/styles/global.css",
+      "reason": "Upstream transition tweak plus local brand/typography/VI readability styling.",
+      "validation": "node scripts/verify-site.mjs --profile offline"
+    },
+    {
+      "path": "src/components/VideoEmbed.astro",
+      "reason": "Preserves the authored MDX video interface and the local Plyr behavior with lint-clean handler names.",
+      "validation": "bun run lint"
+    },
+    {
+      "path": "src/components/Topbar.astro",
+      "reason": "VI language switcher/translation props preserved.",
+      "validation": "node scripts/verify-site.mjs --profile offline"
+    },
+    {
+      "path": "src/components/islands/LanguageSwitcher.astro",
+      "reason": "Switcher links to actual translated sibling URLs, not assumed matching slugs.",
+      "validation": "node --test tests/site/seo.test.mjs"
+    },
+    {
+      "path": "src/components/islands/BackToTop.astro",
+      "reason": "Local back-to-top presentation retained; VI labels via the shared dictionary.",
+      "validation": "node scripts/verify-site.mjs --profile offline"
+    },
+    {
+      "path": "src/components/Panel.astro",
+      "reason": "Retained local sidebar widget wiring (VI dictionary, assets).",
+      "validation": "node scripts/verify-site.mjs --profile offline"
+    },
+    {
+      "path": "src/components/Sidebar.astro",
+      "reason": "Retained local branding/navigation wiring.",
+      "validation": "node scripts/verify-site.mjs --profile offline"
+    },
+    {
+      "path": "README.md",
+      "reason": "Local project documentation plus upstream stack/maintenance/attribution updates.",
+      "validation": "node scripts/check-upstream.mjs --adopted 821bc6171f2ed0f74d920cc5ab70794c3f779971 --candidate 821bc6171f2ed0f74d920cc5ab70794c3f779971"
+    },
+    {
+      "path": ".gitignore",
+      "reason": "Local ignores (editor caches, generated fixtures) preserved.",
+      "validation": "git status --porcelain"
+    },
+    {
+      "path": ".prettierignore",
+      "reason": "Scoped formatting exclusions for generated fixtures/editor caches/agent worktrees.",
+      "validation": "bun run format:site:check"
+    },
+    {
+      "path": "eslint.config.js",
+      "reason": "Maintained-code lint config with editor-cache and fixture exclusions; upstream rules kept.",
+      "validation": "bun run lint"
+    },
+    {
+      "path": "src/pages/og/[...slug].png.ts",
+      "reason": "Generates OG images for every published post without a hero image, including directly reachable unlisted pages; drafts and discovery surfaces remain excluded.",
+      "validation": "node --test tests/site/seo.test.mjs"
+    },
+    {
+      "path": "src/pages/[...locale]/posts/[...slug].astro",
+      "reason": "Derives the render locale from normalized post data rather than the first id segment, so supported explicit frontmatter slugs render correctly, and injects Alert globally via <Content components={{ Alert }} /> so multi-Alert CMS posts compile without duplicate imports.",
+      "validation": "node --test tests/site/seo.test.mjs"
+    }
+  ],
+  "deferred": [
+    {
+      "feature": "Page-scoped KaTeX stylesheet",
+      "reason": "With the upstream Astro 7 dynamic-import layout, the extracted MathStyles CSS chunk is linked from every post page, so the intended page-only KaTeX CSS is not fully honored by the upstream implementation.",
+      "restoration": "Revisit when upstream changes the font/style import strategy; keep math markup opt-in regardless.",
+      "acceptance": "Non-math pages omit the KaTeX CSS chunk (currently not achievable without a layout rework)."
+    },
+    {
+      "feature": "Fancy direct-video controls (Plyr)",
+      "reason": "Native playable video is acceptable; the existing Plyr wrapper is retained from the local theme and remains functional.",
+      "restoration": "No action needed; interface preserved in src/components/VideoEmbed.astro.",
+      "acceptance": "Authored <VideoEmbed src=.../> renders a playable video element."
+    }
+  ]
+}

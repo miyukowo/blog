@@ -1,0 +1,14 @@
+✔ RSS language metadata is locale-specific (VI corrected from the baseline en-us defect) (0.536555ms)
+✔ Giscus theme maps theme attribute to the documented theme names (0.107782ms)
+✔ Giscus script attributes keep pathname mapping and per-locale language (0.126287ms)
+✔ Giscus remount plan cleans stale script+iframe and never double-mounts (0.391744ms)
+✔ temporary fixture build satisfies SEO/visibility/navigation contracts (24490.860489ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 24599.385665
+exit=0

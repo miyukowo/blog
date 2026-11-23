@@ -4,3 +4,14 @@ node_modules/
 public/_pagefind/
 bun.lockb
 AGENTS.md
+# editor caches (ignored in Git, may exist locally)
+.obsidian/
+.idea/
+
+# generated contract test data (byte-stable fixtures, not maintained code)
+tests/site/fixtures/
+
+# Agent worktrees and local tool caches
+.teammates/
+.bun-install/
+.bun-tmp/

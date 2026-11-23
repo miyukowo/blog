@@ -9,12 +9,20 @@
  *  - resolve translation siblings via `translationKey`
  */
 
-import { cdnUrl } from './image';
+/* global console */
 import { getCollection, type CollectionEntry } from 'astro:content';
 import type { ImageMetadata } from 'astro';
 
 import { SITE, type Locale } from '../config';
 import { withBase } from '../i18n/utils';
+import { localePresentation } from '../site/locales';
+import { resolveMediaUrl } from '../site/media';
+import {
+  contentSlug,
+  legacyTaxonomySlug,
+  localeFromContentId,
+  resolvePostIdentity,
+} from '../site/urls';
 
 export type Post = CollectionEntry<'posts'> & {
   data: CollectionEntry<'posts'>['data'] & { lang: Locale; translationKey: string };
@@ -25,39 +33,45 @@ const skipPostCollections = import.meta.env.CI_SKIP_CONTENT_COLLECTIONS === 'tru
 
 /** Derive the locale from `posts/<locale>/foo` slug-ish ID. */
 function localeFromId(id: string): Locale {
-  const seg = id.split(/[\\/]/)[0];
-  if (seg && (SITE.locales as readonly string[]).includes(seg)) return seg as Locale;
-  return SITE.defaultLocale;
+  return localeFromContentId(id, SITE.locales) ?? SITE.defaultLocale;
 }
 
-/** Strip locale prefix from a content ID. */
-function stripLocaleFromId(id: string): string {
-  const segs = id.split(/[\\/]/);
-  if (segs[0] && (SITE.locales as readonly string[]).includes(segs[0])) {
-    return segs.slice(1).join('/');
-  }
-  return id;
+/**
+ * Report (once) a saved CMS `postSlug` that disagrees with the file-system
+ * location. The file wins; the mismatch is surfaced rather than silently
+ * moving a published post.
+ */
+const reportedPostSlugMismatches = new Set<string>();
+function reportPostSlugMismatch(id: string, saved: string | undefined, slug: string): void {
+  const key = `${id}:${saved}`;
+  if (reportedPostSlugMismatches.has(key)) return;
+  reportedPostSlugMismatches.add(key);
+  console.warn(
+    `[posts] postSlug mismatch in "${id}": saved "${saved}" does not match the file-system slug "${slug}". The file location defines the URL; update the CMS field to match.`,
+  );
 }
 
 /** Normalize a post entry: ensure `lang` and `translationKey` are set. */
 function normalize(entry: CollectionEntry<'posts'>): Post {
   const lang = entry.data.lang ?? localeFromId(entry.id);
-  const translationKey =
-    entry.data.translationKey ??
-    stripLocaleFromId(entry.id)
-      .replace(/\.(md|mdx)$/i, '')
-      .replace(/\/index$/, '');
+  const identity = resolvePostIdentity({
+    id: entry.id,
+    postSlug: entry.data.postSlug,
+    translationKey: entry.data.translationKey,
+    locales: SITE.locales,
+  });
+  if (identity.postSlugMismatch) {
+    reportPostSlugMismatch(entry.id, identity.savedPostSlug, identity.slug);
+  }
   return {
     ...entry,
-    data: { ...entry.data, lang, translationKey },
+    data: { ...entry.data, lang, translationKey: identity.translationKey },
   } as Post;
 }
 
-/** Public slug used for the URL: filename minus locale and extension. */
+/** Public slug used for the URL: file-system identity, never `/index`. */
 export function postSlug(entry: Post): string {
-  return stripLocaleFromId(entry.id)
-    .replace(/\.(md|mdx)$/i, '')
-    .replace(/\/index$/, '');
+  return contentSlug(entry.id, SITE.locales);
 }
 
 /** Full localized URL path for a post. */
@@ -117,6 +131,22 @@ export async function getUnlistedPosts(locale: Locale): Promise<Post[]> {
   const all = await getCollection('posts', (entry) => {
     if (isProd && entry.data.draft) return false;
     if (!entry.data.unlisted) return false;
+    const lang = entry.data.lang ?? localeFromId(entry.id);
+    return lang === locale;
+  });
+  return sortPosts(all.map(normalize));
+}
+
+/**
+ * Posts that may need a generated OG image: every published post, listed or
+ * unlisted. Unlisted pages are still directly reachable and reference the
+ * generated image, so their OG resource must exist; drafts never reach the
+ * built output and are excluded. Discovery surfaces keep using `getPosts`.
+ */
+export async function getPostsForOg(locale: Locale): Promise<Post[]> {
+  if (skipPostCollections) return [];
+  const all = await getCollection('posts', (entry) => {
+    if (isProd && entry.data.draft) return false;
     const lang = entry.data.lang ?? localeFromId(entry.id);
     return lang === locale;
   });
@@ -190,8 +220,7 @@ export function groupByYearMonth(
     if (!months.has(m)) months.set(m, []);
     months.get(m)!.push(post);
   }
-  const lang = locale === 'vi' ? 'vi-VN' : 'en-US';
-  const fmt = new Intl.DateTimeFormat(lang, { month: 'long' });
+  const fmt = new Intl.DateTimeFormat(localePresentation[locale].dateLocale, { month: 'long' });
   return Array.from(buckets.entries())
     .sort((a, b) => b[0] - a[0])
     .map(([year, months]) => ({
@@ -229,8 +258,8 @@ export function heroImageSrc(post: Post): string | undefined {
   }
   if (!src) return undefined;
   if (src.startsWith('/') && !src.startsWith('//')) return withBase(src);
-  // Filename từ Cloudinary → CDN URL cho OG image
-  return cdnUrl(src);
+  // Cloudinary upload URL → this site's optimized CDN path (shared policy).
+  return resolveMediaUrl(src);
 }
 
 /**
@@ -244,159 +273,35 @@ export function heroImage(post: Post): ImageMetadata | string | undefined {
   if (!img) return undefined;
   if (typeof img === 'string') {
     if (img.startsWith('/') && !img.startsWith('//')) return withBase(img);
-    // Filename từ CDN → CDN URL để SmartImage optimize được
-    return cdnUrl(img);
+    // Cloudinary upload URL → CDN URL so SmartImage can optimize it.
+    return resolveMediaUrl(img);
   }
   return img as ImageMetadata;
 }
 
-/** Slugify a tag/category for use in URLs. */
-export function slugify(value: string): string {
-  return value
-    .toLowerCase()
-    .normalize('NFKD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
-}
+/**
+ * Slugify a tag/category for use in URLs.
+ *
+ * Kept as the public helper name for existing callers, but delegated to the
+ * site-owned legacy taxonomy policy so published taxonomy URLs such as
+ * `/vi/categories/huong-dan/` never change. Upstream's Unicode slug utility
+ * remains authoritative for its own tests.
+ */
+// Upstream's Unicode slug utility stays exported/meaningful for its own tests;
+// this blog's published taxonomy URLs use the legacy policy below.
+export { slugify } from './slugify';
 
 /** Build the URL for a tag listing page in a given locale. */
 export function tagPath(locale: Locale, tag: string): string {
-  const slug = slugify(tag);
+  const slug = legacyTaxonomySlug(tag);
   const path = locale === SITE.defaultLocale ? `/tags/${slug}/` : `/${locale}/tags/${slug}/`;
   return withBase(path);
 }
 
 /** Build the URL for a category listing page in a given locale. */
 export function categoryPath(locale: Locale, category: string): string {
-  const slug = slugify(category);
+  const slug = legacyTaxonomySlug(category);
   const path =
     locale === SITE.defaultLocale ? `/categories/${slug}/` : `/${locale}/categories/${slug}/`;
   return withBase(path);
-}
-
-/** Find the corresponding category path in all locales for a category in a given locale. */
-export async function getCategoryTranslations(
-  currentLocale: Locale,
-  currentCategory: string,
-): Promise<Record<Locale, string>> {
-  const out = {} as Record<Locale, string>;
-
-  // Initialize with fallback (the category list page)
-  for (const locale of SITE.locales) {
-    const path = locale === SITE.defaultLocale ? '/categories/' : `/${locale}/categories/`;
-    out[locale] = withBase(path);
-  }
-
-  // Current category path in the current locale is definitely correct
-  out[currentLocale] = categoryPath(currentLocale, currentCategory);
-
-  // Find all posts in the current category
-  const currentSlug = slugify(currentCategory);
-  const posts = (await getPosts(currentLocale)).filter(
-    (p) => p.data.categories && p.data.categories.some((c) => slugify(c) === currentSlug),
-  );
-
-  for (const targetLocale of SITE.locales) {
-    if (targetLocale === currentLocale) continue;
-
-    // 1. Check if there is a category in target locale with exact same slug/name
-    const targetCategories = await getCategoriesWithCount(targetLocale);
-    const exactMatch = targetCategories.find((c) => slugify(c.name) === currentSlug);
-    if (exactMatch) {
-      out[targetLocale] = categoryPath(targetLocale, exactMatch.name);
-      continue;
-    }
-
-    // 2. Try to map via post translations
-    const targetCategoryCounts = new Map<string, number>();
-    for (const post of posts) {
-      const translations = await getTranslations(post);
-      const translatedPost = translations[targetLocale];
-      if (translatedPost && translatedPost.data.categories) {
-        for (const cat of translatedPost.data.categories) {
-          targetCategoryCounts.set(cat, (targetCategoryCounts.get(cat) ?? 0) + 1);
-        }
-      }
-    }
-
-    if (targetCategoryCounts.size > 0) {
-      let bestCategory = '';
-      let maxCount = -1;
-      for (const [cat, count] of targetCategoryCounts.entries()) {
-        if (count > maxCount) {
-          maxCount = count;
-          bestCategory = cat;
-        }
-      }
-      if (bestCategory) {
-        out[targetLocale] = categoryPath(targetLocale, bestCategory);
-      }
-    }
-  }
-
-  return out;
-}
-
-/** Find the corresponding tag path in all locales for a tag in a given locale. */
-export async function getTagTranslations(
-  currentLocale: Locale,
-  currentTag: string,
-): Promise<Record<Locale, string>> {
-  const out = {} as Record<Locale, string>;
-
-  // Initialize with fallback (the tags list page)
-  for (const locale of SITE.locales) {
-    const path = locale === SITE.defaultLocale ? '/tags/' : `/${locale}/tags/`;
-    out[locale] = withBase(path);
-  }
-
-  // Current tag path in the current locale is definitely correct
-  out[currentLocale] = tagPath(currentLocale, currentTag);
-
-  // Find all posts with the current tag
-  const currentSlug = slugify(currentTag);
-  const posts = (await getPosts(currentLocale)).filter(
-    (p) => p.data.tags && p.data.tags.some((t) => slugify(t) === currentSlug),
-  );
-
-  for (const targetLocale of SITE.locales) {
-    if (targetLocale === currentLocale) continue;
-
-    // 1. Check if there is a tag in target locale with exact same slug/name
-    const targetTags = await getTagsWithCount(targetLocale);
-    const exactMatch = targetTags.find((t) => slugify(t.name) === currentSlug);
-    if (exactMatch) {
-      out[targetLocale] = tagPath(targetLocale, exactMatch.name);
-      continue;
-    }
-
-    // 2. Try to map via post translations
-    const targetTagCounts = new Map<string, number>();
-    for (const post of posts) {
-      const translations = await getTranslations(post);
-      const translatedPost = translations[targetLocale];
-      if (translatedPost && translatedPost.data.tags) {
-        for (const tg of translatedPost.data.tags) {
-          targetTagCounts.set(tg, (targetTagCounts.get(tg) ?? 0) + 1);
-        }
-      }
-    }
-
-    if (targetTagCounts.size > 0) {
-      let bestTag = '';
-      let maxCount = -1;
-      for (const [tg, count] of targetTagCounts.entries()) {
-        if (count > maxCount) {
-          maxCount = count;
-          bestTag = tg;
-        }
-      }
-      if (bestTag) {
-        out[targetLocale] = tagPath(targetLocale, bestTag);
-      }
-    }
-  }
-
-  return out;
 }

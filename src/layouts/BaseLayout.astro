@@ -8,6 +8,7 @@ import Panel from '../components/Panel.astro';
 import SEO from '../components/SEO.astro';
 import BackToTop from '../components/islands/BackToTop.astro';
 import { ClientRouter } from 'astro:transitions';
+import { Font } from 'astro:assets';
 import { SITE, type Locale } from '../config';
 import { detectLocale, htmlLang, useTranslations, stripLocale, withBase } from '../i18n/utils';
 import { buildSeo, type SeoMeta } from '../utils/seo';
@@ -38,6 +39,11 @@ interface Props {
   availableLocales?: readonly Locale[];
   /** Optional pre-calculated translation URLs for each locale. */
   translations?: Partial<Record<Locale, string>>;
+  /**
+   * Exclude this page from the Pagefind search index. Used for unlisted
+   * (direct-link only) content, which must not surface in search.
+   */
+  pagefindIgnore?: boolean;
 }
 
 const {
@@ -54,6 +60,7 @@ const {
   seo,
   availableLocales,
   translations,
+  pagefindIgnore = false,
 } = Astro.props;
 
 const locale: Locale = detectLocale(Astro.url.pathname);
@@ -75,6 +82,7 @@ const meta: SeoMeta =
     modifiedTime,
     tags,
     availableLocales,
+    translations,
   });
 ---
 
@@ -99,9 +107,11 @@ const meta: SeoMeta =
       title={`${SITE.title} (VI)`}
       href={withBase('/vi/rss.xml')}
     />
-    <link rel="preload" as="font" type="font/woff2" href={withBase('/_astro/inter-latin-wght-normal.Dx4kXJAl.woff2')} crossorigin />
-    <link rel="preload" as="font" type="font/woff2" href={withBase('/_astro/inter-latin-wght-italic.DpCbqKDY.woff2')} crossorigin />
     <SEO meta={meta} />
+    {/* Custom fonts configured via Astro Fonts API (astro.config.mjs) */}
+    <Font cssVariable="--font-source-sans-3" />
+    <Font cssVariable="--font-lato" />
+    <Font cssVariable="--font-jetbrains-mono" preload />
 
     <ClientRouter />
     {/* Apply persisted theme as early as possible to avoid FOUC. */}
@@ -128,7 +138,7 @@ const meta: SeoMeta =
     </script>
   </head>
 
-  <body>
+  <body data-pagefind-ignore={pagefindIgnore ? '' : undefined}>
     <a
       href="#main"
       class="focus:bg-primary focus:text-primary-content sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:rounded focus:px-3 focus:py-2"

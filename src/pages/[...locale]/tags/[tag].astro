@@ -3,7 +3,9 @@ import { SITE } from '~/config';
 import BaseLayout from '~/layouts/BaseLayout.astro';
 import PostList from '~/components/PostList.astro';
 import { useTranslations, localizedPath } from '~/i18n/utils';
-import { getPosts, getTagsWithCount, slugify, getTagTranslations } from '~/utils/posts';
+import { getPosts, getTagsWithCount } from '~/utils/posts';
+import { legacyTaxonomySlug as slugify } from '~/site/urls';
+import { getTagTranslations } from '~/site/taxonomy';
 
 interface Props {
   tagName: string;

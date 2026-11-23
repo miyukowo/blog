@@ -1,0 +1,19 @@
+bun test v1.3.14 (0d9b296a)
+
+src/utils/posts.test.ts:
+(pass) slugify > Latin tags remain unchanged [1.58ms]
+(pass) slugify > Japanese tags work [0.48ms]
+(pass) slugify > Malayalam tags work [0.03ms]
+(pass) slugify > Mixed strings work [0.03ms]
+(pass) slugify > Multiple spaces become single hyphen [0.01ms]
+(pass) slugify > Special characters are removed
+(pass) slugify > Leading and trailing hyphens are trimmed [0.02ms]
+(pass) slugify > Mixed Latin and Unicode [0.01ms]
+(pass) slugify > Accented characters are preserved [0.01ms]
+(pass) slugify > Empty string after processing returns empty
+
+ 10 pass
+ 0 fail
+ 10 expect() calls
+Ran 10 tests across 1 file. [178.00ms]
+posts_exit=0

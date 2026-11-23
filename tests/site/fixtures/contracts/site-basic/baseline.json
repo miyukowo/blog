@@ -1,0 +1,162 @@
+{
+  "schemaVersion": 1,
+  "recordedDate": "2026-11-02",
+  "sourceBranch": "fixture",
+  "sourceRevision": "fixture-rev-0001",
+  "scope": "Synthetic fixture contract for tests/site/contracts.test.mjs. Not a production measurement.",
+  "toolchain": {
+    "node": "26.12.1",
+    "bun": "1.3.14",
+    "installedAstro": "6.3.3"
+  },
+  "sourceContent": [
+    {
+      "path": "src/content/pages/en/about.md",
+      "sha256": "4b3aca12dfa9896e9a6befc11a825497a31a274738127f577b740270a2baff1d",
+      "bodySha256": "a49753dda9113a434dff56e2d02ea048b9a7b493755960419913fe681f2a6297"
+    },
+    {
+      "path": "src/content/posts/en/hello/index.mdx",
+      "sha256": "7645c73cd989302e7d463bdfdf13e7689078fa202ea718ff5d616c6ea0d0b38c",
+      "bodySha256": "1a97b28758f056602d5784a98618fc66057b04dedbf38bddaab24fef1504576b"
+    },
+    {
+      "path": "src/content/posts/vi/xin-chao/index.mdx",
+      "sha256": "c36febf7e23af9f4713765a82187224c7b60832332ed4bb10d90e975b198023e",
+      "bodySha256": "2ee2e0a9f18434bfe5c6b878579d8dc6ad0cf6a6c7dd4554ce42b082bc31e50f"
+    }
+  ],
+  "htmlRoutes": [
+    {
+      "path": "/",
+      "canonical": "https://fixture.example.dev/",
+      "lang": "en-US",
+      "robots": "",
+      "ogImage": "https://fixture.example.dev/og-default.png",
+      "hreflangs": {
+        "en": "https://fixture.example.dev/",
+        "vi": "https://fixture.example.dev/vi/",
+        "x-default": "https://fixture.example.dev/"
+      }
+    },
+    {
+      "path": "/404.html",
+      "canonical": "https://fixture.example.dev/404/",
+      "lang": "en-US",
+      "robots": "",
+      "ogImage": "https://fixture.example.dev/og-default.png",
+      "hreflangs": {
+        "en": "https://fixture.example.dev/404/",
+        "vi": "https://fixture.example.dev/vi/404/",
+        "x-default": "https://fixture.example.dev/404/"
+      }
+    },
+    {
+      "path": "/about/",
+      "canonical": "https://fixture.example.dev/about/",
+      "lang": "en-US",
+      "robots": "",
+      "ogImage": "https://fixture.example.dev/og-default.png",
+      "hreflangs": {
+        "en": "https://fixture.example.dev/about/",
+        "vi": "https://fixture.example.dev/vi/about/",
+        "x-default": "https://fixture.example.dev/about/"
+      }
+    },
+    {
+      "path": "/posts/hello/",
+      "canonical": "https://fixture.example.dev/posts/hello/",
+      "lang": "en-US",
+      "robots": "",
+      "ogImage": "https://fixture.example.dev/og/hello.png",
+      "hreflangs": {
+        "en": "https://fixture.example.dev/posts/hello/",
+        "vi": "https://fixture.example.dev/vi/posts/xin-chao/",
+        "x-default": "https://fixture.example.dev/posts/hello/"
+      }
+    },
+    {
+      "path": "/vi/",
+      "canonical": "https://fixture.example.dev/vi/",
+      "lang": "vi-VN",
+      "robots": "",
+      "ogImage": "https://fixture.example.dev/og-default.png",
+      "hreflangs": {
+        "en": "https://fixture.example.dev/",
+        "vi": "https://fixture.example.dev/vi/",
+        "x-default": "https://fixture.example.dev/"
+      }
+    },
+    {
+      "path": "/vi/about/",
+      "canonical": "https://fixture.example.dev/vi/about/",
+      "lang": "vi-VN",
+      "robots": "",
+      "ogImage": "https://fixture.example.dev/og-default.png",
+      "hreflangs": {
+        "en": "https://fixture.example.dev/about/",
+        "vi": "https://fixture.example.dev/vi/about/",
+        "x-default": "https://fixture.example.dev/about/"
+      }
+    },
+    {
+      "path": "/vi/categories/huong-dan/",
+      "canonical": "https://fixture.example.dev/vi/categories/huong-dan/",
+      "lang": "vi-VN",
+      "robots": "",
+      "ogImage": "https://fixture.example.dev/og-default.png",
+      "hreflangs": {
+        "en": "https://fixture.example.dev/categories/huong-dan/",
+        "vi": "https://fixture.example.dev/vi/categories/huong-dan/",
+        "x-default": "https://fixture.example.dev/categories/huong-dan/"
+      }
+    },
+    {
+      "path": "/vi/posts/xin-chao/",
+      "canonical": "https://fixture.example.dev/vi/posts/xin-chao/",
+      "lang": "vi-VN",
+      "robots": "",
+      "ogImage": "https://fixture.example.dev/og/vi/xin-chao.png",
+      "hreflangs": {
+        "en": "https://fixture.example.dev/posts/xin-chao/",
+        "vi": "https://fixture.example.dev/vi/posts/xin-chao/",
+        "x-default": "https://fixture.example.dev/posts/xin-chao/"
+      }
+    }
+  ],
+  "feeds": {
+    "/rss.xml": {
+      "language": "en-us",
+      "items": [
+        "https://fixture.example.dev/posts/hello/"
+      ]
+    },
+    "/vi/rss.xml": {
+      "language": "en-us",
+      "items": [
+        "https://fixture.example.dev/vi/posts/xin-chao/"
+      ]
+    }
+  },
+  "sitemapUrls": [
+    "https://fixture.example.dev/",
+    "https://fixture.example.dev/about/",
+    "https://fixture.example.dev/posts/hello/",
+    "https://fixture.example.dev/vi/",
+    "https://fixture.example.dev/vi/about/",
+    "https://fixture.example.dev/vi/categories/huong-dan/",
+    "https://fixture.example.dev/vi/posts/xin-chao/"
+  ],
+  "generatedOgPaths": [
+    "/og/hello.png",
+    "/og/vi/xin-chao.png"
+  ],
+  "search": {
+    "indexedPages": 8,
+    "languages": [
+      "en-us",
+      "vi-vn"
+    ],
+    "engine": "Pagefind 1.5.2"
+  }
+}
