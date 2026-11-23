@@ -946,13 +946,22 @@ test('temporary fixture build satisfies SEO/visibility/navigation contracts', as
   assert.ok(listedHtml.includes('aria-label="Main Content"'), 'main landmark labelled');
   assert.ok(/aria-label="[^"]*"/.test(listedHtml), 'labelled controls present');
 
-  // ---- reduced motion CSS ---------------------------------------------
+  // ---- reduced motion & VI archives CSS -------------------------------
   const cssDir = join(distDir, '_astro');
   const css = readdirSync(cssDir)
     .filter((file) => file.endsWith('.css'))
     .map((file) => readFileSync(join(cssDir, file), 'utf8'))
     .join('\n');
   assert.ok(css.includes('prefers-reduced-motion'), 'reduced-motion behavior must be preserved');
+  assert.match(
+    css,
+    /html\[lang\^=['"]?vi['"]?\]\s*#archives/,
+    'Vietnamese archives timeline offset rule must be preserved in compiled CSS',
+  );
+  assert.ok(
+    css.includes('117px') && css.includes('9rem'),
+    'Vietnamese archives timeline offset coordinates must be preserved',
+  );
 
   // ---- non-main build: valid production identifiers, comments forced off ----
   // This is the rendered equivalent of a staging deployment where the

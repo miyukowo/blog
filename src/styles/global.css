@@ -858,3 +858,25 @@
   -webkit-appearance: none;
   appearance: none;
 }
+
+/* ---------- Vietnamese archives timeline offset ---------- */
+/*
+ * Vietnamese short month labels ("Tháng 1"–"Tháng 12") are wider than English
+ * abbreviations ("May") and collide with the upstream timeline axis at x=77px.
+ * Shift the timeline coordinates right on VI pages without modifying upstream
+ * `src/pages/[...locale]/archives.astro`.
+ */
+html[lang^='vi'] #archives .year,
+html[lang^='vi'] #archives ul li {
+  padding-left: 9rem !important;
+}
+html[lang^='vi'] #archives .year::before,
+html[lang^='vi'] #archives ul li::before {
+  left: 117px !important;
+}
+html[lang^='vi'] #archives .year::after {
+  left: 113px !important;
+}
+html[lang^='vi'] #archives ul li > a::before {
+  left: 115px !important;
+}
