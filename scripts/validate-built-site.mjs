@@ -143,10 +143,30 @@ function walkFiles(root, predicate, out = []) {
   return out;
 }
 
-/** Every URL origin in the contract must be the one explicit expected origin. */
-export function collectOriginViolations(contract, expectedOrigin) {
+/**
+ * Return the explicit `og:image` origin expected for `routePath` when deriving
+ * expectations from current source. External origins (e.g. the optimized media
+ * CDN for a remote `heroImage`) are permitted only for routes whose source
+ * expectations explicitly resolve to that origin.
+ */
+function expectedOgOriginForRoute(expectations, routePath) {
+  const expectedRoute = expectations?.routeByPath?.get(routePath);
+  if (!expectedRoute) return undefined;
+  const expectedOgImage = expectedRouteMetadata(expectations, expectedRoute).ogImage;
+  if (typeof expectedOgImage !== 'string' || !/^https?:\/\//i.test(expectedOgImage)) {
+    return undefined;
+  }
+  try {
+    return new URL(expectedOgImage).origin;
+  } catch {
+    return undefined;
+  }
+}
+
+/** Every URL origin in the contract must be the expected origin (or expected external OG origin). */
+export function collectOriginViolations(contract, expectedOrigin, expectations) {
   const violations = [];
-  const check = (value, label) => {
+  const check = (value, label, allowedExternalOrigin) => {
     if (typeof value !== 'string' || value === '') return;
     let url;
     try {
@@ -155,7 +175,7 @@ export function collectOriginViolations(contract, expectedOrigin) {
       violations.push(`${label}: expected an absolute URL, got "${value}"`);
       return;
     }
-    if (url.origin !== expectedOrigin) {
+    if (url.origin !== expectedOrigin && url.origin !== allowedExternalOrigin) {
       violations.push(`${label}: origin ${url.origin} != expected ${expectedOrigin} (${value})`);
     }
   };
@@ -166,7 +186,10 @@ export function collectOriginViolations(contract, expectedOrigin) {
     for (const [hreflang, href] of Object.entries(route.hreflangs ?? {})) {
       check(href, `htmlRoutes[${route.path}].hreflangs.${hreflang}`);
     }
-    if (route.ogImage) check(route.ogImage, `htmlRoutes[${route.path}].ogImage`);
+    if (route.ogImage) {
+      const allowedOgOrigin = expectedOgOriginForRoute(expectations, route.path);
+      check(route.ogImage, `htmlRoutes[${route.path}].ogImage`, allowedOgOrigin);
+    }
   }
 
   for (const [feedPath, feed] of Object.entries(contract.feeds ?? {})) {
@@ -178,8 +201,8 @@ export function collectOriginViolations(contract, expectedOrigin) {
   return violations;
 }
 
-/** Every referenced/generated OG file must exist in the supplied dist. */
-export function collectOgViolations(distDir, contract) {
+/** Every referenced local/generated OG file must exist in the supplied dist. */
+export function collectOgViolations(distDir, contract, expectedOrigin) {
   const violations = [];
   const seen = new Set();
   const requireFile = (pathname, label) => {
@@ -200,7 +223,16 @@ export function collectOgViolations(distDir, contract) {
     if (typeof route.ogImage !== 'string' || route.ogImage === '') continue;
     let pathname = route.ogImage;
     if (/^https?:\/\//i.test(route.ogImage)) {
-      pathname = new URL(route.ogImage).pathname;
+      try {
+        const parsed = new URL(route.ogImage);
+        // External/CDN hero images (e.g. https://cdn.tvphus.dev/...) are not
+        // emitted into local dist/; only check local existence for same-origin
+        // OG resources.
+        if (expectedOrigin && parsed.origin !== expectedOrigin) continue;
+        pathname = parsed.pathname;
+      } catch {
+        continue;
+      }
     }
     if (!pathname.startsWith('/')) continue;
     requireFile(pathname, `htmlRoutes[${route.path}].ogImage`);
@@ -684,8 +716,8 @@ export async function validateBuiltSite({
     violations.push(...collectRoutineStaticViolations(resolvedDist, expectations));
   }
 
-  violations.push(...collectOriginViolations(contract, expectedOrigin));
-  violations.push(...collectOgViolations(resolvedDist, contract));
+  violations.push(...collectOriginViolations(contract, expectedOrigin, expectations));
+  violations.push(...collectOgViolations(resolvedDist, contract, expectedOrigin));
 
   if (profile === 'preview') {
     violations.push(

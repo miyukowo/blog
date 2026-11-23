@@ -15,7 +15,12 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
 
-import { BuiltSiteValidationError, validateBuiltSite } from '../../scripts/validate-built-site.mjs';
+import {
+  BuiltSiteValidationError,
+  collectOgViolations,
+  collectOriginViolations,
+  validateBuiltSite,
+} from '../../scripts/validate-built-site.mjs';
 
 const execFileAsync = promisify(execFile);
 
@@ -288,4 +293,92 @@ test('the validator CLI exits nonzero on a broken artifact and zero after restor
     encoding: 'utf8',
   });
   assert.match(restored.stdout, /validate-built-site: PASS/);
+});
+
+test('external CDN ogImage is allowed only when source expectations expect it, without local dist check', async (t) => {
+  const fixture = await makeValidFixture(t);
+  const cdnOg = 'https://cdn.tvphus.dev/image/optimized/v123/hero.jpg';
+  const contract = {
+    htmlRoutes: [
+      {
+        path: '/posts/cdn-hero/',
+        canonical: `${FIXTURE_ORIGIN}/posts/cdn-hero/`,
+        lang: 'en-US',
+        robots: '',
+        ogImage: cdnOg,
+        hreflangs: { en: `${FIXTURE_ORIGIN}/posts/cdn-hero/` },
+      },
+      {
+        path: '/posts/hello/',
+        canonical: `${FIXTURE_ORIGIN}/posts/hello/`,
+        lang: 'en-US',
+        robots: '',
+        ogImage: `${FIXTURE_ORIGIN}/og/hello.png`,
+        hreflangs: { en: `${FIXTURE_ORIGIN}/posts/hello/` },
+      },
+    ],
+    feeds: {},
+    sitemapUrls: [],
+    generatedOgPaths: ['/og/hello.png'],
+  };
+
+  const expectations = {
+    origin: FIXTURE_ORIGIN,
+    basePrefix: '',
+    listed: { en: [], vi: [] },
+    routeByPath: new Map([
+      [
+        '/posts/cdn-hero/',
+        {
+          path: '/posts/cdn-hero/',
+          locale: 'en',
+          kind: 'post',
+          post: {
+            locale: 'en',
+            slug: 'cdn-hero',
+            path: '/posts/cdn-hero/',
+            ogPath: '/og/cdn-hero.png',
+            translationKey: 'cdn-hero',
+            unlisted: false,
+            heroImage: 'https://res.cloudinary.com/tvphus/image/upload/v123/hero.jpg',
+          },
+        },
+      ],
+      [
+        '/posts/hello/',
+        {
+          path: '/posts/hello/',
+          locale: 'en',
+          kind: 'post',
+          post: {
+            locale: 'en',
+            slug: 'hello',
+            path: '/posts/hello/',
+            ogPath: '/og/hello.png',
+            translationKey: 'hello',
+            unlisted: false,
+            heroImage: undefined,
+          },
+        },
+      ],
+    ]),
+  };
+
+  assert.deepEqual(collectOriginViolations(contract, FIXTURE_ORIGIN, expectations), []);
+  assert.deepEqual(collectOgViolations(fixture.distDir, contract, FIXTURE_ORIGIN), []);
+
+  // Unexpected wrong-origin ogImage on a hero-less route must still fail.
+  const wrongOriginContract = {
+    ...contract,
+    htmlRoutes: [
+      contract.htmlRoutes[0],
+      {
+        ...contract.htmlRoutes[1],
+        ogImage: 'https://wrong-origin.example/og/hello.png',
+      },
+    ],
+  };
+  const violations = collectOriginViolations(wrongOriginContract, FIXTURE_ORIGIN, expectations);
+  assert.equal(violations.length, 1);
+  assert.match(violations[0], /htmlRoutes\[\/posts\/hello\/\]\.ogImage/);
 });

@@ -360,4 +360,48 @@ test('routine validation follows current source and rejects stale/broken artifac
   await expectFailure(validate(root, previewOptions), /comment mount/);
   writeFileSync(commentTarget, commentText, 'utf8');
   await validate(root, previewOptions);
+
+  // ---- 8. Cloudinary/external heroImage OG URL in production & preview --
+  const cloudinaryFixture = 'en/cloudinary-hero/index.mdx';
+  const expectedCdnOg = 'https://cdn.tvphus.dev/image/optimized/v123/test-hero.jpg';
+  writePost(
+    root,
+    cloudinaryFixture,
+    [
+      "title: 'Cloudinary hero fixture'",
+      "description: 'External CDN hero image OG test.'",
+      'pubDate: 2026-11-12',
+      "heroImage: 'https://res.cloudinary.com/tvphus/image/upload/f_auto,q_auto/v123/test-hero.jpg'",
+      'showFeaturedImage: false',
+    ].join('\n'),
+  );
+
+  buildProject(root, SITE_URL);
+  const cdnPostPath = join(distDir, 'posts', 'cloudinary-hero', 'index.html');
+  const cdnPostHtml = readFileSync(cdnPostPath, 'utf8');
+  assert.ok(cdnPostHtml.includes(expectedCdnOg), 'built HTML must emit optimized CDN og:image');
+  assert.equal(
+    existsSync(join(distDir, 'og', 'cloudinary-hero.png')),
+    false,
+    'post with heroImage must not generate a fallback OG PNG',
+  );
+  await validate(root);
+
+  writeFileSync(
+    cdnPostPath,
+    cdnPostHtml.replaceAll(expectedCdnOg, 'https://wrong-origin.example/foo.jpg'),
+    'utf8',
+  );
+  await expectFailure(validate(root), /ogImage|origin/);
+  writeFileSync(cdnPostPath, cdnPostHtml, 'utf8');
+  await validate(root);
+
+  buildProject(root, 'https://staging-blog.tvphus.dev');
+  preparePreviewCms({
+    distDir,
+    branch: PREVIEW_BRANCH,
+    siteUrl: 'https://staging-blog.tvphus.dev',
+  });
+  markPreviewNoindex({ distDir, branch: 'staging' });
+  await validate(root, previewOptions);
 });
