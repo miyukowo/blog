@@ -433,6 +433,20 @@ unlisted: true
 
 Hidden explicit slug body.
 `,
+  // Mixed-case/space filename + unlisted: emitted at the loader-normalized
+  // route, excluded from sitemap/listings/feeds/search, and emits its OG PNG.
+  'en/Review Hidden.md': `---
+title: 'Review Hidden fixture'
+description: 'Unlisted fixture whose mixed-case, space-containing filename must match its normalized route and stay out of discovery surfaces.'
+pubDate: 2026-11-13
+unlisted: true
+---
+
+This unlisted post exists so the fixture build exercises filename identity normalization:
+the loader emits \`/posts/review-hidden/\`, the sitemap exclusion must use that same
+identity, the page stays directly reachable and noindex, and it never appears in
+listings, feeds, search or the sitemap.
+`,
 };
 
 function buildFixtureProject() {
@@ -567,7 +581,7 @@ test('temporary fixture build satisfies SEO/visibility/navigation contracts', as
   );
 
   // ---- loader filename/slug identity fixtures (Task 1) -----------------
-  // A real mixed-case/space filename committed in `src/content/posts` must
+  // A mixed-case/space filename in the disposable fixture project must
   // resolve to the loader-normalized route, stay directly reachable/noindex,
   // and be excluded from discovery using that same identity.
   const reviewHiddenFile = pageFile(distDir, '/posts/review-hidden/');

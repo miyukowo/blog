@@ -61,10 +61,8 @@ The contract compares against the measured baseline in
 33 HTML routes, 12 tracked content files with SHA-256/body hashes, 2 feeds, 32 sitemap URLs,
 6 generated OG images, Pagefind 33 pages (EN/VI). Changes are only accepted through the documented
 exact `from → to` field allowances: the intentional VI RSS language correction and three corrected
-taxonomy hreflang values. A permanent Task 1 regression fixture (`Review Hidden.md`, unlisted) is
-classified as an additive source/route/OG file; it does not change any protected baseline value.
-Any other drift fails. This snapshot mode is explicit (`--mode historical --baseline …`, or
-`verify-site.mjs`) and is not the routine deployment gate.
+taxonomy hreflang values. Any other drift fails. This snapshot mode is explicit
+(`--mode historical --baseline …`, or `verify-site.mjs`) and is not the routine deployment gate.
 
 Routine deployment validation (`scripts/validate-built-site.mjs`, default `--mode routine`) derives
 expected routes, feeds, sitemap identities, generated OG files, per-route metadata and the Pagefind

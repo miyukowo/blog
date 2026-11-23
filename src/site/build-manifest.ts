@@ -48,6 +48,9 @@ interface FingerprintEntry {
   sha256: string;
 }
 
+/** Git-ignored local editor caches that do not affect built output. */
+const IGNORED_EDITOR_ENTRIES = new Set(['.obsidian', '.idea', '.DS_Store', 'Thumbs.db']);
+
 function sha256(value: string | Buffer): string {
   return createHash('sha256').update(value).digest('hex');
 }
@@ -56,6 +59,7 @@ function listFiles(root: string): string[] {
   const files: string[] = [];
   const visit = (directory: string, prefix: string): void => {
     for (const entry of readdirSync(directory, { withFileTypes: true })) {
+      if (IGNORED_EDITOR_ENTRIES.has(entry.name)) continue;
       const relativePath = prefix ? posix.join(prefix, entry.name) : entry.name;
       const full = join(directory, entry.name);
       if (entry.isDirectory()) visit(full, relativePath);

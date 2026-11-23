@@ -49,10 +49,7 @@
  *
  * This profile is the EXPLICIT historical/migration check. Routine PR and
  * deployment validation uses `scripts/validate-built-site.mjs --mode routine`,
- * which derives expectations from current source. The one additive historical
- * classification is the permanent Task 1 regression fixture
- * (`Review Hidden.md`): its direct route and generated OG image are added
- * without changing any protected baseline value.
+ * which derives expectations from current source.
  *
  * Usage:
  *   node scripts/verify-site.mjs [--profile offline|full|preview]

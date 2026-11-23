@@ -125,6 +125,7 @@ const OG_DIRECTORY = 'og';
 const PAGEFIND_ENTRY = posix.join('_pagefind', 'pagefind-entry.json');
 
 const ROUTE_FIELDS = ['canonical', 'lang', 'robots', 'ogImage'];
+const IGNORED_EDITOR_ENTRIES = new Set(['.obsidian', '.idea', '.DS_Store', 'Thumbs.db']);
 
 /** Raised when the build/source tree cannot be captured as a contract. */
 export class SiteContractCaptureError extends Error {
@@ -186,6 +187,7 @@ async function listFiles(root) {
     const entries = await readdir(directory, { withFileTypes: true });
     entries.sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0));
     for (const entry of entries) {
+      if (IGNORED_EDITOR_ENTRIES.has(entry.name)) continue;
       const relativePath = prefix ? posix.join(prefix, entry.name) : entry.name;
       if (entry.isDirectory()) {
         await visit(join(directory, entry.name), relativePath);

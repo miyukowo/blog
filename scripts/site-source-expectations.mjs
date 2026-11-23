@@ -36,11 +36,13 @@ const DEFAULT_LOCALE = siteLocales[0];
 const FRONTMATTER_PATTERN = /^---\r?\n([\s\S]*?)\r?\n---/;
 const CONTENT_FILE_PATTERN = /\.(?:md|mdx)$/i;
 const INDEXABLE_SKIP_PATHS = new Set(['/404.html']);
+const IGNORED_EDITOR_ENTRIES = new Set(['.obsidian', '.idea', '.DS_Store', 'Thumbs.db']);
 
 function listFiles(root) {
   const files = [];
   const visit = (directory, prefix) => {
     for (const entry of readdirSync(directory, { withFileTypes: true })) {
+      if (IGNORED_EDITOR_ENTRIES.has(entry.name)) continue;
       const relativePath = prefix ? posix.join(prefix, entry.name) : entry.name;
       const full = join(directory, entry.name);
       if (entry.isDirectory()) visit(full, relativePath);

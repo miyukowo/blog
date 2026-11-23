@@ -19,6 +19,7 @@ import { promisify } from 'node:util';
 import { test } from 'node:test';
 
 import { assertSiteContract, captureSite } from '../../scripts/site-contract.mjs';
+import { computeSourceFingerprint } from '../../src/site/build-manifest.ts';
 
 const execFileAsync = promisify(execFile);
 
@@ -615,4 +616,22 @@ test('the CLI captures and asserts on temporary fixtures and reports failures no
   ]);
   assert.notEqual(brokenAssert.code, 0);
   assert.match(`${brokenAssert.stdout}${brokenAssert.stderr}`, /\/posts\/hello\//);
+});
+
+test('gitignored editor caches (.obsidian) do not trip source content or build fingerprint checks', async (t) => {
+  const fixture = await makeFixtureCopy(t);
+  const baseline = await readBaseline(fixture);
+  const beforeFingerprint = computeSourceFingerprint(fixture.sourceDir).fingerprint;
+
+  const obsidianDir = join(fixture.sourceDir, 'src', 'content', 'posts', '.obsidian');
+  await mkdir(obsidianDir, { recursive: true });
+  await writeFile(join(obsidianDir, 'workspace.json'), '{"left":{"collapsed":false}}');
+  await writeFile(join(obsidianDir, 'app.json'), '{"alwaysUpdateLinks":true}');
+
+  const actual = await capture(fixture);
+  assert.doesNotThrow(() => assertSiteContract(actual, baseline));
+  assert.equal(computeSourceFingerprint(fixture.sourceDir).fingerprint, beforeFingerprint);
+
+  await writeFile(join(obsidianDir, 'workspace.json'), '{"left":{"collapsed":true}}');
+  assert.equal(computeSourceFingerprint(fixture.sourceDir).fingerprint, beforeFingerprint);
 });

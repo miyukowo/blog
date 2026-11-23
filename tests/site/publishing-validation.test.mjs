@@ -122,6 +122,7 @@ test('routine validation follows current source and rejects stale/broken artifac
   const listingPost = 'src/content/posts/en/getting-started/index.mdx';
   const enFixture = 'en/publishing-en/index.mdx';
   const viFixture = 'vi/publishing-vi/index.mdx';
+  const unlistedFixture = 'en/Review Hidden.md';
   const draftFixture = 'en/publishing-draft/index.mdx';
 
   // ---- 1. a rebuilt artifact of the unchanged source passes -------------
@@ -130,7 +131,7 @@ test('routine validation follows current source and rejects stale/broken artifac
   assert.equal(initial.mode, 'routine');
   assert.match(initial.summary, /routes/);
 
-  // ---- 2. editorial correction + new EN/VI posts + draft fixture --------
+  // ---- 2. editorial correction + new EN/VI/unlisted posts + draft -------
   const originalListing = readFileSync(join(root, listingPost), 'utf8');
   writeFileSync(
     join(root, listingPost),
@@ -158,6 +159,16 @@ test('routine validation follows current source and rejects stale/broken artifac
   );
   writePost(
     root,
+    unlistedFixture,
+    [
+      "title: 'Review Hidden fixture'",
+      "description: 'Ephemeral unlisted mixed-case fixture.'",
+      'pubDate: 2026-11-13',
+      'unlisted: true',
+    ].join('\n'),
+  );
+  writePost(
+    root,
     draftFixture,
     [
       "title: 'Publishing draft fixture'",
@@ -174,6 +185,8 @@ test('routine validation follows current source and rejects stale/broken artifac
   await validate(root);
   assert.ok(existsSync(join(root, 'dist', 'posts', 'publishing-en', 'index.html')));
   assert.ok(existsSync(join(root, 'dist', 'vi', 'posts', 'publishing-vi', 'index.html')));
+  assert.ok(existsSync(join(root, 'dist', 'posts', 'review-hidden', 'index.html')));
+  assert.ok(existsSync(join(root, 'dist', 'og', 'review-hidden.png')));
   assert.equal(
     existsSync(join(root, 'dist', 'posts', 'publishing-draft', 'index.html')),
     false,
@@ -212,11 +225,14 @@ test('routine validation follows current source and rejects stale/broken artifac
   );
   rmSync(join(root, 'src', 'content', 'posts', enFixture), { force: true });
   rmSync(join(root, 'src', 'content', 'posts', viFixture), { force: true });
+  rmSync(join(root, 'src', 'content', 'posts', unlistedFixture), { force: true });
   buildProject(root);
   await validate(root);
   assert.equal(existsSync(join(root, 'dist', 'posts', 'publishing-draft', 'index.html')), false);
   assert.equal(existsSync(join(root, 'dist', 'posts', 'publishing-en', 'index.html')), false);
   assert.equal(existsSync(join(root, 'dist', 'vi', 'posts', 'publishing-vi', 'index.html')), false);
+  assert.equal(existsSync(join(root, 'dist', 'posts', 'review-hidden', 'index.html')), false);
+  assert.equal(existsSync(join(root, 'dist', 'og', 'review-hidden.png')), false);
 
   // ---- 5. mutation failures without rebuilding, then restore ----------
   const distDir = join(root, 'dist');
@@ -228,7 +244,7 @@ test('routine validation follows current source and rejects stale/broken artifac
   writeFileSync(routePath, routeBytes);
   await validate(root);
 
-  const ogPath = join(distDir, 'og', 'review-hidden.png');
+  const ogPath = join(distDir, 'og', 'getting-started.png');
   const ogBytes = readFileSync(ogPath);
   rmSync(ogPath);
   await expectFailure(validate(root), /missing generated OG image/);
