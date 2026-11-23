@@ -21,7 +21,6 @@ import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { XMLParser } from 'fast-xml-parser';
 import { parse as parseYaml } from 'yaml';
 
 import { markPreviewNoindex } from '../../scripts/mark-preview-noindex.mjs';
@@ -349,13 +348,15 @@ test('GitHub Pages workflow/support is preserved for separate assessment', () =>
   );
 });
 
-test('full-output contract fixture exists for the production-shaped build', () => {
-  // The harness script is the source of truth for required output (content,
-  // OG, RSS, sitemap, search); deployment relies on it via the same env rules.
-  const verifyScript = readFileSync(join(REPO_ROOT, 'scripts', 'verify-site.mjs'), 'utf8');
-  assert.match(verifyScript, /CI_SKIP_AUTO_OG_IMAGE/);
-  assert.match(verifyScript, /profile === 'full'|'full'/);
-  // CLOUDFLARE project command must upload the built dist directory.
+test('full-output contract validation guards the production-shaped build before upload', () => {
+  const validatorScript = readFileSync(
+    join(REPO_ROOT, 'scripts', 'validate-built-site.mjs'),
+    'utf8',
+  );
+  assert.match(validatorScript, /collectOriginViolations/);
+  assert.match(validatorScript, /collectOgViolations/);
+  // Deployment workflow validates the built artifact before uploading dist.
+  assert.match(cfText, /validate-built-site\.mjs/);
   assert.match(cfText, /pages deploy dist/);
 });
 
@@ -382,17 +383,3 @@ test('jobs running test:site fetch full Git history for upstream ancestry checks
     }
   }
 });
-
-// Keep the XML parser import meaningful for future feed assertions without
-// adding dead code: parse the checked-in baseline sitemap once.
-const baseline = JSON.parse(
-  readFileSync(
-    join(REPO_ROOT, 'docs', 'research', '2026-11-02-dsh-preflight-baseline.json'),
-    'utf8',
-  ),
-);
-const parsed = new XMLParser({ removeNSPrefix: true }).parse(
-  '<urlset><url><loc>https://example.test/</loc></url></urlset>',
-);
-assert.ok(parsed.urlset.url.loc);
-assert.ok(Array.isArray(baseline.sitemapUrls));

@@ -10,10 +10,8 @@
  *   - scripts/            (contract + verification harness)
  *   - tests/site/         (Node test-runner tests; fixtures are git-ignored
  *                          test data and excluded via .prettierignore)
- *   - docs/               (maintenance/handoff documentation)
- *   - src/site/           (local site policy modules; added by Task 2, so its
- *                          absence must not fail the check)
- *   - public/cms/         (Sveltia admin shell + config, adopted by Task 6)
+ *   - src/site/           (local site policy modules)
+ *   - public/cms/         (Sveltia admin shell + config)
  *   - explicit local/shared files changed by the maintainability work
  *
  * `bunfig.toml` is intentionally not listed because Prettier has no TOML
@@ -34,7 +32,6 @@ const PRETTIER_BIN = join(REPO_ROOT, 'node_modules', 'prettier', 'bin', 'prettie
 const SCOPED_PATHS = [
   'scripts',
   'tests/site',
-  'docs',
   'src/site',
   'public/cms',
   'src/components/VideoEmbed.astro',

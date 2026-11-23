@@ -8,8 +8,7 @@
  * The authenticated Sveltia + Cloudinary round-trip (sign in, create/edit a
  * translated draft, select/upload media, save, reload, delete on a
  * `codex/cms-validation-<run>` branch) requires external credentials and is
- * therefore NOT exercised here. See docs/maintenance/upstream.md for the
- * remaining manual gate.
+ * therefore NOT exercised here.
  */
 import assert from 'node:assert/strict';
 import { execFile } from 'node:child_process';

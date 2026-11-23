@@ -1,2 +1,0 @@
-preview noindex: injected (dist/_headers)
-noindex_exit=0

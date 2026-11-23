@@ -31,12 +31,11 @@ Open [http://localhost:4321](http://localhost:4321) to see the site.
 
 ## Maintenance
 
-- [Upstream update runbook](docs/maintenance/upstream.md) — exact fetch, compare,
-  merge, verification, review and rollback steps.
+- **Upstream updates:** fetch `https://github.com/kannansuresh/chirping-astro-starter` (`main`), inspect drift with `node scripts/check-upstream.mjs --adopted <adopted-sha> --candidate <new-sha>`, merge with `git merge --no-ff <new-sha>`, and verify with `bun run test:site`.
 - [`theme-upstream.json`](theme-upstream.json) — adopted upstream source/starter
   SHAs, local-owned paths and shared-file exceptions.
 - [Compatibility contract harness](scripts/site-contract.mjs) —
-  `bun run test:site` / `bun run verify:site` preserve public routes, content
+  `bun run test:site` / `bun run verify:site` validate public routes, content
   hashes, metadata, feeds, sitemap, OG and search output.
 
 ## Site-specific choices
@@ -58,7 +57,7 @@ Open [http://localhost:4321](http://localhost:4321) to see the site.
 | `bun run typecheck`      | Run `astro check`                     |
 | `bun run lint`           | Run ESLint                            |
 | `bun run test:site`      | Run the site compatibility tests      |
-| `bun run verify:site`    | Offline build + contract verification |
+| `bun run verify:site`    | Validate built `./dist/` against current source |
 | `bun run format`         | Format with Prettier                  |
 
 ## Content

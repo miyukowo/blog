@@ -1,9 +1,0 @@
-HEAD: fd3171ff58aa205daa775234bb5166e5a0e28e1f
-adopted ancestor check:
-PASS: adopted starter is ancestor
-historical bridge tree equality:
-PASS: bridge tree equality (no diff)
-merge 7da7e21 parents:
-7da7e21d3a7467725f1b538e627140e1dd77c653 af8034605b6c04873f9a51cdc2433a15255aa1dc 821bc6171f2ed0f74d920cc5ab70794c3f779971
-bridge parents:
-af8034605b6c04873f9a51cdc2433a15255aa1dc 181f8a3690d5c11e44e474101499ff0cb83c8475 5e8552f3922b623c04b5d0ffae4d7a9e255ccb20

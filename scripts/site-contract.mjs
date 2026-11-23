@@ -2,10 +2,9 @@
 /**
  * Site compatibility contract: deterministic capture and assertion.
  *
- * The measured reference lives in
- * `docs/research/2026-11-02-dsh-preflight-baseline.json`. This module turns a
- * production-shaped `dist/` build plus the content source tree into the same
- * schemaVersion 1 shape so migrations can be checked mechanically.
+ * Turns a production-shaped `dist/` build plus the content source tree into a
+ * schemaVersion 1 snapshot so migrations and built artifacts can be checked
+ * mechanically.
  *
  * ## Capture (`captureSite`)
  *

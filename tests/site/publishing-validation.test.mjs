@@ -32,14 +32,13 @@ import { fileURLToPath } from 'node:url';
 
 import { preparePreviewCms } from '../../scripts/prepare-preview.mjs';
 import { markPreviewNoindex } from '../../scripts/mark-preview-noindex.mjs';
+import { captureSite } from '../../scripts/site-contract.mjs';
 import { validateBuiltSite, BuiltSiteValidationError } from '../../scripts/validate-built-site.mjs';
-import { ALLOWED_CHANGES } from '../../scripts/site-allowed-changes.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(HERE, '..', '..');
 const ASTRO_BIN = join(REPO_ROOT, 'node_modules', 'astro', 'bin', 'astro.mjs');
 const PAGEFIND_BIN = join(REPO_ROOT, 'node_modules', 'pagefind', 'lib', 'runner', 'bin.cjs');
-const BASELINE_PATH = join(REPO_ROOT, 'docs', 'research', '2026-11-02-dsh-preflight-baseline.json');
 const SITE_URL = 'https://blog.tvphus.dev';
 const PREVIEW_BRANCH = 'codex/cms-validation-publishing-test';
 
@@ -130,6 +129,18 @@ test('routine validation follows current source and rejects stale/broken artifac
   const initial = await validate(root);
   assert.equal(initial.mode, 'routine');
   assert.match(initial.summary, /routes/);
+  const initialBaselinePath = join(root, 'initial-baseline.json');
+  writeFileSync(
+    initialBaselinePath,
+    JSON.stringify(
+      await captureSite({
+        distDir: join(root, 'dist'),
+        sourceDir: root,
+        sourceRevision: 'initial',
+      }),
+    ),
+    'utf8',
+  );
 
   // ---- 2. editorial correction + new EN/VI/unlisted posts + draft -------
   const originalListing = readFileSync(join(root, listingPost), 'utf8');
@@ -307,8 +318,8 @@ test('routine validation follows current source and rejects stale/broken artifac
       profile: 'production',
       mode: 'historical',
       siteUrl: SITE_URL,
-      baselinePath: BASELINE_PATH,
-      allowedChanges: ALLOWED_CHANGES,
+      baselinePath: initialBaselinePath,
+      allowedChanges: {},
     }),
     /sourceContent.*(sha256|bodySha256)/,
   );

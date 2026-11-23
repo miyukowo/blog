@@ -21,7 +21,7 @@
     "lint": "eslint . --max-warnings=0",
     "lint:fix": "eslint . --fix",
     "test:site": "node --test --test-concurrency=1 tests/site/",
-    "verify:site": "node scripts/verify-site.mjs --profile offline",
+    "verify:site": "node scripts/validate-built-site.mjs --dist dist --mode routine --profile production --site-url https://blog.tvphus.dev",
     "format:site:check": "node scripts/format-site-check.mjs --check",
     "format": "prettier --write \"**/*.{astro,ts,tsx,js,jsx,md,mdx,css,json}\"",
     "format:check": "prettier --check \"**/*.{astro,ts,tsx,js,jsx,md,mdx,css,json}\""

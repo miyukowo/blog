@@ -1,2 +1,0 @@
-$ eslint . --max-warnings=0
-lint_exit=0

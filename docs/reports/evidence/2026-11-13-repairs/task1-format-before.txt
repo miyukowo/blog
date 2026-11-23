@@ -1,7 +1,0 @@
-$ node scripts/format-site-check.mjs --check
-format-site-check (--check): scripts, tests/site, docs, src/site, public/cms, src/components/VideoEmbed.astro, src/utils/og-image.ts, package.json, eslint.config.js, .prettierrc.json
-Checking formatting...
-[warn] docs/reports/evidence/final/full-contract.json
-[warn] Code style issues found in the above file. Run Prettier with --write to fix.
-error: script "format:site:check" exited with code 1
-exit=1

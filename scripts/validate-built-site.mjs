@@ -43,7 +43,6 @@ import { fileURLToPath } from 'node:url';
 import { parse as parseYaml } from 'yaml';
 
 import { assertSiteContract, captureSite, SiteContractError } from './site-contract.mjs';
-import { ALLOWED_CHANGES } from './site-allowed-changes.mjs';
 import { hasGlobalNoindex } from './header-policy.mjs';
 import {
   BUILD_MANIFEST_RELATIVE_PATH,
@@ -54,12 +53,6 @@ import { normalizeSitemapPathname } from '../src/site/sitemap.ts';
 
 const SCRIPTS_DIR = dirname(fileURLToPath(import.meta.url));
 export const REPO_ROOT = resolve(SCRIPTS_DIR, '..');
-export const DEFAULT_BASELINE_PATH = join(
-  REPO_ROOT,
-  'docs',
-  'research',
-  '2026-11-02-dsh-preflight-baseline.json',
-);
 
 export const PROFILES = ['production', 'preview'];
 export const MODES = ['routine', 'historical'];
@@ -612,7 +605,7 @@ export async function validateBuiltSite({
   sourceDir = REPO_ROOT,
   manifestPath,
   baselinePath,
-  allowedChanges = ALLOWED_CHANGES,
+  allowedChanges = {},
   cmsBranch,
   sourceRevision,
 } = {}) {
@@ -814,7 +807,7 @@ async function main() {
     }
     const allowedChanges = options.allowed
       ? JSON.parse(readFileSync(resolve(options.allowed), 'utf8'))
-      : ALLOWED_CHANGES;
+      : {};
     const result = await validateBuiltSite({
       distDir: options.dist,
       profile: options.profile,

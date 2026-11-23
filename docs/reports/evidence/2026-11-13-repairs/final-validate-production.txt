@@ -1,5 +1,0 @@
-validate-built-site: PASS profile=production dist=/home/tvp/.codex/worktrees/upstream-preflight/blog/.repairs-evidence/clean/dist site=https://blog.tvphus.dev
-  contract: 33 routes, 2 feeds, 32 sitemap URLs, 6 generated OG files, 33 Pagefind pages
-  origin consistency: OK
-  generated OG existence: OK
-validate_prod_exit=0

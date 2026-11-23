@@ -40,7 +40,6 @@
     "src/site/",
     "scripts/",
     "tests/",
-    "docs/",
     "theme-upstream.json",
     "public/cms/",
     "public/_headers",
@@ -57,7 +56,7 @@
     {
       "path": "astro.config.mjs",
       "reason": "Upstream Astro 7/S\u00e4tteri config plus site-owned CDN allowlist, Vietnamese font subsets, an exact config-time unlisted-sitemap scan sharing the loader's content-entry identity policy, an MDX raw-HTML compatibility seam (src/site/mdx-html.ts, src/site/sitemap.ts), a build-manifest integration for routine artifact validation, and a deployment-origin-aware site value so preview sitemap/feed origins match canonical metadata.",
-      "validation": "node scripts/verify-site.mjs --profile preview"
+      "validation": "node scripts/validate-built-site.mjs --dist dist --mode routine --profile preview --site-url https://staging-blog.tvphus.dev"
     },
     {
       "path": "package.json",
@@ -72,7 +71,7 @@
     {
       "path": "bunfig.toml",
       "reason": "Upstream bun install policy plus [run] bun=false so Astro commands execute under Node.",
-      "validation": "node scripts/verify-site.mjs --profile offline"
+      "validation": "bun run test:site"
     },
     {
       "path": ".node-version",
@@ -87,7 +86,7 @@
     {
       "path": "src/content.config.ts",
       "reason": "Upstream mermaid field plus local postSlug field required by the CMS publishing convention, and the shared glob-loader generateId (src/site/content-identity.ts) used by the sitemap scan and publishing expectations.",
-      "validation": "node scripts/verify-site.mjs --profile offline"
+      "validation": "bun run test:site"
     },
     {
       "path": "src/i18n/ui.ts",
@@ -117,12 +116,12 @@
     {
       "path": "src/pages/[...locale]/categories/[category].astro",
       "reason": "Translated taxonomy destinations use the site-owned resolver and legacy published slugs.",
-      "validation": "node scripts/verify-site.mjs --profile offline"
+      "validation": "bun run test:site"
     },
     {
       "path": "src/pages/[...locale]/tags/[tag].astro",
       "reason": "Translated taxonomy destinations use the site-owned resolver and legacy published slugs.",
-      "validation": "node scripts/verify-site.mjs --profile offline"
+      "validation": "bun run test:site"
     },
     {
       "path": "src/plugins/satteri-base-links.ts",
@@ -132,7 +131,7 @@
     {
       "path": "src/utils/posts.ts",
       "reason": "Filesystem URL identity without /index, normalized translation fallback, CMS postSlug mismatch reporting, and an OG-eligible published-post helper that includes unlisted pages but still excludes drafts.",
-      "validation": "node scripts/verify-site.mjs --profile offline"
+      "validation": "bun run test:site"
     },
     {
       "path": "src/utils/seo.ts",
@@ -157,7 +156,7 @@
     {
       "path": "src/styles/global.css",
       "reason": "Upstream transition tweak plus local brand/typography/VI readability styling.",
-      "validation": "node scripts/verify-site.mjs --profile offline"
+      "validation": "bun run test:site"
     },
     {
       "path": "src/components/VideoEmbed.astro",
@@ -167,7 +166,7 @@
     {
       "path": "src/components/Topbar.astro",
       "reason": "VI language switcher/translation props preserved.",
-      "validation": "node scripts/verify-site.mjs --profile offline"
+      "validation": "bun run test:site"
     },
     {
       "path": "src/components/islands/LanguageSwitcher.astro",
@@ -177,17 +176,17 @@
     {
       "path": "src/components/islands/BackToTop.astro",
       "reason": "Local back-to-top presentation retained; VI labels via the shared dictionary.",
-      "validation": "node scripts/verify-site.mjs --profile offline"
+      "validation": "bun run test:site"
     },
     {
       "path": "src/components/Panel.astro",
       "reason": "Retained local sidebar widget wiring (VI dictionary, assets).",
-      "validation": "node scripts/verify-site.mjs --profile offline"
+      "validation": "bun run test:site"
     },
     {
       "path": "src/components/Sidebar.astro",
       "reason": "Retained local branding/navigation wiring.",
-      "validation": "node scripts/verify-site.mjs --profile offline"
+      "validation": "bun run test:site"
     },
     {
       "path": "README.md",
