@@ -359,6 +359,30 @@ test('full-output contract fixture exists for the production-shaped build', () =
   assert.match(cfText, /pages deploy dist/);
 });
 
+test('jobs running test:site fetch full Git history for upstream ancestry checks', () => {
+  const checks = parseYaml(readFileSync(CHECKS_WORKFLOW, 'utf8'));
+  for (const [name, workflow] of [
+    ['deploy-cf.yml', cf],
+    ['checks.yml', checks],
+  ]) {
+    const jobsWithSiteTests = Object.entries(workflow.jobs ?? {}).filter(([, job]) =>
+      (job.steps ?? []).some((step) => String(step.run ?? '').includes('bun run test:site')),
+    );
+    assert.ok(jobsWithSiteTests.length > 0, `${name} must run bun run test:site`);
+    for (const [jobId, job] of jobsWithSiteTests) {
+      const checkout = (job.steps ?? []).find((step) =>
+        String(step.uses ?? '').startsWith('actions/checkout'),
+      );
+      assert.ok(checkout, `${name}#${jobId} must use actions/checkout`);
+      assert.equal(
+        checkout.with?.['fetch-depth'],
+        0,
+        `${name}#${jobId} must set fetch-depth: 0 so upstream starter SHAs exist in CI`,
+      );
+    }
+  }
+});
+
 // Keep the XML parser import meaningful for future feed assertions without
 // adding dead code: parse the checked-in baseline sitemap once.
 const baseline = JSON.parse(
